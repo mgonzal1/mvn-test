@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>data-pool-manager-maven</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+        <dependencies>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.9.1</version>
+        </dependency>
+
+<!--            company jar file has 2.2.4 version but parseString method was deprecated so I just updated to latest version 2.9.1-->
+
+<!--        <dependency>-->
+<!--            <groupId>com.google.code</groupId>-->
+<!--            <artifactId>gson</artifactId>-->
+<!--            <version>2.2.4</version>-->
+<!--            <scope>system</scope>-->
+<!--            <systemPath>C:/Softwares/mavenrepository/com/google/code/gson-2.2.4.jar</systemPath>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>com.google.code.json</groupId>-->
+<!--            <artifactId>json</artifactId>-->
+<!--            <version>1.0</version>-->
+<!--            <scope>system</scope>-->
+<!--            <systemPath>C:/Softwares/mavenrepository/com/google/code/json/json-lib.jar</systemPath>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>com.google.code.json</groupId>-->
+<!--            <artifactId>json</artifactId>-->
+<!--            <version>1.0</version>-->
+<!--            <scope>system</scope>-->
+<!--            <systemPath>C:/Softwares/mavenrepository/com/google/code/json/json.jar</systemPath>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>com.dpm.server</groupId>-->
+<!--            <artifactId>dpm</artifactId>-->
+<!--            <version>1.0</version>-->
+<!--            <scope>system</scope>-->
+<!--            <systemPath>C:/Softwares/mavenrepository/com/dpm/server/dpmold.jar</systemPath>-->
+<!--        </dependency>-->
+
+        <dependency>
+            <groupId>com.dpm.server</groupId>
+            <artifactId>dpm</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>C:/Softwares/mavenrepository/com/dpm/server/dpm.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>org.epics</groupId>
+            <artifactId>epics</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>C:/Softwares/mavenrepository/org/epics/pva-phoebus.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc</artifactId>
+            <version>1.44.1</version>
+            <scope>system</scope>
+            <systemPath>C:/Softwares/mavenrepository/io/grpc/grpc-1.44.1.jar</systemPath>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.25.2</version>
+        </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>3.12.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-core</artifactId>
+                <version>2.0.9</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-api-mockito2</artifactId>
+                <version>2.0.9</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.powermock</groupId>
+                <artifactId>powermock-module-junit4</artifactId>
+                <version>2.0.9</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+
+
+</project>
