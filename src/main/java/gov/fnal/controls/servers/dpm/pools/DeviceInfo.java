@@ -63,8 +63,8 @@ public class DeviceInfo
 	{
 		public static class Primary
 		{
-			public int index;
-			public int inputLen;
+			public int index;//removed final
+			public int inputLen;//removed final
 			public final String units;
 
 			public Primary(ResultSet rs) throws SQLException
