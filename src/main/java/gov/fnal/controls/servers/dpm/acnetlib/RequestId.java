@@ -6,7 +6,7 @@ import java.util.Objects;
 public final class RequestId implements AcnetErrors
 {
 	//final int node;
-	final int id;
+	 int id;
 
 	RequestId(int id)
 	{

@@ -10,10 +10,10 @@ final public class AcnetRequestContext implements AcnetConstants, AcnetErrors, A
 
 	//final AtomicReference<AcnetConnection> connection;
 	volatile AcnetConnection connection;
-	final String task;
+	 String task;
 	final int taskId;
-	final Node node;
-	final RequestId requestId;
+	 Node node;
+	 RequestId requestId;
 	final boolean isMult;
 	final long timeout;
 

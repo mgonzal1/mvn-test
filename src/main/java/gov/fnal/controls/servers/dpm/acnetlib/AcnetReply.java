@@ -5,7 +5,7 @@ public class AcnetReply extends AcnetPacket implements AcnetConstants, AcnetErro
 {
 	static final AcnetReply nil = new AcnetReply() { void handle() { } };
 
-	final RequestId requestId;
+	 RequestId requestId;
 	final boolean last;
 
 	AcnetReply()

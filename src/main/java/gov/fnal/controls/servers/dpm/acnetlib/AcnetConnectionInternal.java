@@ -81,7 +81,7 @@ public class AcnetConnectionInternal extends AcnetConnection
 				final int type = data.get() & 0xff;
 				final int subType = data.get() & 0xff;
 
-				AcnetInterface.logger.log(Level.INFO, "AcnetAuxHandler: " + type + " subtype: " + subType);
+				//AcnetInterface.logger.log(Level.INFO, "AcnetAuxHandler: " + type + " subtype: " + subType);
 
 				buf.clear();
 
@@ -563,7 +563,7 @@ public class AcnetConnectionInternal extends AcnetConnection
 	static ReadThread readThread;
 	static WriteThread writeThread;
 	static final HashMap<Integer, AcnetConnectionInternal> connectionsByName = new HashMap<>();
-	static final ArrayList<AcnetConnectionInternal> connectionsById = new ArrayList<>();
+	static  ArrayList<AcnetConnectionInternal> connectionsById = new ArrayList<>();
 
 	boolean inHandler;
 

@@ -33,6 +33,7 @@ public class StatSetTest {
         stat.messageReceived();
         Assert.assertEquals(26, stat.stats[3]);
     }
+
     @Test
     public void test_requestReceived() {
         StatSet stat = getStat();

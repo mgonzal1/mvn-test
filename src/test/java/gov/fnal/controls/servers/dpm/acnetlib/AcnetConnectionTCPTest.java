@@ -1,21 +1,14 @@
 package gov.fnal.controls.servers.dpm.acnetlib;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class AcnetConnectionTCPTest {
 
@@ -39,6 +32,7 @@ public class AcnetConnectionTCPTest {
         assertTrue(disposed);
 
     }
+
     @Test(expected = AcnetUnavailableException.class)
     public void send_test() throws AcnetStatusException {
         Node node = mock(Node.class);
@@ -47,9 +41,20 @@ public class AcnetConnectionTCPTest {
 
         InetSocketAddress address = mock(InetSocketAddress.class);
         AcnetConnectionTCP acnetConnectionTCP = new AcnetConnectionTCP("test", node, address);
-        acnetConnectionTCP.channel  = socketChannel;//change private to public
+        acnetConnectionTCP.channel = socketChannel;//change private to public
         final ByteBuffer byteBuffer = acnetConnectionTCP.sendCommand(12, 13, null);
         System.out.println(byteBuffer);
 
+    }
+
+    @Test
+    public void test_read() throws IOException {
+        Node node = mock(Node.class);
+        node.name = "node name";//remove final
+        SocketChannel socketChannel = mock(SocketChannel.class);
+        InetSocketAddress address = mock(InetSocketAddress.class);
+        AcnetConnectionTCP acnetConnectionTCP = new AcnetConnectionTCP("test", node, address);
+        acnetConnectionTCP.channel = socketChannel;//change private to public
+        acnetConnectionTCP.read();
     }
 }

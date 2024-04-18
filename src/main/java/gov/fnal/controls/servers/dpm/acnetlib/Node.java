@@ -98,7 +98,7 @@ public class Node implements NodeFlags, AcnetErrors
 		return address;
 	}
 
-	final public int value()
+	 public int value()
 	{
 		return value;
 	}
