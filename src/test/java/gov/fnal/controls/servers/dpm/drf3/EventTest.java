@@ -1,31 +1,31 @@
 package gov.fnal.controls.servers.dpm.drf3;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-@RunWith(MockitoJUnitRunner.class)
 public class EventTest {
 
     //DefaultEvent test cases
     @Test
-    public void test_ValidDefaultEvent() throws EventFormatException{
+    public void test_ValidDefaultEvent() throws EventFormatException {
 
         String validInput = "u";
         Event result = Event.parse(validInput);
         assertNotNull(result);
-        assertTrue(result instanceof DefaultEvent);
+        assertInstanceOf(DefaultEvent.class, result);
     }
 
-    @Test (expected = EventFormatException.class)
-    public void test_InvalidDefaultEvent() throws EventFormatException{
+    @Test
+    public void test_InvalidDefaultEvent() throws EventFormatException {
 
         String validInput = "uUtest";
-        Event result = Event.parse(validInput);
-        assertNotNull(result);
-        assertTrue(result instanceof DefaultEvent);
+        assertThrows(EventFormatException.class, () -> {
+            Event.parse(validInput);
+        });
+        //        assertNotNull(result);
+//        assertInstanceOf(DefaultEvent.class, result);
     }
 
     //Immediate Event test cases
@@ -35,21 +35,26 @@ public class EventTest {
         String validInput = "I";
         Event result = Event.parse(validInput);
         assertNotNull(result);
-        assertTrue(result instanceof ImmediateEvent);
+        assertInstanceOf(ImmediateEvent.class, result);
     }
 
-    @Test (expected = EventFormatException.class)
+    @Test
     public void test_InvalidImmediateEvent() throws EventFormatException {
 
         String validInput = "Illinois";
-        Event result = Event.parse(validInput);
-        assertNotNull(result);
-        assertTrue(result instanceof ImmediateEvent);
+        assertThrows(EventFormatException.class, () -> {
+            Event.parse(validInput);
+        });
+//        Event result = Event.parse(validInput);
+//        assertNotNull(result);
+//        assertInstanceOf(ImmediateEvent.class, result);
     }
 
-    @Test (expected = EventFormatException.class)
+    @Test
     public void test_ImmediateEventWhenInputIsNotMatchAnyEvent() throws EventFormatException {
-        Event.parse("O");
+        assertThrows(EventFormatException.class, () -> {
+            Event.parse("O");
+        });
     }
 
     //periodic event test cases
@@ -59,7 +64,7 @@ public class EventTest {
         String validInput = "P";
         Event result = Event.parse(validInput);
         assertNotNull(result);
-        assertTrue(result instanceof PeriodicEvent);
+        assertInstanceOf(PeriodicEvent.class, result);
     }
 
     @Test
@@ -68,7 +73,7 @@ public class EventTest {
         String validInput = "P,90000";
         Event result = Event.parse(validInput);
         assertNotNull(result);
-        assertTrue(result instanceof PeriodicEvent);
+        assertInstanceOf(PeriodicEvent.class, result);
     }
 
     @Test
@@ -77,14 +82,17 @@ public class EventTest {
         String validInput = "P,90000,T";
         Event result = Event.parse(validInput);
         assertNotNull(result);
-        assertTrue(result instanceof PeriodicEvent);
+        assertInstanceOf(PeriodicEvent.class, result);
     }
 
-    @Test(expected = EventFormatException.class)
+    @Test
     public void test_PeriodicEventForRegularExpIsNotMatched() throws EventFormatException {
 
         String validInput = "p4343555,o7oyi7ti7t,yiutiu";
-        Event.parse(validInput);
+        assertThrows(EventFormatException.class, () -> {
+            Event.parse(validInput);
+        });
+
     }
 
     @Test
@@ -93,17 +101,17 @@ public class EventTest {
         String validInput = "Q";
         Event result = Event.parse(validInput);
         assertNotNull(result);
-        assertTrue(result instanceof PeriodicEvent);
+        assertInstanceOf(PeriodicEvent.class, result);
     }
 
-   //ClockEvent test cases
+    //ClockEvent test cases
     @Test
     public void test_ClockEvent() throws EventFormatException {
 
         String validInput = "E,FF,E,90000";
         Event result = Event.parse(validInput);
         assertNotNull(result);
-        assertTrue(result instanceof ClockEvent);
+        assertInstanceOf(ClockEvent.class, result);
     }
 
     //StateEvent test cases
@@ -113,7 +121,7 @@ public class EventTest {
         String validInput = "S,DeviceName,64534,90000,*";
         Event result = Event.parse(validInput);
         assertNotNull(result);
-        assertTrue(result instanceof StateEvent);
+        assertInstanceOf(StateEvent.class, result);
     }
 
     //NeverEvent test cases
@@ -123,19 +131,22 @@ public class EventTest {
         String validInput = "N";
         Event result = Event.parse(validInput);
         assertNotNull(result);
-        assertTrue(result instanceof NeverEvent);
+        assertInstanceOf(NeverEvent.class, result);
     }
 
     //when given string input is null
-    @Test(expected = NullPointerException.class)
+    @Test
     public void test_DefaultEventWhenInputIsNull() throws EventFormatException {
-        Event.parse(null);
+        assertThrows(NullPointerException.class, () -> {
+            Event.parse(null);
+        });
     }
 
     //when given string character at 0 position doesn't contain any
-    @Test (expected = EventFormatException.class)
+    @Test
     public void test_DefaultEventWhenInputIsNotMatchAnyEvent() throws EventFormatException {
-        Event.parse("X");
+        assertThrows(EventFormatException.class, () -> {
+            Event.parse("X");
+        });
     }
-
 }

@@ -2,19 +2,17 @@ package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
-@RunWith(MockitoJUnitRunner.class)
+
 public class AnalogAlarmScalingTest {
 
     @Test

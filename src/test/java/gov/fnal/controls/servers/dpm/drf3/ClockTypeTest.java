@@ -1,14 +1,15 @@
 package gov.fnal.controls.servers.dpm.drf3;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static gov.fnal.controls.servers.dpm.drf3.ClockType.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ClockTypeTest {
 
     @Test
-    public void testEnumConstants(){
+    public void testEnumConstants() {
         assertEquals("H", HARDWARE.toString());
         assertEquals("S", SOFTWARE.toString());
         assertEquals("E", EITHER.toString());
@@ -32,13 +33,18 @@ public class ClockTypeTest {
         assertEquals(EITHER, clockTypeE);
     }
 
-    @Test (expected = RequestFormatException.class)
+    @Test
     public void testParseInvalidInput() throws RequestFormatException {
-        ClockType.parse("InvalidValue");
+        assertThrows(RequestFormatException.class, () -> {
+            ClockType.parse("InvalidValue");
+        });
     }
 
-    @Test (expected = NullPointerException.class)
+    @Test
     public void testParseValidInputIsNull() throws NullPointerException {
-        ClockType.parse(null);
+        assertThrows(NullPointerException.class, () -> {
+            ClockType.parse(null);
+        });
+
     }
 }

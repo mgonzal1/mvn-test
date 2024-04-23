@@ -1,10 +1,10 @@
 package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class DigitalAlarmScalingTest {
 
@@ -25,6 +25,7 @@ public class DigitalAlarmScalingTest {
         DigitalAlarmScaling digitalAlarmScaling = new DigitalAlarmScaling(ScalingUtilities.getDeviceInfoData());
         assertFalse(digitalAlarmScaling.inAlarm());
     }
+
     @Test
     public void test_isEnabled() throws AcnetStatusException {
         DigitalAlarmScaling digitalAlarmScaling = new DigitalAlarmScaling(ScalingUtilities.getDeviceInfoData());
@@ -34,23 +35,24 @@ public class DigitalAlarmScalingTest {
     @Test
     public void test_mask() throws AcnetStatusException {
         DigitalAlarmScaling digitalAlarmScaling = new DigitalAlarmScaling(ScalingUtilities.getDeviceInfoData());
-        assertEquals(0,digitalAlarmScaling.mask());
+        assertEquals(0, digitalAlarmScaling.mask());
     }
 
     @Test
     public void test_nom() throws AcnetStatusException {
         DigitalAlarmScaling digitalAlarmScaling = new DigitalAlarmScaling(ScalingUtilities.getDeviceInfoData());
-        assertEquals(0,digitalAlarmScaling.nom());
+        assertEquals(0, digitalAlarmScaling.nom());
     }
 
     @Test
     public void test_triesNeeded() throws AcnetStatusException {
         DigitalAlarmScaling digitalAlarmScaling = new DigitalAlarmScaling(ScalingUtilities.getDeviceInfoData());
-        assertEquals(0,digitalAlarmScaling.triesNeeded());
+        assertEquals(0, digitalAlarmScaling.triesNeeded());
     }
+
     @Test
     public void test_triesNow() throws AcnetStatusException {
         DigitalAlarmScaling digitalAlarmScaling = new DigitalAlarmScaling(ScalingUtilities.getDeviceInfoData());
-        assertEquals(0,digitalAlarmScaling.triesNow());
+        assertEquals(0, digitalAlarmScaling.triesNow());
     }
 }

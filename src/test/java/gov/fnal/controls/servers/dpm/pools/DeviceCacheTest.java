@@ -2,12 +2,8 @@ package gov.fnal.controls.servers.dpm.pools;
 
 import gov.fnal.controls.db.CachedResultSet;
 import gov.fnal.controls.db.DbServer;
-import gov.fnal.controls.db.resultset.ResultSetData;
-import gov.fnal.controls.db.resultset.SybaseResultSetData;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.powermock.reflect.Whitebox;
 
 import java.sql.ResultSet;
@@ -21,10 +17,10 @@ import static org.mockito.Mockito.when;
 public class DeviceCacheTest {
 
     private static DbServer dbServer;
-    private static  ResultSet resultSet;;
+    private static ResultSet resultSet;
 
 
-    @BeforeClass
+    @BeforeAll
     public static void init() throws SQLException {
         final String query = "SELECT di,pi,pv_name FROM accdb.foreign_device_mapping " + "WHERE di IN ";
         dbServer = mock(DbServer.class);

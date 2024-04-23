@@ -1,7 +1,7 @@
 package gov.fnal.controls.servers.dpm.acnetlib;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
@@ -11,40 +11,42 @@ public class StatSetTest {
     public void test_messageSent() {
         StatSet stat = getStat();
         stat.messageSent();
-        Assert.assertEquals(11, stat.stats[0]);
+        Assertions.assertEquals(11, stat.stats[0]);
     }
+
     @Test
     public void test_requestSent() {
         StatSet stat = getStat();
         stat.requestSent();
-        Assert.assertEquals(16, stat.stats[1]);
+        Assertions.assertEquals(16, stat.stats[1]);
     }
 
     @Test
     public void test_replaySent() {
         StatSet stat = getStat();
         stat.replySent();
-        Assert.assertEquals(21, stat.stats[2]);
+        Assertions.assertEquals(21, stat.stats[2]);
     }
 
     @Test
     public void test_messageReceived() {
         StatSet stat = getStat();
         stat.messageReceived();
-        Assert.assertEquals(26, stat.stats[3]);
+        Assertions.assertEquals(26, stat.stats[3]);
     }
 
     @Test
     public void test_requestReceived() {
         StatSet stat = getStat();
         stat.requestReceived();
-        Assert.assertEquals(31, stat.stats[4]);
+        Assertions.assertEquals(31, stat.stats[4]);
     }
+
     @Test
     public void test_replyReceived() {
         StatSet stat = getStat();
         stat.replyReceived();
-        Assert.assertEquals(36, stat.stats[5]);
+        Assertions.assertEquals(36, stat.stats[5]);
     }
 
     @Test
@@ -52,7 +54,7 @@ public class StatSetTest {
         StatSet stat = getStat();
         ByteBuffer byteBuffer = ByteBuffer.allocate(254);
         final ByteBuffer byteBuffer1 = stat.putStats(byteBuffer);
-        Assert.assertNotNull(byteBuffer1);
+        Assertions.assertNotNull(byteBuffer1);
     }
 
     private StatSet getStat() {

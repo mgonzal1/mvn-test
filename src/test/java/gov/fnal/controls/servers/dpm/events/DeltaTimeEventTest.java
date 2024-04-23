@@ -1,14 +1,14 @@
 package gov.fnal.controls.servers.dpm.events;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DeltaTimeEventTest {
 
     @Test
     public void test_DefaultTimeoutT1T2MillisZero() {
-        DeltaTimeEvent deltaTimeEvent = new DeltaTimeEvent(1000L,2000L);
+        DeltaTimeEvent deltaTimeEvent = new DeltaTimeEvent(1000L, 2000L);
         assertEquals(5000L, deltaTimeEvent.defaultTimeout());
     }
 

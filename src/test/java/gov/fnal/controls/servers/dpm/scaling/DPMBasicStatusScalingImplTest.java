@@ -3,13 +3,13 @@ package gov.fnal.controls.servers.dpm.scaling;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 public class DPMBasicStatusScalingImplTest {
@@ -92,21 +92,21 @@ public class DPMBasicStatusScalingImplTest {
     public void test_textValue() throws AcnetStatusException {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
-        Assert.assertEquals("character    ", basicStatusScaling.textValue());
+        assertEquals("character    ", basicStatusScaling.textValue());
     }
 
     @Test
     public void test_hasOn() throws AcnetStatusException {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
-        Assert.assertTrue(basicStatusScaling.hasOn());
+        assertTrue(basicStatusScaling.hasOn());
     }
 
     @Test
     public void test_isOn() throws AcnetStatusException {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
-        Assert.assertFalse(basicStatusScaling.isOn());
+        assertFalse(basicStatusScaling.isOn());
     }
 
     @Test
@@ -114,7 +114,7 @@ public class DPMBasicStatusScalingImplTest {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
         basicStatusScaling.defined[1] = true;//remove final
-        Assert.assertTrue(basicStatusScaling.hasReady());
+        assertTrue(basicStatusScaling.hasReady());
     }
 
     @Test
@@ -122,7 +122,7 @@ public class DPMBasicStatusScalingImplTest {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
         basicStatusScaling.defined[1] = true;//remove final
-        Assert.assertFalse(basicStatusScaling.isReady());
+        assertFalse(basicStatusScaling.isReady());
     }
 
     @Test
@@ -130,7 +130,7 @@ public class DPMBasicStatusScalingImplTest {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
         basicStatusScaling.defined[2] = true;//remove final
-        Assert.assertFalse(basicStatusScaling.isRemote());
+        assertFalse(basicStatusScaling.isRemote());
     }
 
     @Test
@@ -138,7 +138,7 @@ public class DPMBasicStatusScalingImplTest {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
         basicStatusScaling.defined[3] = true;//remove final
-        Assert.assertFalse(basicStatusScaling.isPositive());
+        assertFalse(basicStatusScaling.isPositive());
     }
 
     @Test
@@ -146,7 +146,7 @@ public class DPMBasicStatusScalingImplTest {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
         basicStatusScaling.defined[3] = true;//remove final
-        Assert.assertTrue(basicStatusScaling.hasPositive());
+        assertTrue(basicStatusScaling.hasPositive());
     }
 
     @Test
@@ -154,7 +154,7 @@ public class DPMBasicStatusScalingImplTest {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
         basicStatusScaling.defined[4] = true;//remove final
-        Assert.assertFalse(basicStatusScaling.isRamp());
+        assertFalse(basicStatusScaling.isRamp());
     }
 
     @Test
@@ -162,13 +162,13 @@ public class DPMBasicStatusScalingImplTest {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
         basicStatusScaling.defined[4] = true;//remove final
-        Assert.assertTrue(basicStatusScaling.hasRamp());
+        assertTrue(basicStatusScaling.hasRamp());
     }
 
     @Test
     public void test_rawStatus() throws AcnetStatusException {
         DPMBasicStatusScalingImpl basicStatusScaling = new DPMBasicStatusScalingImpl(getWhatDaq());
         basicStatusScaling.rawStatus = 2;//remove final
-        Assert.assertEquals(2, basicStatusScaling.rawStatus(), 0);
+        assertEquals(2, basicStatusScaling.rawStatus(), 0);
     }
 }

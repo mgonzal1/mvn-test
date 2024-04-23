@@ -1,15 +1,17 @@
 package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.drf3.ClockType;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
-import static org.junit.Assert.assertEquals;
 
 public class ReadSetScalingTest {
 
@@ -19,7 +21,7 @@ public class ReadSetScalingTest {
     };
     public static DeviceInfo.ReadSetScaling readSetScaling;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() throws SQLException {
         readSetScaling = mock(DeviceInfo.ReadSetScaling.class);
         DeviceInfo.ReadSetScaling.Primary primary = new DeviceInfo.ReadSetScaling.Primary(mock(ResultSet.class));
@@ -68,11 +70,13 @@ public class ReadSetScalingTest {
         assertEquals(0, unscale[1]);
     }
 
-    @Test(expected = AcnetStatusException.class)
-    public void test_unscaleWhenStringData() throws AcnetStatusException {
+    @Test
+    public void test_unscaleWhenStringData() {
         ReadSetScaling setScaling = new ReadSetScaling(readSetScaling);
+        assertThrows(AcnetStatusException.class, () -> {
+            setScaling.unscale("ser", 2);
+        });
 
-        setScaling.unscale("ser", 2);
     }
 
     @Test

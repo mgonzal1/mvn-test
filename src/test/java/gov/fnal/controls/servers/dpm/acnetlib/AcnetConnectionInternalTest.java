@@ -1,21 +1,17 @@
 package gov.fnal.controls.servers.dpm.acnetlib;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.ArrayList;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.mockito.Mockito.*;
 
-@RunWith(PowerMockRunner.class)
+
 @PrepareForTest({Node.class,
         AcnetConnectionInternal.WriteThread.class,
         AcnetRequestContext.class,
@@ -30,7 +26,7 @@ public class AcnetConnectionInternalTest {
         when(node.name()).thenReturn("node");
         AcnetConnectionInternal acnetConnectionInternal = new AcnetConnectionInternal(1, 12, node);
         final String name = acnetConnectionInternal.getName(1);
-        Assert.assertEquals("node", name);
+        Assertions.assertEquals("node", name);
     }
 
     @Test
@@ -41,7 +37,7 @@ public class AcnetConnectionInternalTest {
         when(node.value()).thenReturn(12);
         AcnetConnectionInternal acnetConnectionInternal = new AcnetConnectionInternal(1, 12, node);
         final int nodeValue = acnetConnectionInternal.getNode("node");
-        Assert.assertEquals(12, nodeValue);
+        Assertions.assertEquals(12, nodeValue);
 
     }
 

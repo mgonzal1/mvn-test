@@ -3,14 +3,13 @@ package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 
 public class BasicStatusScalingTest {
@@ -38,22 +37,28 @@ public class BasicStatusScalingTest {
         assertEquals(53327, basicStatusScaling.scale(BYTES, 1, 2));
     }
 
-    @Test(expected = AcnetStatusException.class)
+    @Test
     public void test_scaleWithOffsetValue() throws SQLException, AcnetStatusException {
         BasicStatusScaling basicStatusScaling = new BasicStatusScaling(getDeviceInfoData());
-        basicStatusScaling.scale(BYTES, 1);
+        assertThrows(AcnetStatusException.class, () -> {
+            basicStatusScaling.scale(BYTES, 1);
+        });
     }
 
-    @Test(expected = AcnetStatusException.class)
+    @Test
     public void test_unscaleWithStringData() throws SQLException, AcnetStatusException {
         BasicStatusScaling basicStatusScaling = new BasicStatusScaling(getDeviceInfoData());
-        basicStatusScaling.unscale("Test", 1);
+        assertThrows(AcnetStatusException.class, () -> {
+            basicStatusScaling.unscale("Test", 1);
+        });
     }
 
-    @Test(expected = AcnetStatusException.class)
+    @Test
     public void test_unscaleWithDoubleValue() throws SQLException, AcnetStatusException {
         BasicStatusScaling basicStatusScaling = new BasicStatusScaling(getDeviceInfoData());
-        basicStatusScaling.unscale(457, 1);
+        assertThrows(AcnetStatusException.class, () -> {
+            basicStatusScaling.unscale(457, 1);
+        });
     }
 
     @Test
@@ -62,7 +67,7 @@ public class BasicStatusScalingTest {
         deviceInfoData.di = 2;
         BasicStatusScaling basicStatusScaling = new BasicStatusScaling(deviceInfoData);
         final String statusString = basicStatusScaling.getStatusString(1);
-        assertEquals("character    ",statusString);
+        assertEquals("character    ", statusString);
     }
 
     @Test

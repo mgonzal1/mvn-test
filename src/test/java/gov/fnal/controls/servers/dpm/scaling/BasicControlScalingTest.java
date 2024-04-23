@@ -1,14 +1,16 @@
 package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.drf3.Event;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 public class BasicControlScalingTest {
@@ -17,10 +19,13 @@ public class BasicControlScalingTest {
             (byte) 0xa2, (byte) 0xd8, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte) 0x9d
     };
 
-    @Test(expected = AcnetStatusException.class)
+    @Test
     public void test_scale() throws SQLException, AcnetStatusException {
         BasicControlScaling basicControlScaling = new BasicControlScaling(getDeviceInfoData());
-        basicControlScaling.scale(BYTES, 1);
+        assertThrows(AcnetStatusException.class, () -> {
+            basicControlScaling.scale(BYTES, 1);
+        });
+        //basicControlScaling.scale(BYTES, 1);
     }
 
     @Test
@@ -38,6 +43,7 @@ public class BasicControlScalingTest {
         final byte[] unscale = basicControlScaling.unscale("short Name", 4);
         assertEquals(10, unscale[0]);
     }
+
     @Test
     public void test_unscaleWhenStringValueWithLongText() throws SQLException, AcnetStatusException {
         BasicControlScaling basicControlScaling = new BasicControlScaling(getDeviceInfoData());

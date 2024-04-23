@@ -1,6 +1,6 @@
 package gov.fnal.controls.servers.dpm.acnetlib;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 

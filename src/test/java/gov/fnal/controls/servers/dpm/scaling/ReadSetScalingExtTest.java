@@ -2,7 +2,7 @@ package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,7 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 public class ReadSetScalingExtTest {
@@ -22,11 +23,13 @@ public class ReadSetScalingExtTest {
     };
 
     //constants[0] = 2 and Length < 2
-    @Test(expected = AcnetStatusException.class)
-    public void test_rawToStringWhenFirstConstantIsTwoAndLengthIsLessThan2() throws AcnetStatusException, SQLException {
+    @Test
+    public void test_rawToStringWhenFirstConstantIsTwoAndLengthIsLessThan2() throws SQLException {
         ReadSetScalingExt readSetScalingExt = new ReadSetScalingExt(getReadSetScaling(new double[]{2, 16, 1, 45, 56, 44}));
-        final String rawToString = readSetScalingExt.rawToString(BYTES, 2, 1);
-        assertEquals("20d0", rawToString);
+        assertThrows(AcnetStatusException.class, () -> {
+            final String rawToString = readSetScalingExt.rawToString(BYTES, 2, 1);
+            assertEquals("20d0", rawToString);
+        });
     }
 
     //constants[0] = 2 and Length > 2
@@ -37,11 +40,13 @@ public class ReadSetScalingExtTest {
         assertEquals("20d0", rawToString);
     }
 
-    @Test(expected = AcnetStatusException.class)
-    public void test_rawToStringAndFirstConstantIsTwoAndLengthIsLessThan4() throws AcnetStatusException, SQLException {
+    @Test
+    public void test_rawToStringAndFirstConstantIsTwoAndLengthIsLessThan4() throws SQLException {
         ReadSetScalingExt readSetScaling = new ReadSetScalingExt(getReadSetScaling(new double[]{3, 16, 2, 45, 56, 44}));
-        final String rawToString = readSetScaling.rawToString(BYTES, 2, 3);
-        assertEquals("ea3ad020", rawToString);
+        assertThrows(AcnetStatusException.class, () -> {
+            final String rawToString = readSetScaling.rawToString(BYTES, 2, 3);
+            assertEquals("ea3ad020", rawToString);
+        });
     }
 
     @Test
@@ -67,11 +72,13 @@ public class ReadSetScalingExtTest {
     }
 
     //Constants[2] >= 2 or c2 >=2
-    @Test(expected = AcnetStatusException.class)
-    public void test_rawToStringIndexIs8WhenConstantTwoIsEqualToTwo() throws AcnetStatusException, SQLException {
+    @Test
+    public void test_rawToStringIndexIs8WhenConstantTwoIsEqualToTwo() throws SQLException {
         ReadSetScalingExt readSetScalingExt = new ReadSetScalingExt(getReadSetScaling(new double[]{8, 16, 2, 45, 56, 44}));
-        final String rawToString = readSetScalingExt.rawToString(BYTES, 2, 4);
-        assertEquals(" \uFFD0:￪", rawToString);
+        assertThrows(AcnetStatusException.class, () -> {
+            final String rawToString = readSetScalingExt.rawToString(BYTES, 2, 4);
+            assertEquals(" \uFFD0:￪", rawToString);
+        });
     }
 
     @Test
@@ -83,29 +90,35 @@ public class ReadSetScalingExtTest {
         assertEquals("shortText", rawToString);
     }
 
-    @Test(expected = AcnetStatusException.class)
-    public void test_rawToStringIndexIs12AndLengthLessThan4() throws AcnetStatusException, SQLException {
+    @Test
+    public void test_rawToStringIndexIs12AndLengthLessThan4() throws SQLException {
         DeviceInfo.ReadSetScaling readSetScaling = getReadSetScaling(new double[]{12, 16, 1, 45, 56, 44});
         readSetScaling.common.enums = getEnumStringValues();//remove final common.enums
         ReadSetScalingExt readSetScalingExt = new ReadSetScalingExt(readSetScaling);
-        readSetScalingExt.rawToString(BYTES, 2, 3);
+        assertThrows(AcnetStatusException.class, () -> {
+            readSetScalingExt.rawToString(BYTES, 2, 3);
+        });
     }
 
 
-    @Test(expected = AcnetStatusException.class)
-    public void test_rawToStringIndexIs288AndLengthEqualToOne() throws AcnetStatusException, SQLException {
+    @Test
+    public void test_rawToStringIndexIs288AndLengthEqualToOne() throws SQLException {
         DeviceInfo.ReadSetScaling readSetScaling = getReadSetScaling(new double[]{288, 16, 1, 45, 56, 44});
         readSetScaling.common.enums = getEnumStringValues();//remove final common.enums
         ReadSetScalingExt readSetScalingExt = new ReadSetScalingExt(readSetScaling);
-        readSetScalingExt.rawToString(BYTES, 2, 1);
+        assertThrows(AcnetStatusException.class, () -> {
+            readSetScalingExt.rawToString(BYTES, 2, 1);
+        });
     }
 
-    @Test(expected = AcnetStatusException.class)
-    public void test_rawToStringIndexIs289AndLengthEqualToTwo() throws AcnetStatusException, SQLException {
+    @Test
+    public void test_rawToStringIndexIs289AndLengthEqualToTwo() throws SQLException {
         DeviceInfo.ReadSetScaling readSetScaling = getReadSetScaling(new double[]{289, 16, 1, 45, 56, 44});
         readSetScaling.common.enums = getEnumStringValues();//remove final common.enums
         ReadSetScalingExt readSetScalingExt = new ReadSetScalingExt(readSetScaling);
-        readSetScalingExt.rawToString(BYTES, 2, 2);
+        assertThrows(AcnetStatusException.class, () -> {
+            readSetScalingExt.rawToString(BYTES, 2, 2);
+        });
     }
 
 //    @Test(expected = AcnetStatusException.class)
@@ -131,10 +144,12 @@ public class ReadSetScalingExtTest {
         assertEquals("234 2150458", rawToString);
     }
 
-    @Test(expected = AcnetStatusException.class)
-    public void test_rawToStringIndexIs21AndLengthLessThan2() throws AcnetStatusException, SQLException {
+    @Test
+    public void test_rawToStringIndexIs21AndLengthLessThan2() throws SQLException {
         ReadSetScalingExt readSetScalingExt = new ReadSetScalingExt(getReadSetScaling(new double[]{21, 16, 1, 45, 56, 44}));
-        readSetScalingExt.rawToString(BYTES, 2, 1);
+        assertThrows(AcnetStatusException.class, () -> {
+            readSetScalingExt.rawToString(BYTES, 2, 1);
+        });
     }
 
     @Test
@@ -144,10 +159,13 @@ public class ReadSetScalingExtTest {
         assertEquals("234 2150458", rawToString);
     }
 
-    @Test(expected = AcnetStatusException.class)
-    public void test_rawToStringIndexIs22AndLengthLessThan2() throws AcnetStatusException, SQLException {
+    @Test
+    public void test_rawToStringIndexIs22AndLengthLessThan2() throws SQLException {
         ReadSetScalingExt readSetScalingExt = new ReadSetScalingExt(getReadSetScaling(new double[]{22, 16, 1, 45, 56, 44}));
-        readSetScalingExt.rawToString(BYTES, 2, 1);
+        assertThrows(AcnetStatusException.class, () -> {
+            readSetScalingExt.rawToString(BYTES, 2, 1);
+        });
+
     }
 
 
@@ -235,6 +253,7 @@ public class ReadSetScalingExtTest {
         }
         return enums;
     }
+
     private Map<Object, DeviceInfo.ReadSetScaling.Common.EnumString> getEnumSettings() {
         Map<Object, DeviceInfo.ReadSetScaling.Common.EnumString> enums = new HashMap<>();
 
