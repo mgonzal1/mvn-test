@@ -10,7 +10,7 @@ name: Java CI with Maven
 
 on:
   schedule:
-    - cron: "10 22 * * *"   # <=== One time in a day at 6 PM
+    - cron: "13 22 * * *"   # <=== One time in a day at 6 PM
 
 #  push:
 #    branches: [ "main" ]
