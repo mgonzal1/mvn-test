@@ -1,19 +1,21 @@
 // $Id: ReadSetScalingExt.java,v 1.5 2024/02/22 16:33:36 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
-import gov.fnal.controls.servers.dpm.Errors;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.events.ClockEvent;
-import gov.fnal.controls.servers.dpm.pools.DeviceCache;
-import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
-
-import java.nio.ByteBuffer;
+import java.util.Date;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
+import java.nio.ByteBuffer;
+
+import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
+
+import gov.fnal.controls.servers.dpm.pools.DeviceCache;
+import gov.fnal.controls.servers.dpm.Errors;
+import gov.fnal.controls.servers.dpm.events.ClockEvent;
 
 class ReadSetScalingExt extends ReadSetScaling
 {

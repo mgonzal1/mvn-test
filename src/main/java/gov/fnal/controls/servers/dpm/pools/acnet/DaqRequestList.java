@@ -1,4 +1,4 @@
-// $Id: DaqRequestList.java,v 1.9 2024/02/22 16:32:14 kingc Exp $
+// $Id: DaqRequestList.java,v 1.11 2024/04/11 19:19:24 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
@@ -16,15 +16,15 @@ class DaqRequestList
     final long timeout;
 
 	final DaqDefinitions daqDefs;
-    private int rpySize;
-    private int reqSize;
+    int rpySize;
+    int reqSize;
     protected boolean modified = false;
 
     final ArrayList<WhatDaq> requests = new ArrayList<>();
 	volatile DaqSendTransaction transaction;
     final Completable listCompletion;
 
-    DaqRequestList(Node node, DataEvent event, boolean isSetting, Completable listCompletion, long timeout)
+    DaqRequestList(Node node, DataEvent event, boolean isSetting, Completable listCompletion, long timeout) 
     {
 		this.node = node;
         this.event = event;
@@ -58,6 +58,7 @@ class DaqRequestList
 		final boolean rpyTooBig = isSetting ? daqDefs.StatusOverhead >= rpyRemaining : (daqDefs.StatusOverhead + length) >= rpyRemaining;
 
 		if (reqTooBig || rpyTooBig) {
+			//logger.log(Level.FINER, "DaqRequestList.add(too big): reqSize:" + reqSize + " rpySize:" + rpySize + " " + whatDaq);
 			return false;
 		}
 
@@ -68,6 +69,8 @@ class DaqRequestList
 			reqSize += daqDefs.DeviceOverhead; 
 			rpySize += length + daqDefs.StatusOverhead;
 		}
+
+		//logger.log(Level.FINER, "DaqRequestList.add: reqSize:" + reqSize + " rpySize:" + rpySize + " " + whatDaq);
 
 		requests.add(whatDaq);
 		modified = true;
@@ -82,6 +85,7 @@ class DaqRequestList
 
         	transaction = daqDefs.newSendTransaction(this);
 
+			//logger.log(Level.FINER, "DaqRequestList.send: reqSize:" + reqSize + " rpySize:" + rpySize);
 			transaction.transmit();
 
 			modified = false;

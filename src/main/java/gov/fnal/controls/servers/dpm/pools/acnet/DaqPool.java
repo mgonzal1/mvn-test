@@ -1,12 +1,13 @@
 // $Id: DaqPool.java,v 1.9 2024/02/22 16:32:14 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
 import java.util.HashMap;
 import java.util.TreeMap;
+
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
+
+import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 abstract class DaqPool implements DaqPoolUserRequests<WhatDaq>
 {

@@ -1,46 +1,42 @@
 // $Id: FEDirect.java,v 1.4 2024/03/18 15:29:03 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import static java.lang.System.out;
-
-import java.util.Date;
-import java.util.ArrayList;
-import java.util.logging.Logger;
-import java.io.IOException;
-import java.nio.ByteOrder;
-import java.nio.ByteBuffer;
-import java.text.FieldPosition;
-import java.text.SimpleDateFormat;
-
-
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetReply;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetReplyHandler;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-
-import gov.fnal.controls.servers.dpm.Errors;
+import gov.fnal.controls.servers.dpm.DPMProtocolReplier;
 import gov.fnal.controls.servers.dpm.DPMRequest;
 import gov.fnal.controls.servers.dpm.DataReplier;
-import gov.fnal.controls.servers.dpm.DPMProtocolReplier;
+import gov.fnal.controls.servers.dpm.Errors;
+import gov.fnal.controls.servers.dpm.acnetlib.*;
+import gov.fnal.controls.servers.dpm.events.DataEvent;
 import gov.fnal.controls.servers.dpm.pools.DeviceCache;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.scaling.DPMAnalogAlarmScaling;
-import gov.fnal.controls.servers.dpm.scaling.DPMDigitalAlarmScaling;
 import gov.fnal.controls.servers.dpm.scaling.DPMBasicStatusScaling;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.scaling.DPMDigitalAlarmScaling;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.text.FieldPosition;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.logging.Logger;
+
+import static java.lang.System.out;
 
 public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolReplier
 {
 	static final Logger logger;
-	static final char[] hexDigits = {
-			'0', '1', '2', '3', '4', '5', '6', '7',
-			'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+	static final char[] hexDigits = { 
+	  '0', '1', '2', '3', '4', '5', '6', '7',
+	  '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' 
 	};
 
 	static {
 		System.setProperty("java.util.logging.SimpleFormatter.format", "[%4$-8s %1$tF %1$tT %1$tL] %5$s %6$s%n");
 
 		logger = Logger.getLogger(FEDirect.class.getName());
-	}
+	}	
 
 	final WhatDaq whatDaq;
 	final DataReplier replier;
@@ -78,7 +74,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	void printBytes(final ByteBuffer buf, final int indent, final int BytesPerLine)
 	{
 		final byte[] tmp = new byte[buf.remaining()];
-
+		
 		buf.get(tmp);
 		printBytes(tmp, indent, BytesPerLine);
 	}
@@ -122,7 +118,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 				((int) (buf.get() & 0xff) << 16) |
 				((int) (buf.get() & 0xff) << 24);
 	}
-
+	
 	public long getLong(ByteBuffer buf)
 	{
 		return ((long) buf.get() & 0xff) |
@@ -173,7 +169,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 					e.printStackTrace();
 				}
 			} else {
-				System.out.println("remaining: " + buf.remaining() + " len:" + whatDaq.length());
+			System.out.println("remaining: " + buf.remaining() + " len:" + whatDaq.length());
 				final short status = buf.getShort();
 				buf.get(dataBuf, 0, whatDaq.getLength());
 
@@ -192,7 +188,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	}
 
 	String dateString(long timestamp)
-	{
+	{	
 		return dateFormat.format(new Date(timestamp), new StringBuffer(), new FieldPosition(0)).toString();
 	}
 
@@ -310,7 +306,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 			buf.putShort((short) (2 + whatDaq.getLength()));
 			buf.putShort((short) 1);
 			buf.putShort((short) event.ftd());
-
+			
 			buf.putInt(whatDaq.dipi());
 			buf.put(whatDaq.getSSDN());
 			buf.putShort((short) whatDaq.getLength());
@@ -351,11 +347,11 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 			(new FEDirect(whatDaq, args[0])).sendRequest().printRepliesForever();
 		} catch (AcnetStatusException e) {
 			System.out.println();
-			System.out.println("AcnetStatusException: " + Errors.name(e.status));
+			System.out.println("AcnetStatusException: " + Errors.name(e.status));			
 			e.printStackTrace();
 		} catch (Exception e) {
 			System.out.println();
-			System.out.println("Exception: " + e);
+			System.out.println("Exception: " + e);			
 			e.printStackTrace();
 		}
 

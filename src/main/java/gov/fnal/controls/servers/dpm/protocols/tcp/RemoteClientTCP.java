@@ -2,14 +2,13 @@
 
 package gov.fnal.controls.servers.dpm.protocols.tcp;
 
-import gov.fnal.controls.servers.dpm.protocols.Protocol;
-
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.nio.channels.SocketChannel;
+import java.net.InetAddress;
+import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 
+import gov.fnal.controls.servers.dpm.protocols.Protocol;
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public class RemoteClientTCP 

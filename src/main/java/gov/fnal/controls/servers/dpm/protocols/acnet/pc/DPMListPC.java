@@ -1,4 +1,4 @@
-// $Id: DPMListPC.java,v 1.22 2023/12/13 17:04:49 kingc Exp $
+// $Id: DPMListPC.java,v 1.24 2024/04/11 20:22:23 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.acnet.pc;
 
 import gov.fnal.controls.servers.dpm.SettingData;
@@ -10,13 +10,49 @@ import gov.fnal.controls.service.proto.DPM;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
-
 class DPMListPC extends DPMListAcnet implements Runnable, DPM.Request.Receiver
 {
+	final static ExecutorService executor = Executors.newWorkStealingPool();
+	//final static ExecutorService executor = Executors.newCachedThreadPool();
+
+/*
+	class QueueMonitor extends Thread
+	{
+		QueueMonitor()
+		{
+			setName("DPMListPC:" + id() + " monitor");
+
+			if (debug())
+				start();
+		}
+
+		@Override
+		public void run()
+		{
+			try {
+				while (!disposed()) {
+					Thread.sleep(1);
+					if (msgQ.size() != 0) {
+						System.out.println("List:" + id() + " queue.size() = " + msgQ.size());
+					}
+				}
+			} catch (InterruptedException e) {
+				System.out.println("List:" + id() + " queue.size() = " + msgQ.size() + " thread exit");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	*/
+
 	class DPMProtocolReplierPCImpl extends DPMProtocolReplierPC
 	{
 		private final AcnetRequest request;
@@ -26,6 +62,7 @@ class DPMListPC extends DPMListAcnet implements Runnable, DPM.Request.Receiver
 		{
 			this.request = request;
 			this.replyBuf = ByteBuffer.allocate(64 * 1024);
+
 		}
 
 		@Override
@@ -38,23 +75,58 @@ class DPMListPC extends DPMListAcnet implements Runnable, DPM.Request.Receiver
 		}
 	}
 
-	final private Thread thread;
+	//final private Thread thread;
 	final LinkedBlockingQueue<DPM.Request> msgQ;
+	Future task;
 
-	private boolean done;
+	//final QueueMonitor queMon;
+
+	//private boolean done;
 
 	public DPMListPC(DPMProtocolHandler owner, AcnetRequest request) throws AcnetStatusException
 	{
 		super(owner, request);
 
-		this.done = false;
+		//this.done = false;
 		this.msgQ = new LinkedBlockingQueue<>();
 		this.protocolReplier = new DPMProtocolReplierPCImpl(request);
-		this.thread = new Thread(this);
-		this.thread.setName(String.format("DPMListPC(id: %s) - %tc", id(), createdTime)); 
-		this.thread.start();
+		this.task = executor.submit(this);
+
+		//this.queMon = new QueueMonitor();
+
+		//this.thread = new Thread(this);
+		//this.thread.setName(String.format("DPMListPC(id: %s) - %tc", id(), createdTime)); 
+		//this.thread.start();
 	}
 
+	@Override
+	public void run()
+	{
+/*
+		final DPM.Request m = msgQ.poll();
+
+		if (m != null) {
+			try {
+				m.deliverTo(this);
+			} catch (Exception e) {
+				dispose(ACNET_SYS);
+				logger.log(Level.FINE, String.format("%s list - exception: %s", id(), e.toString()));		
+			}
+		}
+		*/
+		DPM.Request m;
+
+		while ((m = msgQ.poll()) != null) {
+			try {
+				m.deliverTo(this);
+			} catch (Exception e) {
+				dispose(ACNET_SYS);
+				logger.log(Level.FINE, String.format("%s list - exception: %s", id(), e.toString()));		
+			}
+		}
+	}
+
+/*
 	@Override
 	public void run()
 	{
@@ -63,7 +135,7 @@ class DPMListPC extends DPMListAcnet implements Runnable, DPM.Request.Receiver
 				msgQ.take().deliverTo(this);
 			} catch (Exception e) {
 				dispose(ACNET_SYS);
-				logger.fine(String.format("%s list - exception: %s", id(), e.toString()));		
+				logger.log(Level.FINE, String.format("%s list - exception: %s", id(), e.toString()));		
 			}
 		}
 
@@ -73,15 +145,48 @@ class DPMListPC extends DPMListAcnet implements Runnable, DPM.Request.Receiver
 
 		super.dispose(disposedStatus);
 
-		logger.finer(String.format("%s thread exit", id()));
+		logger.log(Level.FINE, String.format("%s thread exit", id()));
 	}
+	*/
 
+	final void handleMessage(DPM.Request m)
+	{
+		msgQ.add(m);
+
+		if (task.isDone())
+			this.task = executor.submit(this);
+
+		//this.task = executor.submit(this);
+	}
+	
+	/*
 	final void handleMessage(DPM.Request m)
 	{
 		if (thread.isAlive())
 			msgQ.add(m);
 	}
+	*/
+	
 
+	@Override
+	public boolean dispose(int status)
+	{
+		//queMon.interrupt();
+
+		disposedStatus = status;
+
+		try {
+			request.sendLastStatus(disposedStatus);
+		} catch (Exception ignore) { }
+
+		super.dispose(disposedStatus);
+
+		logger.log(Level.FINE, String.format("%s disposed", id()));
+
+		return true;
+	}
+
+/*
 	@Override
 	public boolean dispose(int status)
 	{
@@ -90,17 +195,18 @@ class DPMListPC extends DPMListAcnet implements Runnable, DPM.Request.Receiver
 
 		return true;
 	}
+	*/
 
 	@Override
 	public void handle(DPM.Request.ServiceDiscovery m)
 	{
-		done = true;
+		//done = true;
 	}
 
 	@Override
 	public void handle(DPM.Request.OpenList m)
 	{
-		logger.fine(String.format("%s OpenList from:%-6s", id(), clientHostName()));
+		logger.log(Level.FINE, String.format("%s OpenList from:%-6s", id(), clientHostName()));
 	}
 
 	@Override

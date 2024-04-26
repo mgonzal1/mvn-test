@@ -1,10 +1,12 @@
-// $Id: SettingDaqPool.java,v 1.11 2024/02/22 16:32:14 kingc Exp $
+// $Id: SettingDaqPool.java,v 1.12 2024/03/20 17:55:06 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
 import java.util.Iterator;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
+
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 public class SettingDaqPool extends OneShotDaqPool implements Completable, AcnetErrors
 {
@@ -20,25 +22,26 @@ public class SettingDaqPool extends OneShotDaqPool implements Completable, Acnet
 	}
 
 	@Override
-	public void insert(WhatDaq whatDaq)
+	public void insert(WhatDaq newWhatDaq)
 	{
-		if (whatDaq.getLength() > DaqDefinitions.MaxReplyDataLength()) {
-			PoolSegmentAssembly.insert(whatDaq, this, 8192, false);
+		if (newWhatDaq.getLength() > DaqDefinitions.MaxReplyDataLength()) {
+			PoolSegmentAssembly.insert(newWhatDaq, this, 8192, false);
 			return;
 		}
 
-		Iterator<WhatDaq> url = queuedReqs.iterator();
+		final Iterator<WhatDaq> iter = queuedReqs.iterator();
 
-		WhatDaq userPerhaps;
-		while (url.hasNext()) {
-			userPerhaps = (WhatDaq) url.next();
-			if (userPerhaps.isEqual(whatDaq)) {
-				userPerhaps.getReceiveData().receiveStatus(DAE_SETTING_SUPERCEDED, System.currentTimeMillis(), 0);
-				url.remove();
+		while (iter.hasNext()) {
+			final WhatDaq whatDaq = iter.next();
+
+			if (whatDaq.isEqual(newWhatDaq)) {
+				whatDaq.getReceiveData().receiveStatus(DAE_SETTING_SUPERCEDED, System.currentTimeMillis(), 0);
+				iter.remove();
 				break;
 			}
 		}
-		queuedReqs.add(whatDaq);
+
+		queuedReqs.add(newWhatDaq);
 	}
 
 	@Override

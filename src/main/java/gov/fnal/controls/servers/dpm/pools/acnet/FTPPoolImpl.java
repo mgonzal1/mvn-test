@@ -1,17 +1,28 @@
-// $Id: FTPPoolImpl.java,v 1.16 2024/02/22 16:32:14 kingc Exp $
+// $Id: FTPPoolImpl.java,v 1.17 2024/03/27 20:59:23 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.SettingData;
+import java.util.Set;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Vector;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.nio.ByteBuffer;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.pools.*;
+
+import gov.fnal.controls.servers.dpm.SettingData;
 import gov.fnal.controls.servers.dpm.scaling.Scaling;
 import gov.fnal.controls.servers.dpm.scaling.ScalingFactory;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.logging.Level;
+import gov.fnal.controls.servers.dpm.pools.PoolUser;
+import gov.fnal.controls.servers.dpm.pools.PoolType;
+import gov.fnal.controls.servers.dpm.pools.PoolInterface;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
@@ -76,7 +87,7 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 	}
 
 	@Override
-	public void addSetting(WhatDaq whatDaq, SettingData setting)
+	public void addSetting(WhatDaq whatDaq, SettingData setting) throws AcnetStatusException
 	{
 		setting.deliverTo(whatDaq, this);
 	}

@@ -12,11 +12,11 @@ abstract public class AcnetPacket implements AcnetConstants
 	//protected final int flags;
 	final Buffer buf;
 	final int status;
-	 int server;
-	 int client;
-	 int serverTask;
+	final int server;
+	final int client;
+	final int serverTask;
 	//protected final String serverTaskName;
-	 int clientTaskId;
+	final int clientTaskId;
 	final int id;
 	final int length;
 

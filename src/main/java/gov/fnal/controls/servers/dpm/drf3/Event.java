@@ -4,7 +4,7 @@ package gov.fnal.controls.servers.dpm.drf3;
 public abstract class Event implements Comparable<Event>
 {
     public static Event parse(String str) throws EventFormatException
-    {
+	{
         if (str == null) {
             throw new NullPointerException();
         }
@@ -27,20 +27,19 @@ public abstract class Event implements Comparable<Event>
                 case 'S':
                 case 's':
                     return StateEvent.parseState(str);
-                case 'N':
-                case 'n':
-                    return NeverEvent.parseNever(str);
+				case 'N':
+				case 'n':
+					return NeverEvent.parseNever(str);
             }
         }
-
-      throw new EventFormatException("Invalid event: \"" + str + "\"");
+        throw new EventFormatException("Invalid event: \"" + str + "\"");
     }
 
     protected Event() {}
 
-    @Override
-    public int compareTo(Event event)
-    {
-        return toString().compareTo(event.toString());
-    }
+	@Override
+	public int compareTo(Event event)
+	{
+		return toString().compareTo(event.toString());
+	}
 }

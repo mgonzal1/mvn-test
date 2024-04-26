@@ -3,27 +3,19 @@ package gov.fnal.controls.servers.dpm;
 
 import java.util.Set;
 import java.util.HashSet;
-import java.util.HashMap;
-import java.util.Vector;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.text.ParseException;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
 
@@ -145,8 +137,8 @@ class AcnetStatusJob extends Job
 	}
 
 	@Override
-	void start(Map<Long, DPMRequest> requests) throws InterruptedException, IOException, AcnetStatusException
-	{
+	void start(Map<Long, DPMRequest> requests) throws InterruptedException, IOException, AcnetStatusException 
+	{ 
 		final long now = now();
 
 		for (Map.Entry<Long, DPMRequest> entry : requests.entrySet()) {
@@ -214,7 +206,7 @@ class ReceiveDataCallback implements ReceiveData, AcnetErrors, TimeNow
 	}
 
 	@Override
-	public void receiveData(byte[] data, int offset, long timestamp, long cycle)
+    public void receiveData(byte[] data, int offset, long timestamp, long cycle)
 	{
 		boolean isChanged = true;
 
@@ -249,7 +241,7 @@ class ReceiveDataCallback implements ReceiveData, AcnetErrors, TimeNow
 		} catch (IOException e) {
 			list.dispose(ACNET_DISCONNECTED);
 		} catch (Exception e) {
-			logger.log(Level.WARNING, "exception during status delivery", e);
+			logger.log(Level.WARNING, "exception during status delivery", e); 
 		}
 	}
 
@@ -266,7 +258,7 @@ class ReceiveDataCallback implements ReceiveData, AcnetErrors, TimeNow
 		} catch (BufferOverflowException e) {
 			list.sendStatusNoEx(whatDaq, DPM_REPLY_OVERFLOW, timestamp, cycle);
 		} catch (Exception e) {
-			logger.log(Level.WARNING, "exception during data delivery", e);
+			logger.log(Level.WARNING, "exception during data delivery", e); 
 		}
 	}
 
@@ -283,7 +275,7 @@ class ReceiveDataCallback implements ReceiveData, AcnetErrors, TimeNow
 		} catch (BufferOverflowException e) {
 			list.sendStatusNoEx(whatDaq, DPM_REPLY_OVERFLOW, timestamp, cycle);
 		} catch (Exception e) {
-			logger.log(Level.WARNING, "exception during data delivery", e);
+			logger.log(Level.WARNING, "exception during data delivery", e); 
 		}
 	}
 
@@ -300,7 +292,7 @@ class ReceiveDataCallback implements ReceiveData, AcnetErrors, TimeNow
 		} catch (BufferOverflowException e) {
 			list.sendStatusNoEx(whatDaq, DPM_REPLY_OVERFLOW, timestamp, cycle);
 		} catch (Exception e) {
-			logger.log(Level.WARNING, "exception during data delivery", e);
+			logger.log(Level.WARNING, "exception during data delivery", e); 
 		}
 	}
 
@@ -317,7 +309,7 @@ class ReceiveDataCallback implements ReceiveData, AcnetErrors, TimeNow
 		} catch (BufferOverflowException e) {
 			list.sendStatusNoEx(whatDaq, DPM_REPLY_OVERFLOW, timestamp, cycle);
 		} catch (Exception e) {
-			logger.log(Level.WARNING, "exception during data delivery", e);
+			logger.log(Level.WARNING, "exception during data delivery", e); 
 		}
 	}
 
@@ -381,7 +373,7 @@ class AcceleratorJob extends Job
 				}
 
 				if (!whatDaq.getEvent().isRepetitive())
-					requests.remove(refId);
+					requests.remove(refId);	
 			} catch (AcnetStatusException e) {
 				list.sendStatus(refId, e.status, now());
 			} catch (Exception e) {
@@ -431,7 +423,7 @@ class RedirectAcceleratorJob extends AcceleratorJob
 					pool.addRequest(whatDaq);
 
 				if (!whatDaq.getEvent().isRepetitive())
-					requests.remove(refId);
+					requests.remove(refId);	
 
 			} catch (AcnetStatusException e) {
 				list.sendStatusNoEx(refId, e.status, now());
@@ -452,7 +444,7 @@ class RedirectAcceleratorJob extends AcceleratorJob
 
 class SavefileJob extends Job implements PoolUser, TimeNow
 {
-	private final SavedDataSource source;
+	private final SavedDataSource source; 
 
 	SavefileJob(DPMList list, int fileAlias) throws AcnetStatusException
 	{
@@ -502,11 +494,11 @@ class SavefileJob extends Job implements PoolUser, TimeNow
 			this.source = new SavedDataSource(usage, fileAlias, sdaCase, sdaSubcase);
 
 			final String query = "SELECT DISTINCT B.file_alias, A.file_index, A.collection_index"
-					+ " FROM srdb.sda_data A, srdb.save_header B WHERE B.owner LIKE '" + usage
-					+ "' AND B.file_alias = " + fileAlias
-					+ " AND A.file_index = B.file_index "
-					+ " AND A.collection_alias = " + sdaCase
-					+ " AND A.set_alias = " + sdaSubcase;
+									+ " FROM srdb.sda_data A, srdb.save_header B WHERE B.owner LIKE '" + usage
+									+ "' AND B.file_alias = " + fileAlias 
+									+ " AND A.file_index = B.file_index "
+									+ " AND A.collection_alias = " + sdaCase
+									+ " AND A.set_alias = " + sdaSubcase;
 			final ResultSet rs = getDbServer("srdb").executeQuery(query);
 
 			while (rs.next()) {
@@ -566,7 +558,7 @@ class LoggerSingleJob extends Job implements PoolUser
 	private long timestamp;
 	private final ArrayList<DataLoggerFetchJob> fetchJobs = new ArrayList<>();
 	private boolean completed = false;
-
+	
 	LoggerSingleJob(DPMList list, String loggerName, long timestamp, int accuracy)
 	{
 		super(list);
@@ -670,7 +662,7 @@ class LoggerJob extends Job implements Runnable
 	private boolean completed = false;
 
 	private volatile DataLoggerFetchJob currentJob = null;
-
+	
 	LoggerJob(DPMList list, long t1, long t2, String loggerName)
 	{
 		super(list);
@@ -758,8 +750,8 @@ class LoggerJob extends Job implements Runnable
 
 			currentJob = new DataLoggerFetchJob(callback, e.loggerName(), loggerRequest, loggerEvent);
 
-			logger.log(Level.FINE, String.format("%s fetching '%s' from logger on '%s' list:%d event:'%s'",
-					list.id(), fInfo.whatDaq.loggedName, e.loggerName(), e.id(), e.event()));
+			logger.log(Level.FINE, String.format("%s fetching '%s' from logger on '%s' list:%d event:'%s'", 
+													list.id(), fInfo.whatDaq.loggedName, e.loggerName(), e.id(), e.event()));
 
 			synchronized (callback) {
 				currentJob.start();
@@ -767,12 +759,12 @@ class LoggerJob extends Job implements Runnable
 			}
 
 			if (callback.error() == 0 && callback.count() > 0) {
-				logger.log(Level.FINE, String.format("%s fetch complete for '%s' from logger on '%s' list:%d event:'%s'",
-						list.id(), fInfo.whatDaq.loggedName, e.loggerName(), e.id(), e.event()));
+				logger.log(Level.FINE, String.format("%s fetch complete for '%s' from logger on '%s' list:%d event:'%s'", 
+														list.id(), fInfo.whatDaq.loggedName, e.loggerName(), e.id(), e.event()));
 				return true;
 			} else
-				logger.log(Level.FINE, String.format("%s No data found in logger '%s' for '%s'. (Error=0x%04x) Trying next logger...",
-						list.id(), e.loggerName(), fInfo.whatDaq.loggedName, callback.error()));
+				logger.log(Level.FINE, String.format("%s No data found in logger '%s' for '%s'. (Error=0x%04x) Trying next logger...", 
+											list.id(), e.loggerName(), fInfo.whatDaq.loggedName, callback.error()));
 		}
 
 		return false;
@@ -782,7 +774,7 @@ class LoggerJob extends Job implements Runnable
 	public void run()
 	{
 		try {
-			while (true) {
+			while (true) {	
 				final FetchInfo fetchInfo = fetchQ.take();
 
 				if (fetchInfo.loggers == null)
@@ -845,7 +837,7 @@ class LoggerJob extends Job implements Runnable
 	{
 		if (currentJob != null)
 			currentJob.stop();
-
+		
 		fetchQ.clear();
 	}
 }
@@ -922,8 +914,8 @@ class SettingJob extends Job
 	{
 		Scope.listSettingsStarted(list);
 
-		allowedDevices = list.allowPrivilegedSettings() ? allDevicesSet :
-				user.allowedDevices(list.properties.get("ROLE"));
+		allowedDevices = list.allowPrivilegedSettings() ? allDevicesSet : 
+							user.allowedDevices(list.properties.get("ROLE"));
 
 		for (SettingData setting : settings) {
 			final long refId = setting.refId;
@@ -960,7 +952,7 @@ class SettingJob extends Job
 	}
 
 	@Override
-	void stop()
+	void stop() 
 	{
 		completed = true;
 	}
@@ -1012,7 +1004,7 @@ class SettingJob extends Job
 		logger.log(Level.FINE, String.format("%s LogSettings - %d setting(s)", list.id(), successful.size()));
 
 		try {
-			pool.logSettings(user, list.clientHostName(), successful);
+			pool.logSettings(user, list.clientHostName(), successful); 
 		} catch (Exception e) {
 			logger.log(Level.FINE, list.id() + " unable to log settings - " + e);
 		}
@@ -1090,7 +1082,7 @@ class SpeedTestJob extends Job
 	}
 
 	@Override
-	void stop()
+	void stop() 
 	{
 		completed = true;
 	}

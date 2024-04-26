@@ -124,8 +124,8 @@ class DPMBasicStatusScalingImpl extends BasicStatusScaling implements DPMBasicSt
 	//final WhatDaq whatDaq;
 	final int di;
 	final int pi;
-	 int length;
-	 boolean[] defined;
+	final int length;
+	final boolean[] defined;
 
 	int rawStatus;
 

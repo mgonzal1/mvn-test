@@ -1,9 +1,9 @@
 //  $Id: Field.java,v 1.1 2022/11/01 20:42:17 kingc Exp $
 package gov.fnal.controls.servers.dpm.drf3;
 
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.EnumMap;
 
 import static gov.fnal.controls.servers.dpm.drf3.Property.*;
 

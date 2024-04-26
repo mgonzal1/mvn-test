@@ -1,14 +1,15 @@
 // $Id: StateTransitionTrigger.java,v 1.6 2024/02/22 16:32:14 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
+import java.util.List;
+import java.util.LinkedList;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+
 import gov.fnal.controls.servers.dpm.events.DataEvent;
 import gov.fnal.controls.servers.dpm.events.DataEventFactory;
 import gov.fnal.controls.servers.dpm.events.StateEvent;
-
-import java.util.LinkedList;
-import java.util.List;
 
 class StateTransitionTrigger implements Trigger, AcnetErrors
 {

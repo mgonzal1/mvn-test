@@ -1,4 +1,4 @@
-// $Id: ScalingProtocolHandlerPC.java,v 1.13 2024/03/05 17:43:26 kingc Exp $
+// $Id: ScalingProtocolHandlerPC.java,v 1.16 2024/04/01 15:33:47 kingc Exp $
 
 package gov.fnal.controls.servers.dpm.protocols.acnet.pc;
 
@@ -9,6 +9,7 @@ import gov.fnal.controls.servers.dpm.acnetlib.AcnetCancel;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequest;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.pools.DeviceCache;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.protocols.HandlerType;
 import gov.fnal.controls.servers.dpm.protocols.Protocol;
@@ -20,28 +21,31 @@ import gov.fnal.controls.service.proto.Scaling;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.sql.SQLException;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
-public class ScalingProtocolHandlerPC extends DPMProtocolHandlerAcnet implements AcnetErrors, Runnable,
-											Scaling.Request.Receiver, DPMProtocolReplier
+public class ScalingProtocolHandlerPC extends DPMProtocolHandlerAcnet implements AcnetErrors, Runnable, DPMProtocolReplier
 {
 	private final ByteBuffer replyBuf;
 	private final LinkedBlockingQueue<AcnetRequest> requestQ;
 	private final Scaling.Reply.ServiceDiscovery serviceDiscoveryReply;
+	private Future task;
 
 	public ScalingProtocolHandlerPC(String name) throws AcnetStatusException
 	{
 		super(name);
 
 		this.replyBuf = ByteBuffer.allocate(64 * 1024);
-		this.requestQ = new LinkedBlockingQueue<>(16);
+		this.requestQ = new LinkedBlockingQueue<>(256);
 		this.serviceDiscoveryReply = new Scaling.Reply.ServiceDiscovery();
 		this.serviceDiscoveryReply.serviceLocation = connection.getLocalNodeName(); 
+		this.task = DPMListPC.executor.submit(this);
 
-		(new Thread(this, "ScalingProtocolHandlerPC")).start();
+		//(new Thread(this, "ScalingProtocolHandlerPC")).start();
 
 		handleRequests(this);
 	}
@@ -63,9 +67,19 @@ public class ScalingProtocolHandlerPC extends DPMProtocolHandlerAcnet implements
 	{
 		try {
 			request.setObject(Scaling.Request.unmarshal(request.data()));
+
 			if (!requestQ.offer(request))
 				request.ignore();
-		} catch (Exception ignore) { }
+
+			if (task.isDone())
+				this.task = DPMListPC.executor.submit(this);
+		} catch (Exception e) {
+			logger.log(Level.FINE, "Scale exception", e);		
+
+			try {	
+				request.ignore();
+			} catch (Exception ignore) { }
+		}
 	}
 
 	@Override
@@ -73,6 +87,28 @@ public class ScalingProtocolHandlerPC extends DPMProtocolHandlerAcnet implements
 	{
 	}
 
+	@Override
+	public void run()
+	{
+		//DPM.Request m;
+		AcnetRequest request;
+
+		while ((request = requestQ.poll()) != null) {
+			try {
+				//((Scaling.Request) request.getObject()).deliverTo(this);
+				final Scaling.Request scalingRequest = (Scaling.Request) request.getObject();
+
+				if (scalingRequest instanceof Scaling.Request.ServiceDiscovery)
+					handle(request, (Scaling.Request.ServiceDiscovery) scalingRequest);
+				else
+					handle(request, (Scaling.Request.Scale) scalingRequest);
+			} catch (Exception e) {
+				logger.log(Level.FINE, "Scale exception", e);		
+				sendStatusNoEx(DIO_SCALEFAIL);
+			}
+		}
+	}
+/*
 	@Override
 	public void run()
 	{
@@ -88,9 +124,9 @@ public class ScalingProtocolHandlerPC extends DPMProtocolHandlerAcnet implements
 			}
 		}
 	}
+*/
 
-	@Override
-	public void handle(Scaling.Request.ServiceDiscovery m)
+	synchronized void handle(AcnetRequest request, Scaling.Request.ServiceDiscovery m)
 	{
 		try {
 			if (!DPMServer.restartScheduled()) {
@@ -102,19 +138,36 @@ public class ScalingProtocolHandlerPC extends DPMProtocolHandlerAcnet implements
 		} catch (Exception ignore) { }
 	}
 
-	@Override
-	public void handle(Scaling.Request.Scale m)
+	void handle(AcnetRequest request, Scaling.Request.Scale m)
 	{
 		try {
+			if (logger.isLoggable(Level.FINER)) {
+				if (m.raw != null)
+					logger.log(Level.FINER, "Raw->Scaled Scaling request for '" + m.drf_request + "'");
+				else if (m.scaled != null)
+					logger.log(Level.FINER, "Scaled->Raw Scaling request for '" + m.drf_request + "'");
+				else
+					logger.log(Level.FINER, "Bad Scaling request for '" + m.drf_request + "'");
+			}
+
+			DeviceCache.add(m.drf_request);
+
 			final WhatDaq whatDaq = new WhatDaq(null, m.drf_request);
 			final DataReplier replier = DataReplier.get(whatDaq, this);
+
+			this.request = request;
 
 			if (m.raw != null)
 				replier.sendReply(m.raw, 0, 0, 0);
 			else if (m.scaled != null)
 				replier.sendReply(m.scaled, 0, 0);
+			else
+				sendStatusNoEx(DIO_SCALEFAIL);
 		} catch (AcnetStatusException e) {
+			logger.log(Level.FINER, "exception handling scale request", e);
 			sendStatusNoEx(e.status);	
+		} catch (SQLException e) {
+			sendStatusNoEx(SQL_GENERIC_ERROR);	
 		} catch (Exception e) {
 			sendStatusNoEx(DIO_SCALEFAIL);
 		}

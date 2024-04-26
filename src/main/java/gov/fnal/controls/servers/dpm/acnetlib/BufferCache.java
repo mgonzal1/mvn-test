@@ -1,4 +1,4 @@
-// $Id: BufferCache.java,v 1.3 2024/02/22 16:29:45 kingc Exp $
+// $Id: BufferCache.java,v 1.4 2024/04/11 20:41:13 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.io.IOException;
@@ -151,18 +151,22 @@ abstract class Buffer
 
 final class BufferCache
 {
+	static final int MaxCacheSize = 32 * 1024 * 1024;
 	static final int BufferSize = 64 * 1024;
+	static final int MaxBufferCount = MaxCacheSize / BufferSize;
 
 	private static class CachedBuffer extends Buffer
 	{
 		final int bufNo;
 		boolean inUse;
+		final boolean bufferAfterUse;
 
 		CachedBuffer(ByteBuffer buf)
 		{
 			super(buf);
 			this.bufNo = allocatedCount;
 			this.inUse = true;
+			this.bufferAfterUse = allocatedCount <= MaxBufferCount;
 		}
 
 		@Override
@@ -173,7 +177,10 @@ final class BufferCache
 					inUse = false;
 					buf.clear();
 					buf.order(ByteOrder.LITTLE_ENDIAN);
-					freeList.add(this);
+
+					if (bufferAfterUse)
+						freeList.add(this);
+
 					//logger.log(Level.FINER, () -> "BufferCache.free[allocated:" + allocatedCount + " free:" + freeList.size() + "]");
 				} else {
 					AcnetInterface.logger.log(Level.WARNING, () -> "BufferCache.free[bufNo:" + bufNo + " inUse:" + inUse + "]");

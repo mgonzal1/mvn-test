@@ -1,7 +1,6 @@
 // $Id: DPMListJSON.java,v 1.19 2023/11/02 16:36:15 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.tcp.json;
-
-import java.util.Collection;
+ 
 import java.util.logging.Level;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.io.IOException;
@@ -9,12 +8,9 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
@@ -69,14 +65,14 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 			int status;
 		}
 
-		static class DeviceInfo extends Reply
+        static class DeviceInfo extends Reply
 		{
-			long refId;
-			int di;
-			java.lang.String name;
-			java.lang.String description;
-			java.lang.String units;
-			short format_hint;
+            long refId;
+            int di;
+            String name;
+            String description;
+            String units;
+            short format_hint;
 		}
 
 		static class Raw extends Reply
@@ -101,7 +97,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 			long refId;
 			long timestamp;
 			long cycle;
-			int status;
+            int status;
 			double[] data;
 		}
 
@@ -123,67 +119,67 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 			String[] data;
 		}
 
-		static class BasicStatus extends Reply
+        static class BasicStatus extends Reply
 		{
-			long refId;
-			long timestamp;
-			long cycle;
-			boolean on;
-			boolean ready;
-			boolean remote;
-			boolean positive;
-			boolean ramp;
+            long refId;
+            long timestamp;
+            long cycle;
+            boolean on;
+            boolean ready;
+            boolean remote;
+            boolean positive;
+            boolean ramp;
 		}
 
-		static class DigitalAlarm extends Reply
+        static class DigitalAlarm extends Reply
 		{
-			long refId;
-			long timestamp;
-			long cycle;
-			int nominal;
-			int mask;
-			boolean alarm_enable;
-			boolean alarm_status;
-			boolean abort;
-			boolean abort_inhibit;
-			int tries_needed;
-			int tries_now;
+            long refId;
+            long timestamp;
+            long cycle;
+            int nominal;
+            int mask;
+            boolean alarm_enable;
+            boolean alarm_status;
+            boolean abort;
+            boolean abort_inhibit;
+            int tries_needed;
+            int tries_now;
 		}
 
-		static class AnalogAlarm extends Reply
+        static class AnalogAlarm extends Reply
 		{
-			long refId;
-			long timestamp;
-			long cycle;
-			double minimum;
-			double maximum;
-			boolean alarm_enable;
-			boolean alarm_status;
-			boolean abort;
-			boolean abort_inhibit;
-			int tries_needed;
-			int tries_now;
+            long refId;
+            long timestamp;
+            long cycle;
+            double minimum;
+            double maximum;
+            boolean alarm_enable;
+            boolean alarm_status;
+            boolean abort;
+            boolean abort_inhibit;
+            int tries_needed;
+            int tries_now;
 		}
 
-		static class TimedScalarArray extends Reply
+        static class TimedScalarArray extends Reply
 		{
-			long refId;
-			long timestamp;
-			long cycle;
-			int status;
-			double[] data;
-			long[] micros;
+            long refId;
+            long timestamp;
+            long cycle;
+            int status;
+            double[] data;
+            long[] micros;
 		}
 
-		static class Authenticate extends Reply
+        static class Authenticate extends Reply
 		{
-			String serviceName;
-			byte[] token;
+            String serviceName;
+            byte[] token;
 		}
 
-		static class ApplySettings extends Reply
+        static class ApplySettings extends Reply
 		{
-			SettingStatus[] status;
+            SettingStatus[] status;
 		}
 	}
 
@@ -224,10 +220,10 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 
 		if (root.isJsonArray()) {
 			for (JsonElement je : root.getAsJsonArray())
-				addJsonElement(je, refId++);
+				addJsonElement(je, refId++);	
 		} else if (root.isJsonObject()) {
 			for (JsonElement je : root.getAsJsonObject().getAsJsonArray("requests"))
-				addJsonElement(je, refId++);
+				addJsonElement(je, refId++);	
 		} else if (root.isJsonPrimitive())
 			addJsonElement(root, refId++);
 
@@ -287,18 +283,18 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	}
 
 	@Override
-	public void sendReply(WhatDaq whatDaq)
-	{
-		final Reply.DeviceInfo m = new Reply.DeviceInfo();
+    public void sendReply(WhatDaq whatDaq)
+    {
+        final Reply.DeviceInfo m = new Reply.DeviceInfo();
 
-		m.refId = whatDaq.refId;
-		m.di = whatDaq.dInfo.di;
-		m.name = whatDaq.dInfo.name;
-		m.description = whatDaq.dInfo.description;
-		m.units = whatDaq.getUnits();
+        m.refId = whatDaq.refId;
+        m.di = whatDaq.dInfo.di;
+        m.name = whatDaq.dInfo.name;
+        m.description = whatDaq.dInfo.description;
+        m.units = whatDaq.getUnits();
 
 		sendReply(m);
-	}
+    }
 
 	@Override
 	public void sendReply(WhatDaq whatDaq, byte[] data, long timestamp, long cycle)
@@ -335,7 +331,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	@Override
 	public void sendReply(WhatDaq whatDaq, double[] data, long timestamp, long cycle)
 	{
-		final Reply.ScalarArray m = new Reply.ScalarArray();
+		final Reply.ScalarArray m = new Reply.ScalarArray();	
 
 		m.refId = whatDaq.refId;
 		m.timestamp = timestamp;
@@ -348,7 +344,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	@Override
 	public void sendReply(WhatDaq whatDaq, double[] values, long[] micros, long seqNo)
 	{
-		final Reply.TimedScalarArray m = new Reply.TimedScalarArray();
+		final Reply.TimedScalarArray m = new Reply.TimedScalarArray();  
 
 		m.refId = whatDaq.refId;
 		m.cycle = seqNo;
@@ -378,7 +374,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	@Override
 	public void sendReply(WhatDaq whatDaq, String[] data, long timestamp, long cycle)
 	{
-		final Reply.TextArray m = new Reply.TextArray();
+		final Reply.TextArray m = new Reply.TextArray();	
 
 		m.refId = whatDaq.refId;
 		m.timestamp = timestamp;

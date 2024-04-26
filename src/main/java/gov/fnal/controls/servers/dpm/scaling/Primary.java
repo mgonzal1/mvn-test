@@ -967,7 +967,7 @@ class Primary implements AcnetErrors
 		throw new AcnetStatusException(DIO_SCALEFAIL, "Invalid primary transform " + scaling.primary.index);
 	}
 
-	private int checkSignedOverflow(int value, int size) throws AcnetStatusException
+	private int checkSignedOverflow(int value, int size) throws AcnetStatusException 
 	{
 		switch (size) {
 		 case 1:

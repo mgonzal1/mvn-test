@@ -1,4 +1,4 @@
-// $Id: EpicsPoolImpl.java,v 1.10 2024/02/22 16:33:02 kingc Exp $
+// $Id: EpicsPoolImpl.java,v 1.11 2024/03/27 21:16:40 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
 import gov.fnal.controls.servers.dpm.SettingData;
@@ -219,7 +219,7 @@ public class EpicsPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	}
 
 	@Override
-	public void addSetting(WhatDaq whatDaq, SettingData setting)
+	public void addSetting(WhatDaq whatDaq, SettingData setting) throws AcnetStatusException
 	{
 		setting.deliverTo(whatDaq, this);
 	}
@@ -242,7 +242,7 @@ public class EpicsPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	public void handle(WhatDaq whatDaq, double setting)
 	{
 		try {
-			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), new Double(setting));
+			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), Double.valueOf(setting));
 		
 			requests.add(eReq);
 		} catch (AcnetStatusException e) {
@@ -254,7 +254,7 @@ public class EpicsPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	public void handle(WhatDaq whatDaq, double[] setting)
 	{
 		try {
-			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), new Double(setting[0]));
+			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), Double.valueOf(setting[0]));
 		
 			requests.add(eReq);
 		} catch (AcnetStatusException e) {

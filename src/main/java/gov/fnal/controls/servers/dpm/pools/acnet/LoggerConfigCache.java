@@ -1,10 +1,11 @@
-// $Id: LoggerConfigCache.java,v 1.9 2024/03/05 17:30:11 kingc Exp $
+// $Id: LoggerConfigCache.java,v 1.11 2024/03/21 15:57:56 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import gov.fnal.controls.servers.dpm.DPMRequest;
 import gov.fnal.controls.servers.dpm.DPMServer;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
 import gov.fnal.controls.servers.dpm.drf3.AcnetRequest;
 import gov.fnal.controls.servers.dpm.events.DataEvent;
 import gov.fnal.controls.servers.dpm.events.DataEventFactory;
@@ -283,8 +284,8 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 							}
 						} catch (Exception e) {
 							if (!badEntries.contains(badEntryKey) && !button.equals("Client")) {
-								logger.log(logLevel, "exception with logger entry - logger:'" + 
-											loggerName + "' list:" + listId + " index:" + displayIndex, e);
+								logger.log(logLevel, "Exception with logger entry - logger:'" + loggerName + "' list:" + listId + 
+														" index:" + displayIndex + " - " + e.getMessage());
 								badEntries.add(badEntryKey);
 							}
 						}
@@ -440,8 +441,8 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 						exactMatch.add(d);
 				}
 			} catch (Exception e) {
-				logger.log(Level.FINE, "exception with logger entry - " + d.loggerName + " list:" + 
-							d.listId + " drf: " + d.loggedDrf, e);
+				logger.log(Level.FINE, "Exception with logger entry - " + d.loggerName + " list:" + 
+											d.listId + " drf: " + d.loggedDrf + " - " + e.getMessage());
 			}
 		}
 		

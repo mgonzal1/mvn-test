@@ -1,4 +1,4 @@
-// $Id: Scope.java,v 1.60 2024/03/05 17:49:54 kingc Exp $
+// $Id: Scope.java,v 1.63 2024/04/17 14:34:40 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import gov.fnal.controls.servers.dpm.acnetlib.*;
@@ -16,7 +16,6 @@ import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -24,10 +23,9 @@ import java.util.logging.Level;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
-
 class RefreshTask extends TimerTask
 {
-	private static final Timer timer = new Timer("RefreshTimer", true);
+	private static volatile Timer timer = null;
 	private static final Map<String, RefreshTask> activeTasks = new HashMap<>();
 	private static final String packageName = RefreshTask.class.getPackage().getName();
 
@@ -42,21 +40,24 @@ class RefreshTask extends TimerTask
 		this.delay = randomDelay(5, 60);
 
 		logger.log(Level.INFO, className + ": refresh scheduled in " + delay + " seconds"); 
-		timer.schedule(this, delay * 1000);
 	}
 
 	@Override
 	public void run()
 	{
-		synchronized (activeTasks) {
-			activeTasks.remove(className);
-		}
-		
 		try {
 			method.invoke(null);
 			logger.log(Level.INFO, className + ": refresh complete");
 		} catch (Exception e) {
-			logger.log(Level.INFO, className + ": refresh failed - " + e);
+			logger.log(Level.INFO, className + ": refresh failed", e);
+		}
+
+		synchronized (activeTasks) {
+			activeTasks.remove(className);
+			if (activeTasks.size() == 0) {
+				timer.cancel();
+				timer = null;
+			}
 		}
 	}
 
@@ -75,8 +76,15 @@ class RefreshTask extends TimerTask
 	synchronized static boolean schedule(String className) throws Exception
 	{
 		synchronized (activeTasks) {
+			if (timer == null)
+				timer = new Timer("Scope refresh timer", true);
+
 			if (!activeTasks.containsKey(className)) {
-				activeTasks.put(className, new RefreshTask(className));
+				final RefreshTask task = new RefreshTask(className);
+
+				activeTasks.put(className, task);
+				timer.schedule(task, task.delay * 1000);
+
 				return true;
 			}
 
@@ -87,6 +95,7 @@ class RefreshTask extends TimerTask
 
 public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope.Request.Receiver, AcnetErrors
 {
+/*
 	class ScopeServer extends Thread
 	{
 		private final InetSocketAddress address = new InetSocketAddress(0);
@@ -96,7 +105,7 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 		{
 			this.serverChannel = ServerSocketChannel.open();
 			this.serverChannel.bind(address);
-			this.setName("DPMScopeServer");
+			this.setName("Scope accept");
 			this.start();
 		}
 
@@ -113,9 +122,10 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 			serverChannel.close();
 		}
 	}
+	*/
 
 	private static AcnetConnection connection;
-	private static ScopeServer scopeServer;
+	//private static ScopeServer scopeServer;
 	private static ConcurrentLinkedQueue<HandlerThread> handlers = new ConcurrentLinkedQueue<>();
 
 	private final ByteBuffer rpyBuf = ByteBuffer.allocate(8 * 1024);
@@ -133,7 +143,7 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 
 	static void close() throws IOException
 	{
-		scopeServer.close();
+		//scopeServer.close();
 
 		for (HandlerThread handler : handlers)
 			handler.close();
@@ -148,9 +158,8 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 		
 		try {
 			this.discoveryReply.hostName = DPMServer.localHostName();
-			this.scopeServer = new ScopeServer();
-			this.discoveryReply.codeVersion = System.getProperty("dae.version", System.getProperty("version", ""));
-			this.discoveryReply.scopePort = scopeServer.serverChannel.socket().getLocalPort();
+			//this.scopeServer = new ScopeServer();
+			this.discoveryReply.codeVersion = DPMServer.codeVersion();
 		} catch (Exception ignore) {
 			this.discoveryReply.hostName = "-";
 		}
@@ -206,9 +215,11 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 			discoveryReply.activeRefresh = RefreshTask.activeCount() > 0;
 			discoveryReply.restartScheduled = DPMServer.restartScheduled();
 			discoveryReply.inDebugMode = DPMServer.debug();
+			discoveryReply.scopePort = DPMServer.scopeChannel.socket().getLocalPort();
 
 			for (DPMList list : lists) {
-				discoveryReply.requestCount += list.requestCount();
+				//discoveryReply.requestCount += list.requestCount();
+				discoveryReply.requestCount += list.whatDaqCount();
 				discoveryReply.repliesPerSecond += list.repliesPerSecond;
 				discoveryReply.repliesPerSecondMax += list.repliesPerSecondMax;
 			}
@@ -401,7 +412,7 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 		}
 	}
 
-	private class HandlerThread extends Thread implements DPMScope.Request.Receiver
+	static class HandlerThread extends Thread implements DPMScope.Request.Receiver
 	{
 		final Selector selector;
 		final ConcurrentLinkedQueue<DPMScope.Reply> queue = new ConcurrentLinkedQueue<>();
@@ -416,7 +427,7 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 		HandlerThread(SocketChannel channel) throws IOException
 		{
 			this.channel = channel;
-			this.setName("DPMScope.HandlerThread - " + channel);
+			this.setName("Scope connection - " + channel);
 
 			this.selector = Selector.open();
 			this.channel.configureBlocking(false);

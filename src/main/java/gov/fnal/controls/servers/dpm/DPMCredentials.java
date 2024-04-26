@@ -1,12 +1,10 @@
-// $Id: DPMCredentials.java,v 1.14 2024/03/04 16:54:02 kingc Exp $
+// $Id: DPMCredentials.java,v 1.16 2024/03/20 20:17:43 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import gov.fnal.controls.kerberos.KerberosLoginContext;
 import gov.fnal.controls.kerberos.login.ServiceName;
 import org.ietf.jgss.GSSContext;
 import org.ietf.jgss.GSSException;
-import org.ietf.jgss.GSSManager;
-import org.ietf.jgss.GSSName;
 
 import javax.security.auth.kerberos.KerberosPrincipal;
 import java.util.ArrayList;
@@ -19,9 +17,10 @@ import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public class DPMCredentials
 {
-    private static final Pattern PRINCIPAL_NAME_PATTERN = Pattern.compile("^(.*?)/([^/]+)@.+$");
+    static final Pattern PRINCIPAL_NAME_PATTERN = Pattern.compile("^(.*?)/([^/]+)@.+$");
 
-	static private volatile List<KerberosPrincipal> kerberosServicePrincipals = new ArrayList<>();
+	static volatile List<KerberosPrincipal> kerberosServicePrincipals = new ArrayList<>();
+	static String serviceName; 
 
 	private static void login(Level level)
 	{
@@ -43,9 +42,14 @@ public class DPMCredentials
 			}
 
 			kerberosServicePrincipals = tmp;
+			serviceName = getServiceName();
 
 			logger.log(level, "Kerberos login successful in " + (System.currentTimeMillis() - begin) + "ms");
+			logger.log(level, "Kerberos service name: '" + serviceName + "'");
 		} catch (Exception e) {
+			serviceName = "";
+			kerberosServicePrincipals.clear();
+
 			logger.log(Level.WARNING, "Kerberos login failed", e);
 		}
 	}
@@ -62,7 +66,12 @@ public class DPMCredentials
 
 	private DPMCredentials() { }
 
-	static public GSSName serviceName() throws GSSException
+	static public String serviceName()
+	{
+		return serviceName;
+	}
+
+	static String getServiceName() throws GSSException
 	{
 		if (kerberosServicePrincipals.isEmpty())
 			throw new GSSException(GSSException.NO_CRED);
@@ -73,18 +82,19 @@ public class DPMCredentials
         if (!matcher.matches())
 			throw new GSSException(GSSException.NO_CRED);
 
-		final GSSManager manager = GSSManager.getInstance();
-		final String name = matcher.group(1) + "@" + matcher.group(2);
+		//final GSSManager manager = GSSManager.getInstance();
+		//final String name = matcher.group(1) + "@" + matcher.group(2);
+		return matcher.group(1) + "@" + matcher.group(2);
 
-		logger.log(Level.FINE, "service name: '" + name + "'");
+		//logger.log(Level.FINE, "service name: '" + name + "'");
 
-		try {
-			return manager.createName(name, GSSName.NT_HOSTBASED_SERVICE);
-		} catch (GSSException e) {
-			logger.log(Level.WARNING, "exception in serverName()", e);
-			login(Level.FINE);
-			return manager.createName(name, GSSName.NT_HOSTBASED_SERVICE);
-		}
+		//try {
+			//return manager.createName(name, GSSName.NT_HOSTBASED_SERVICE);
+		//} catch (GSSException e) {
+			//logger.log(Level.WARNING, "exception in serviceName()", e);
+			//login(Level.FINE);
+			//return manager.createName(name, GSSName.NT_HOSTBASED_SERVICE);
+		//}
 	}
 
 	static GSSContext createContext() throws GSSException

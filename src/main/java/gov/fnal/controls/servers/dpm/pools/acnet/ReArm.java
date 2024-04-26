@@ -34,7 +34,7 @@ class ReArm implements AcnetErrors
 
 			String token = tok.nextToken(); // skip rearm=
 
-			this.enabled = new Boolean(token).booleanValue();
+			this.enabled = Boolean.valueOf(token).booleanValue();
 
 			if (!this.enabled) {
 				this.reArmDelayEvent = null;

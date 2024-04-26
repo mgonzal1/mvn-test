@@ -1,4 +1,4 @@
-// $Id: DaqSendTransaction.java,v 1.14 2024/03/11 19:14:08 kingc Exp $
+// $Id: DaqSendTransaction.java,v 1.17 2024/04/11 19:18:44 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import gov.fnal.controls.servers.dpm.acnetlib.*;
@@ -64,11 +64,16 @@ abstract class DaqSendTransaction implements NodeFlags, AcnetReplyHandler, Acnet
 		transmitCount++;
 
 		try {
-			final ByteBuffer buf = ByteBuffer.allocate(reqList.daqDefs.requestSize(reqList.requests.size())).order(ByteOrder.LITTLE_ENDIAN);
+			//final ByteBuffer buf = ByteBuffer.allocate(reqList.daqDefs.requestSize(reqList.requests.size())).order(ByteOrder.LITTLE_ENDIAN);
+			final ByteBuffer buf = ByteBuffer.allocate(reqList.reqSize).order(ByteOrder.LITTLE_ENDIAN);
 
 			context = acnetConnection.sendRequest(reqList.node.value(), getTaskName(), reqList.event.isRepetitive(), 
 													createRequest(buf), (int) reqList.timeout, this);
+		} catch (AcnetStatusException e) {
+			logger.log(Level.FINE, "DaqSendTransaction.transmit exception", e); 
+			context.cancelNoEx();
 		} catch (Exception e) {
+			logger.log(Level.WARNING, "DaqSendTransaction.transmit exception", e); 
 			context.cancelNoEx();
 		}
 	}
@@ -89,8 +94,8 @@ abstract class DaqSendTransaction implements NodeFlags, AcnetReplyHandler, Acnet
 			retryCount++;
 
 			if (!reqList.node.is(OUT_OF_SERVICE) && !reqList.node.is(OBSOLETE)) {
-				logger.log(Level.WARNING, reqList.node + " " + reqList.event + ",rpySize: " + reqList.replySize() +
-							", retransmitting msg " + retryCount);
+				//logger.log(Level.FINE, reqList.node + " " + reqList.event + ",rpySize: " + reqList.replySize() +
+				//							", retransmitting msg " + retryCount);
 			}
 
 			transmit();
@@ -211,7 +216,7 @@ class DaqSendTransaction16 extends DaqSendTransaction
 
 		buf.flip();
 
-		//System.out.println("req size: " + buf.remaining());
+		//logger.log(Level.FINER, "DaqSendTransaction16: bufSize:" + buf.remaining());
 
 		return buf;
 	}
@@ -327,6 +332,8 @@ class DaqSendTransaction32 extends DaqSendTransaction //implements NodeFlags, Ac
 		}
 
 		buf.flip();
+
+		//logger.log(Level.FINER, "DaqSendTransaction32: bufSize:" + buf.remaining());
 
 		return buf;
 	}

@@ -1,54 +1,64 @@
-// $Id: DPMServer.java,v 1.85 2024/01/09 15:59:34 kingc Exp $
+// $Id: DPMServer.java,v 1.87 2024/04/01 15:32:04 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.pools.AcceleratorPool;
-import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
-
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.lang.management.MemoryUsage;
-import java.lang.management.OperatingSystemMXBean;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Handler;
+import java.util.Collection;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.Handler;
+import java.util.logging.ConsoleHandler;
+import java.io.IOException;
+import java.io.FileWriter;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.channels.ServerSocketChannel;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.MemoryUsage;
+import java.lang.management.MemoryMXBean;
+
+import gov.fnal.controls.servers.dpm.pools.AcceleratorPool;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
 
 public class DPMServer implements AcnetErrors
 {
 	public static final Logger logger;
-	private static final Level initLogLevel;
 
-	private static final int pid;
-	private static final boolean debug;
-	private static final long started;
-	private static final OperatingSystemMXBean os;
-	private static final double cpuCount;
-	private static final Timer timer;
-	private static final String localHostName;
-	private static final MemoryUsageDisplay memoryUsageDisplay;
+	static final Level initLogLevel;
+	static final int pid;
+	static final long started;
+	static final OperatingSystemMXBean os;
+	static final double cpuCount;
+	static final Timer timer;
+	static final String localHostName;
+	static final MemoryUsageDisplay memoryUsageDisplay;
+	static final String codeVersion;
+	static final ServerSocketChannel scopeChannel; 
+	static final boolean debug;
 
-	private static volatile RestartTask restartTask = null;
+	static volatile RestartTask restartTask = null;
 
 	static {
 		System.setProperty("java.util.logging.SimpleFormatter.format", "[%4$-8s %1$tF %1$tT %1$tL] %5$s %6$s%n");
 
+		codeVersion = System.getProperty("dae.version", System.getProperty("version", ""));
 		logger = Logger.getLogger(DPMServer.class.getName());
 		logger.setUseParentHandlers(false);
 		logger.addHandler(new ConsoleHandler());
 		initLogLevel = Level.parse(System.getProperty("initLogLevel", "CONFIG"));
 
 		pid = getPid();
+
 		try {
 			localHostName = InetAddress.getLocalHost().getHostName();
-		} catch (UnknownHostException e) {
+			scopeChannel = ServerSocketChannel.open();
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 
@@ -56,89 +66,9 @@ public class DPMServer implements AcnetErrors
 		started = System.currentTimeMillis();
 		os = ManagementFactory.getOperatingSystemMXBean();
 		cpuCount = os.getAvailableProcessors();
-		timer = new Timer("DPMServerSharedTimer", false);
+		timer = new Timer("Shared timer", false);
 		memoryUsageDisplay = new MemoryUsageDisplay();
 	}	
-
-	//private static DPMServer server = null;
-
-/*
-	static void serveForever(String host, String vNode) throws Exception
-	{
-		if (server == null) {
-			server = new DPMServer(host, vNode);
-
-			synchronized (server) {
-				server.wait();
-			}
-		}
-	}
-*/
-/*
-	DPMServer() throws Exception
-	{
-		setLogLevel(Level.ALL);
-
-		server = this;
-
-		this.pid = getPid();
-		this.debug = Boolean.parseBoolean(System.getProperty("debug", "false"));
-		this.started = System.currentTimeMillis();
-		this.os = ManagementFactory.getOperatingSystemMXBean();
-		this.cpuCount = os.getAvailableProcessors();
-		this.timer = new Timer("DPMServerSharedTimer", false);
-		this.localHostName = InetAddress.getLocalHost().getHostName();
-		this.memoryUsageDisplay = new MemoryUsageDisplay();
-	}
-*/
-
-	//private DPMServer(String host, String vNode) throws Exception
-	/*
-	private static void init() throws Exception
-	{
-		setLogLevel(initLogLevel);
-
-		//server = this;
-		//this.pid = getPid();
-
-		logger.config("DPM(" + pid + ") CLASSPATH: " + 
-						System.getProperty("java.class.path"));
-
-		//AcnetInterface.init(host, vNode);
-		
-		this.debug = Boolean.parseBoolean(System.getProperty("debug", "false"));
-		this.started = System.currentTimeMillis();
-		this.os = ManagementFactory.getOperatingSystemMXBean();
-		this.cpuCount = os.getAvailableProcessors();
-		this.timer = new Timer("DPMServerSharedTimer", false);
-		this.localHostName = InetAddress.getLocalHost().getHostName();
-		this.memoryUsageDisplay = new MemoryUsageDisplay();
-
-		Runtime.getRuntime().addShutdownHook(new ShutdownHook());
-
-		AcceleratorPool.init();
-		//Lookup.init();
-		Errors.init();
-		//AcnetNodeInfo.init();
-		//AdditionalDeviceInfo.init();
-		ConsoleUserManager.init();
-		DPMCredentials.init();
-		//LoggerConfigCache.init();
-		//DBNews.init();
-		//States.init();
-		Scope.init();
-		DPMProtocolHandler.init();
-
-		try {
-			final Level logLevel = Level.parse(System.getProperty("loglevel"));
-			setLogLevel(logLevel);
-		} catch (Exception e) {
-			final Level logLevel = debug ? Level.FINE : Level.INFO;
-			logger.config("Logging level defaulted to " + logLevel);
-			setLogLevel(logLevel);
-		}
-	}
-	*/
 
 	private static int getPid()
 	{
@@ -162,7 +92,8 @@ public class DPMServer implements AcnetErrors
 				for (DPMProtocolHandler h : DPMProtocolHandler.allHandlers())
 					h.shutdown();
 
-				Scope.close();
+				//Scope.close();
+				scopeChannel.close();
 			} catch (Exception e) {
 				logger.log(Level.WARNING, "shutdown", e);
 			}
@@ -225,29 +156,29 @@ public class DPMServer implements AcnetErrors
 		}
 	}
 
+	static String codeVersion()
+	{
+		return codeVersion;
+	}
+
 	static void scheduleRestart()
 	{
-		//if (server.restartTask == null)
-			//server.restartTask = server.new RestartTask();
 		if (restartTask == null)
 			restartTask = new RestartTask();
 	}
 
 	public static boolean restartScheduled()
 	{
-		//return server.restartTask != null;
 		return restartTask != null;
 	}
 
 	public static boolean debug()
 	{
-		//return server.debug;
 		return debug;
 	}
 
 	static Level getLogLevel()
 	{
-		//return logger.getLevel();
 		return logger.getLevel();
 	}
 
@@ -294,82 +225,64 @@ public class DPMServer implements AcnetErrors
 
 	static long started()
 	{
-		//return server.started;
 		return started;
 	}
 
 	public static String localHostName()
 	{
-		//return server.localHostName;
 		return localHostName;
 	}
 
 	public static int pid()
 	{
-		//return server.pid;
 		return pid;
 	}
 
 	public static int heapFreePercentage()
 	{
-		//return server.memoryUsageDisplay.lastValues[0];
 		return memoryUsageDisplay.lastValues[0];
 	}
 
 	public static Timer sharedTimer()
 	{
-		//return server.timer;
 		return timer;
 	}
 
 	public static int loadPercentage()
 	{
-		//final double sysLoad = server.os.getSystemLoadAverage();
-		//final int load = (int) Math.round((sysLoad / server.cpuCount) * 100.0);
 		final double sysLoad = os.getSystemLoadAverage();
 		final int load = (int) Math.round((sysLoad / cpuCount) * 100.0);
 
 		return (load > 100) ? 100 : load;
 	}
 
+	private static void logCodeVersion() throws IOException
+	{
+		final String root = System.getProperty("engines.files.root");
+
+		if (root != null) { 
+			final FileWriter file = new FileWriter(root + "/files/dpm/" + AcnetInterface.getVirtualNode());
+
+			file.write(codeVersion);
+			file.close();
+		}
+	}
+
 	synchronized public static void main(String[] args) throws Exception
 	{
-		//init();
 		setLogLevel(initLogLevel);
 
-		//server = this;
-		//this.pid = getPid();
-
-		logger.log(Level.CONFIG, "DPM(" + pid + ") CLASSPATH: " + 
-						System.getProperty("java.class.path"));
-
-		//AcnetInterface.init(host, vNode);
-		
-		/*
-		this.debug = Boolean.parseBoolean(System.getProperty("debug", "false"));
-		this.started = System.currentTimeMillis();
-		this.os = ManagementFactory.getOperatingSystemMXBean();
-		this.cpuCount = os.getAvailableProcessors();
-		this.timer = new Timer("DPMServerSharedTimer", false);
-		this.localHostName = InetAddress.getLocalHost().getHostName();
-		this.memoryUsageDisplay = new MemoryUsageDisplay();
-		*/
+		logger.log(Level.CONFIG, "DPM(" + pid + ") VERSION:'" + codeVersion + 
+					"' CLASSPATH:'" + System.getProperty("java.class.path") + "'");
 
 		Runtime.getRuntime().addShutdownHook(new ShutdownHook());
-
-		//gov.fnal.controls.servers.dpm.pools.Node.init();
+	
+		logCodeVersion();
 
 		AcceleratorPool.init();
-		//Lookup.init();
-		
 		Errors.init();
-		//AcnetNodeInfo.init();
-		//AdditionalDeviceInfo.init();
 		ConsoleUserManager.init();
 		DPMCredentials.init();
-		//LoggerConfigCache.init();
-		//DBNews.init();
-		//States.init();
 		Scope.init();
 		DPMProtocolHandler.init();
 
@@ -380,15 +293,21 @@ public class DPMServer implements AcnetErrors
 			logger.log(Level.CONFIG, "Logging level defaulted to " + logLevel);
 			setLogLevel(logLevel);
 		}
-		//if (server == null) {
-			//server = new DPMServer(host, vNode);
-			//server = new DPMServer();
 
-			//synchronized (server) {
-			//	server.wait();
-			//}
-		DPMServer.class.wait();
-		//}
-		//DPMServer.serveForever();
+		final InetSocketAddress address = new InetSocketAddress(0);
+
+		scopeChannel.bind(address);
+		Thread.currentThread().setName("Scope accept");
+
+		while (true) {
+			try {
+				new Scope.HandlerThread(scopeChannel.accept());
+			} catch (Exception ignore) {
+			}
+		}
+
+		//scopeChannel.close();
+	
+		//DPMServer.class.wait();
 	}
 }

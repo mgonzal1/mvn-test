@@ -1,28 +1,17 @@
 // $Id: AcnetPoolImpl.java,v 1.15 2024/04/11 19:17:07 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Timer;
-import java.util.logging.Level;
-
+import gov.fnal.controls.servers.dpm.SettingData;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-
-import gov.fnal.controls.servers.dpm.SettingData;
+import gov.fnal.controls.servers.dpm.pools.PoolInterface;
+import gov.fnal.controls.servers.dpm.pools.PoolType;
 import gov.fnal.controls.servers.dpm.pools.PoolUser;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-import gov.fnal.controls.servers.dpm.pools.PoolType;
-import gov.fnal.controls.servers.dpm.pools.PoolInterface;
-
 import gov.fnal.controls.servers.dpm.scaling.ScalingFactory;
 
-import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+import java.util.*;
 
 public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetErrors
 {
@@ -59,17 +48,19 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	}
 
 	@Override
-	public void addSetting(WhatDaq whatDaq, SettingData setting) {
+	public void addSetting(WhatDaq whatDaq, SettingData setting) throws AcnetStatusException
+	{
 		setting.deliverTo(whatDaq, this);
 	}
 
 	@Override
-	public void handle(WhatDaq whatDaq, byte[] setting) {
+	public void handle(WhatDaq whatDaq, byte[] setting) throws AcnetStatusException
+	{
 		//try {
 		//logger.log(Level.FINER, "adding " + setting.length + " byte setting to " + whatDaq);
 
-		whatDaq.setSetting(setting);
-		requests.add(whatDaq);
+			whatDaq.setSetting(setting);
+			requests.add(whatDaq);
 		//} catch (AcnetStatusException e) {
 		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		//} catch (Exception e) {
@@ -78,11 +69,12 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	}
 
 	@Override
-	public void handle(WhatDaq whatDaq, double setting) throws AcnetStatusException {
+	public void handle(WhatDaq whatDaq, double setting) throws AcnetStatusException
+	{
 		//try {
-		//whatDaq.setSetting(setting);
-		whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
-		requests.add(whatDaq);
+			//whatDaq.setSetting(setting);
+			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
+			requests.add(whatDaq);
 		//} catch (AcnetStatusException e) {
 		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		//} catch (Exception e) {
@@ -91,10 +83,11 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	}
 
 	@Override
-	public void handle(WhatDaq whatDaq, double[] setting) throws AcnetStatusException {
+	public void handle(WhatDaq whatDaq, double[] setting) throws AcnetStatusException
+	{
 		//try {
-		whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
-		requests.add(whatDaq);
+			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
+			requests.add(whatDaq);
 		//} catch (AcnetStatusException e) {
 		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		//} catch (Exception e) {
@@ -103,10 +96,11 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	}
 
 	@Override
-	public void handle(WhatDaq whatDaq, String setting) throws AcnetStatusException {
+	public void handle(WhatDaq whatDaq, String setting) throws AcnetStatusException
+	{
 		//try {
-		whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
-		requests.add(whatDaq);
+			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
+			requests.add(whatDaq);
 		//} catch (AcnetStatusException e) {
 		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		//} catch (Exception e) {
@@ -115,10 +109,11 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	}
 
 	@Override
-	public void handle(WhatDaq whatDaq, String[] setting) throws AcnetStatusException {
+	public void handle(WhatDaq whatDaq, String[] setting) throws AcnetStatusException
+	{
 		//try {
-		whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
-		requests.add(whatDaq);
+			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
+			requests.add(whatDaq);
 		//} catch (AcnetStatusException e) {
 		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		//} catch (Exception e) {
@@ -143,7 +138,7 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 				repetitive.add(pool);
 				pool.insert(whatDaq);
 			} else {
-				final int key = whatDaq.node().value(); ///(whatDaq.trunk() << 16) + whatDaq.node();
+				final int key = whatDaq.node().value(); ///(whatDaq.trunk() << 16) + whatDaq.node(); 
 
 				//DPMOneShotDaqPool pool = oneshot.get(key);
 				OneShotDaqPool pool = oneshot.get(key);
@@ -151,8 +146,8 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 				if (pool == null) {
 					//pool = new DPMOneShotDaqPool(whatDaq.getTrunk(), whatDaq.getNode(), 0, whatDaq.getEvent(), "", true);
 					//pool = new OneShotDaqPool(whatDaq.getTrunk(), whatDaq.getNode(), whatDaq.getEvent());
-					pool = whatDaq.isSettingReady() ? new SettingDaqPool(whatDaq.node()) :
-							new OneShotDaqPool(whatDaq.node());
+					pool = whatDaq.isSettingReady() ? new SettingDaqPool(whatDaq.node()) : 
+														new OneShotDaqPool(whatDaq.node());
 					oneshot.put(key, pool);
 				}
 

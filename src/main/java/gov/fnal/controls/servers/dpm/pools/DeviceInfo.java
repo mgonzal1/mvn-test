@@ -1,9 +1,13 @@
-// $Id: DeviceInfo.java,v 1.3 2024/01/23 23:35:52 kingc Exp $
+// $Id: DeviceInfo.java,v 1.4 2024/03/19 22:11:55 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools;
 
+import java.util.Map;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
 
 public class DeviceInfo
 {
@@ -14,7 +18,7 @@ public class DeviceInfo
 	{
 		public final int pi;
 		public final int node;
-		public  int ftd;
+		public final int ftd;
 		public final byte[] ssdn;
 		public final int size;
 		public final int defSize;
@@ -50,7 +54,7 @@ public class DeviceInfo
 			this.atomicSize = defSize;
 			this.defEvent = "i";
 			this.nonLinear = false;
-			this.foreignName = null;	
+			this.foreignName = null;
 		}
 
 		@Override public String toString()
@@ -63,8 +67,8 @@ public class DeviceInfo
 	{
 		public static class Primary
 		{
-			final public int index;
-			final public int inputLen;
+			public final int index;
+			public final int inputLen;
 			public final String units;
 
 			public Primary(ResultSet rs) throws SQLException
@@ -85,32 +89,24 @@ public class DeviceInfo
 		{
 			public static class EnumString
 			{
-				public  int value;
-				public  String shortText;
-				public  String longText;
+				public final int value;
+				public final String shortText;
+				public final String longText;
 
-				 EnumString(ResultSet rs) throws SQLException
+				EnumString(ResultSet rs) throws SQLException
 				{
 					this.value = rs.getInt("value");
 					this.shortText = rs.getString("short_name");
 					this.longText = rs.getString("long_name");
 				}
-				public EnumString(){
-
-				}
 			}
 
-			public final  String units;
+			public final String units;
 			public final int index;
 			public final double[] constants;
 			//public final EnumString[] enumStrings;
-			public  Map<Object, EnumString> enums;
-			public Common(ResultSet rs) throws SQLException{
-				this.index = rs.getInt("common_index");
-				this.units = rs.getString("common_text");
-				this.constants = new double[rs.getInt("num_constants")];//new ArrayList<Double>();
-				this.enums = new HashMap<>();
-			}
+			public final Map<Object, EnumString> enums;
+
 			Common(DBMaps dbMaps, ResultSet rs) throws SQLException
 			{
 				this.index = rs.getInt("common_index");
@@ -152,7 +148,7 @@ public class DeviceInfo
 		public final DisplayLength displayLength;
 
 		public  Primary primary;
-		public  Common common;
+		public final Common common;
 
 		ReadSetScaling(DBMaps dbMaps, ResultSet rs) throws SQLException
 		{
@@ -179,7 +175,7 @@ public class DeviceInfo
 		@Override
 		public String toString()
 		{
-			return String.format("Reading(%s, %s)", scaling.primary, scaling.common);
+			return prop + "\n" + String.format("Reading(%s, %s)", scaling.primary, scaling.common);
 		}
 	}
 
@@ -197,7 +193,7 @@ public class DeviceInfo
 		@Override
 		public String toString()
 		{
-			return String.format("Setting(%s, %s)", scaling.primary, scaling.common);
+			return prop + "\n" + String.format("Setting(%s, %s)", scaling.primary, scaling.common);
 		}
 	}
 
@@ -213,7 +209,7 @@ public class DeviceInfo
 		final public int subfunction;
 		final public byte[] feData;
 		final public int segment;
-		 public String text;
+		final public String text;
 
 		AnalogAlarm(DBMaps dbMaps, ResultSet rs) throws SQLException
 		{
@@ -297,9 +293,9 @@ public class DeviceInfo
 		{
 			public static class Display
 			{
-				 public String text;
-				 public String character;
-				 public int color;
+				final public String text;
+				final public String character;
+				final public int color;
 
 				Display(String prefix, ResultSet rs) throws SQLException
 				{
@@ -310,12 +306,12 @@ public class DeviceInfo
 			}
 
 			final public int order;
-			 public boolean inverted;
-			 public long mask;
-			 public long match;
-			 public String shortName;
-			 public String longName;
-			 public Display trueDisplay;
+			final public boolean inverted;
+			final public long mask;
+			final public long match;
+			final public String shortName;
+			final public String longName;
+			final public Display trueDisplay;
 			final public Display falseDisplay;
 
 			Attribute(ResultSet rs) throws SQLException
@@ -333,8 +329,8 @@ public class DeviceInfo
 
 		public final PropertyInfo prop;
 		
-		public  int dataLen;
-		public  List<Attribute> attributes;
+		public final int dataLen;
+		public final List<Attribute> attributes;
 		public final List<BitTextAttribute> bitText;
 
 		Status(DBMaps dbMaps, ResultSet rs) throws SQLException
@@ -352,12 +348,12 @@ public class DeviceInfo
 	{
 		public static class Attribute
 		{
-			public  int order;
-			public  int value;
-			public  String shortName;
-			public  String longName;
+			public final int order;
+			public final int value;
+			public final String shortName;
+			public final String longName;
 
-			public Attribute(ResultSet rs) throws SQLException
+			Attribute(ResultSet rs) throws SQLException
 			{
 				this.order = rs.getInt("order_number");
 				this.value = rs.getInt("value");
@@ -373,7 +369,7 @@ public class DeviceInfo
 		}
 
 		public final PropertyInfo prop;
-		public  Attribute attributes[];
+		public final Attribute attributes[];
 
 		Control(DBMaps dbMaps, ResultSet rs) throws SQLException
 		{
@@ -384,8 +380,8 @@ public class DeviceInfo
 		}
 	}
 
-	 public int di;
-	 public String name;
+	final public int di;
+	final public String name;
 	final public String description;
 	final public String longName;
 	final public String longDescription;
@@ -395,10 +391,10 @@ public class DeviceInfo
 
 	final public Reading reading;
 	final public Setting setting;
-	 public Control control;
-	 public Status status;
-	 public AnalogAlarm analogAlarm;
-	 public DigitalAlarm digitalAlarm;
+	final public Control control;
+	final public Status status;
+	final public AnalogAlarm analogAlarm;
+	final public DigitalAlarm digitalAlarm;
 	final public List<String> family;
 
 	DeviceInfo(DBMaps dbMaps, ResultSet rs) throws SQLException

@@ -121,7 +121,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 	private final DataHandler dataHandler;
 	private final ByteBuffer lenBuf = ByteBuffer.allocateDirect(4);
 
-    public SocketChannel channel = null;
+    private SocketChannel channel = null;
 	private ByteBuffer readBuf;
 
 	private ReadState readState = ReadState.PacketLength;
@@ -171,12 +171,6 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 	{
 		this(new InetSocketAddress(host, ACNET_TCP_PORT), name, vNode);
 	}
-	AcnetConnectionTCP(String name,Node node,InetSocketAddress address){
-        super(name,node);
-		this.address = address;
-		this.dataHandler = new DataHandler();
-
-    }
 
 	@Override
 	boolean inDataHandler()
@@ -201,7 +195,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
     }
 
 	@Override
-	public  boolean disposed()
+	final boolean disposed()
 	{
 		return channel == null;
 	}
@@ -244,7 +238,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 		}
 	}
 
-    public final void read() throws IOException
+    private final void read() throws IOException 
 	{
 		if (readState == ReadState.PacketLength) {
 			if (lenBuf.remaining() > 0) {
@@ -310,7 +304,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 	{
 		if (!disposed()) {
 			hdrBuf.clear();
-			hdrBuf.putShort((short) cmd).putInt(name).putInt(Rad50.encode(vNode.name)).flip();
+			hdrBuf.putShort((short) cmd).putInt(name).putInt(Rad50.encode(vNode.name())).flip();
 
 			cmdBuf.flip();
 

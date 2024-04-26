@@ -1,4 +1,4 @@
-// $Id: SettingData.java,v 1.3 2023/07/20 19:44:27 kingc Exp $
+// $Id: SettingData.java,v 1.4 2024/03/27 21:07:38 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
@@ -10,14 +10,14 @@ public abstract class SettingData
 
 	public static interface Handler
 	{
-		public void handle(WhatDaq whatDaq, byte[] data);
+		public void handle(WhatDaq whatDaq, byte[] data) throws AcnetStatusException;
 		public void handle(WhatDaq whatDaq, double data) throws AcnetStatusException;
 		public void handle(WhatDaq whatDaq, double[] data) throws AcnetStatusException;
 		public void handle(WhatDaq whatDaq, String data) throws AcnetStatusException;
 		public void handle(WhatDaq whatDaq, String[] data) throws AcnetStatusException;
 	}
 
-	abstract public void deliverTo(WhatDaq whatDaq, Handler handler);
+	abstract public void deliverTo(WhatDaq whatDaq, Handler handler) throws AcnetStatusException;
 
 	private SettingData(long refId)
 	{
@@ -35,7 +35,7 @@ public abstract class SettingData
 		}
 
 		@Override
-		public void deliverTo(WhatDaq whatDaq, Handler handler)
+		public void deliverTo(WhatDaq whatDaq, Handler handler) throws AcnetStatusException
 		{
 			handler.handle(whatDaq, data);
 		}
@@ -52,7 +52,7 @@ public abstract class SettingData
 		}
 
 		@Override
-		public void deliverTo(WhatDaq whatDaq, Handler handler)
+		public void deliverTo(WhatDaq whatDaq, Handler handler) throws AcnetStatusException
 		{
 			handler.handle(whatDaq, data);
 		}
@@ -69,7 +69,7 @@ public abstract class SettingData
 		}
 
 		@Override
-		public void deliverTo(WhatDaq whatDaq, Handler handler)
+		public void deliverTo(WhatDaq whatDaq, Handler handler) throws AcnetStatusException
 		{
 			handler.handle(whatDaq, data);
 		}
@@ -86,7 +86,7 @@ public abstract class SettingData
 		}
 
 		@Override
-		public void deliverTo(WhatDaq whatDaq, Handler handler)
+		public void deliverTo(WhatDaq whatDaq, Handler handler) throws AcnetStatusException
 		{
 			handler.handle(whatDaq, data);
 		}
@@ -103,7 +103,7 @@ public abstract class SettingData
 		}
 
 		@Override
-		public void deliverTo(WhatDaq whatDaq, Handler handler)
+		public void deliverTo(WhatDaq whatDaq, Handler handler) throws AcnetStatusException
 		{
 			handler.handle(whatDaq, data);
 		}

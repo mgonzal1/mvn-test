@@ -1,4 +1,4 @@
-// $Id: DPMList.java,v 1.80 2024/03/06 15:42:45 kingc Exp $
+// $Id: DPMList.java,v 1.84 2024/04/11 20:23:30 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
@@ -21,7 +21,7 @@ import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public abstract class DPMList implements AcnetErrors, TimeNow
 {
-	static final Timer timer = new Timer("DPMListStats", true);
+	static final Timer timer = new Timer("List stats timer", true);
 	static final IdPool idPool = new IdPool(4096, 2048);
 
 	static volatile long totalRequestCount = 0;
@@ -106,7 +106,8 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 			if (count == 0) {
 				try {
 					protocolReplier.sendReply(id, 0);
-					logger.log(Level.FINEST, id + " send list status");
+					if (logger.isLoggable(Level.FINEST))
+						logger.log(Level.FINEST, id + " send list status");
 				} catch (AcnetStatusException e) {
 					dispose(ACNET_DISCONNECTED);
 					logger.log(Level.FINE, String.format("%s list - exception: %s", id, e.getMessage()));
@@ -409,18 +410,16 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 			try {
 				if (gss == null)
 					gss = DPMCredentials.createContext();
-				//token = gss.acceptSecContext(token, 0, token.length);
 				token = DPMCredentials.accept(gss, token);
 			} catch (GSSException e) {
 				authenticationFailed(DPM_PRIV, e, protocolReplier);
 			}
-		//}
 
 			if (gss != null && gss.isEstablished()) {
 				try {
 					logger.log(Level.INFO, String.format("%s User %s authenticated from %s for service %s", 
 															id, gss.getSrcName(), clientHostName(), gss.getTargName()));
-					protocolReplier.sendReply(new AuthenticateReply(DPMCredentials.serviceName().toString()));
+					protocolReplier.sendReply(new AuthenticateReply(DPMCredentials.serviceName()));
 				} catch (GSSException e) {
 					authenticationFailed(DPM_PRIV, e, protocolReplier);
 				} catch (AcnetStatusException e) {
@@ -430,7 +429,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 				}
 			} else if (token != null) {
 				try {
-					protocolReplier.sendReply(new AuthenticateReply(DPMCredentials.serviceName().toString(), token));
+					protocolReplier.sendReply(new AuthenticateReply(DPMCredentials.serviceName(), token));
 				} catch (AcnetStatusException e) {
 					authenticationFailed(e.status, e, protocolReplier);
 				} catch (Exception e) {
@@ -494,7 +493,8 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 					String[] prop = drf.substring(1).split(":");
 
 					if (!prop[0].isEmpty()) {
-	    				logger.log(Level.FINE, String.format("%s AddProperty '%s'='%s'", id, prop[0], prop[1]));
+						if (logger.isLoggable(Level.FINE))
+	    					logger.log(Level.FINE, String.format("%s AddProperty '%s'='%s'", id, prop[0], prop[1]));
 						addToProperties(prop[0], prop[1]);
 						return;
 					}
@@ -506,7 +506,8 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 			// If it fails as a property then go ahead and try to parse
 			// as a DRF3 request
 
-	    	logger.log(Level.FINE, String.format("%s AddRequest %6d '%s'", id, refId, drf));
+			if (logger.isLoggable(Level.FINE))
+	    		logger.log(Level.FINE, String.format("%s AddRequest %6d '%s'", id, refId, drf));
 
 			final DPMRequest req = new DPMRequest(drf);
 			
@@ -634,14 +635,15 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 				try {
 					gssName = GSSManager.getInstance().createName(property("USER"), GSSName.NT_USER_NAME);
 				} catch (Exception e) { 
-					//logger.log(Level.FINE, "Unable to create GSSName from '" + property("USER") + "'");
-					//throw new AcnetStatusException(DPM_PRIV);
-					try {
-						gssName = GSSManager.getInstance().createName("neswold@FNAL.GOV", GSSName.NT_USER_NAME);
-					} catch (Exception e2) {
-						logger.log(Level.FINE, "Unable to create GSSName from '" + property("USER") + "'");
-						throw new AcnetStatusException(DPM_PRIV);
-					}
+					logger.log(Level.FINE, "Unable to create GSSName from '" + property("USER") + "'");
+					throw new AcnetStatusException(DPM_PRIV);
+
+					//try {
+					//	gssName = GSSManager.getInstance().createName("neswold@FNAL.GOV", GSSName.NT_USER_NAME);
+					//} catch (Exception e2) {
+					//	logger.log(Level.FINE, "Unable to create GSSName from '" + property("USER") + "'");
+					//	throw new AcnetStatusException(DPM_PRIV);
+					//}
 				}
 			else
 				throw new AcnetStatusException(DPM_PRIV);

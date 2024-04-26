@@ -1,10 +1,11 @@
 // $Id: BasicStatusScaling.java,v 1.8 2024/01/05 21:31:06 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
-
 import java.util.Arrays;
+
+//import gov.fnal.controls.service.proto.Lookup_v2;
+import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 
 class BasicStatusScaling implements Scaling
 {

@@ -1,4 +1,4 @@
-// $Id: DPMProtocolHandlerPC.java,v 1.19 2024/02/22 16:33:36 kingc Exp $
+// $Id: DPMProtocolHandlerPC.java,v 1.20 2024/04/01 15:33:47 kingc Exp $
 
 package gov.fnal.controls.servers.dpm.protocols.acnet.pc;
 
@@ -61,7 +61,7 @@ public class DPMProtocolHandlerPC extends DPMProtocolHandlerAcnet implements Acn
 			this.buf = ByteBuffer.allocate(16 * 1024);
 			this.msg = new DPM.Reply.ServiceDiscovery();
 			this.msg.serviceLocation = connection.getLocalNodeName(); 
-			this.setName("ServiceDiscovery");
+			this.setName("Service discovery");
 			this.start();
 		}
 

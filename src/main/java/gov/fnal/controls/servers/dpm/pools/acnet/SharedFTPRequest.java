@@ -1,11 +1,12 @@
 // $Id: SharedFTPRequest.java,v 1.6 2024/02/22 16:32:14 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.events.DataEventObserver;
-import gov.fnal.controls.servers.dpm.pools.ReceiveData;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
 import java.util.Vector;
+
+import gov.fnal.controls.servers.dpm.events.DataEventObserver;
+
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 
 class SharedFTPRequest extends FTPRequest implements ReceiveData, DataEventObserver
 {

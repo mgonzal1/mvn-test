@@ -1,11 +1,11 @@
 // $Id: FTPScope.java,v 1.5 2024/02/22 16:32:14 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
+import java.util.StringTokenizer;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
-
-import java.util.StringTokenizer;
 
 class FTPScope implements AcnetErrors
 {

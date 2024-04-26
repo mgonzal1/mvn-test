@@ -5,8 +5,8 @@ package gov.fnal.controls.servers.dpm.protocols.tcp;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.HashMap;
 
 class HttpRequest 
 {

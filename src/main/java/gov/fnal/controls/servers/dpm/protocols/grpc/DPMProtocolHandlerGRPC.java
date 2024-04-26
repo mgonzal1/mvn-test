@@ -1,4 +1,4 @@
-// $Id: DPMProtocolHandlerGRPC.java,v 1.10 2024/03/05 17:45:23 kingc Exp $
+// $Id: DPMProtocolHandlerGRPC.java,v 1.11 2024/03/20 17:56:00 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.grpc;
 
 //import java.util.UUID;
@@ -133,7 +133,7 @@ class DPMImpl extends DPMImplBase// implements ServerInterceptor
 			});
 
 			sessionReply.setSessionId(session.id());
-			sessionReply.setServiceName(DPMCredentials.serviceName().toString());
+			sessionReply.setServiceName(DPMCredentials.serviceName());
 
 			responseObserver.onNext(sessionReply.build());
 		} catch (Exception e) {

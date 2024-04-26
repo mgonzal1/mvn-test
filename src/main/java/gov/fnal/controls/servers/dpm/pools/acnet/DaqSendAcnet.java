@@ -1,12 +1,12 @@
 // $Id: DaqSendAcnet.java,v 1.9 2024/02/22 16:32:14 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
+import java.util.Collection;
+import java.util.ArrayList;
+
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
 import gov.fnal.controls.servers.dpm.events.DataEvent;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 class DaqSendAcnet implements DaqSendInterface
 {
@@ -17,8 +17,8 @@ class DaqSendAcnet implements DaqSendInterface
 	private final Completable listCompletion;
 	private final ArrayList<DaqRequestList> reqLists = new ArrayList<>();
 
-	DaqSendAcnet(Node node, DataEvent event, boolean isSetting,
-				 Completable listCompletion, long timeout)
+	DaqSendAcnet(Node node, DataEvent event, boolean isSetting, 
+					Completable listCompletion, long timeout)
 	{
 		this.node = node;
 		this.event = event;

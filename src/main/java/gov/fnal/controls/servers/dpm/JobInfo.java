@@ -1,4 +1,4 @@
-// $Id: JobInfo.java,v 1.17 2024/03/06 15:41:27 kingc Exp $
+// $Id: JobInfo.java,v 1.18 2024/03/22 19:21:40 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
@@ -71,9 +71,9 @@ public class JobInfo
 
 	void start(DPMList list) throws InterruptedException, IOException, AcnetStatusException, SQLException
 	{
-		DeviceCache.add(requests.values());
-		
 		if (needsStart) {
+			DeviceCache.add(requests.values());
+
 			needsStart = false;
 
 			final Job newJob = model.createJob(list);

@@ -1,10 +1,10 @@
 // $Id: PVMonitor.java,v 1.2 2023/05/25 16:57:54 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
-import org.epics.pva.client.PVAChannel;
-import org.epics.pva.data.PVAStructure;
-
 import java.util.BitSet;
+
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.client.PVAChannel;
 
 public class PVMonitor implements EpicsListener
 {

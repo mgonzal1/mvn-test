@@ -1,17 +1,18 @@
 // $Id: DPMProtocolHandler.java,v 1.7 2023/11/02 16:36:15 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols;
 
-import gov.fnal.controls.servers.dpm.DPMList;
-import gov.fnal.controls.servers.dpm.ListId;
-import gov.fnal.controls.servers.dpm.Scope;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import gov.fnal.controls.servers.dpm.ListId;
+import gov.fnal.controls.servers.dpm.DPMList;
+import gov.fnal.controls.servers.dpm.Scope;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 

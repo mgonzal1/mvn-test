@@ -1,14 +1,15 @@
 // $Id: DatabasePoolImpl.java,v 1.6 2023/11/02 16:36:15 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.database;
 
-import gov.fnal.controls.servers.dpm.SettingData;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.pools.PoolInterface;
-import gov.fnal.controls.servers.dpm.pools.PoolType;
-import gov.fnal.controls.servers.dpm.pools.ReceiveData;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
 import java.util.ArrayList;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
+
+import gov.fnal.controls.servers.dpm.SettingData;
+import gov.fnal.controls.servers.dpm.pools.ReceiveData;
+import gov.fnal.controls.servers.dpm.pools.PoolType;
+import gov.fnal.controls.servers.dpm.pools.PoolInterface;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 public class DatabasePoolImpl implements PoolInterface, AcnetErrors
 {

@@ -1,10 +1,10 @@
 // $Id: DPMRequest.java,v 1.7 2024/03/05 17:46:51 kingc Exp $
 package gov.fnal.controls.servers.dpm;
+ 
+import java.util.Objects;
 
 import gov.fnal.controls.servers.dpm.drf3.DiscreteRequest;
 import gov.fnal.controls.servers.dpm.drf3.ImmediateEvent;
-
-import java.util.Objects;
 		
 public final class DPMRequest extends DiscreteRequest implements Comparable<DPMRequest>
 {

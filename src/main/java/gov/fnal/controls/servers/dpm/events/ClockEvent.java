@@ -1,10 +1,9 @@
 // $Id: ClockEvent.java,v 1.5 2024/03/06 20:02:20 kingc Exp $
 package gov.fnal.controls.servers.dpm.events;
 
-import gov.fnal.controls.db.DbServer;
-
 import java.sql.ResultSet;
 
+import gov.fnal.controls.db.DbServer;
 import static gov.fnal.controls.db.DbServer.getDbServer;
 
 public class ClockEvent implements DataEvent, DbServer.Constants

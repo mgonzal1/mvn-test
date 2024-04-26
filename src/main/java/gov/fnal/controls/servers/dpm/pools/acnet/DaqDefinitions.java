@@ -1,4 +1,4 @@
-// $Id: DaqDefinitions.java,v 1.7 2024/02/22 16:32:14 kingc Exp $
+// $Id: DaqDefinitions.java,v 1.8 2024/03/27 21:00:26 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
@@ -63,12 +63,11 @@ class Daq16 extends DaqDefinitions
 
 class Daq32 extends DaqDefinitions
 {
-	final int MaxEventStringLength;
+	static final int MaxEventStringLength = 54;
 
 	Daq32()
 	{
-		super(18, 34, 20, 2);
-		this.MaxEventStringLength = 54;
+		super(18 + MaxEventStringLength, 34, 20, 2);
 	}
 
 	int requestSize(int count)

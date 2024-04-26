@@ -9,7 +9,7 @@ class Rad50
 										'6', '7', '8', '9' };
     static final int Rad50CharCount = 6;
     
-	private static int charToIndex(char c)
+	final private static int charToIndex(char c) 
 	{
 		if (c >= 'A' && c <= 'Z')
 			return c - 'A' + 1;
@@ -27,7 +27,7 @@ class Rad50
 		return 0;
 	}
     
-    public static int encode(String s)
+    public final static int encode(String s) 
 	{
 		int v1 = 0, v2 = 0;
 		int len = s.length();
@@ -47,7 +47,7 @@ class Rad50
 		return v2 << 16 | v1;
     }
 
-    public static String decode(int rad50)
+    final static String decode(int rad50) 
 	{
 		final char s[] = new char[Rad50CharCount];
 

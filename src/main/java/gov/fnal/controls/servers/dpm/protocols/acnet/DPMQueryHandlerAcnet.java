@@ -1,20 +1,21 @@
 // $Id: DPMQueryHandlerAcnet.java,v 1.11 2023/11/02 16:36:15 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.acnet;
 
-import gov.fnal.controls.servers.dpm.DPMList;
-import gov.fnal.controls.servers.dpm.DPMServer;
-import gov.fnal.controls.servers.dpm.JobInfo;
+import java.util.Collection;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.logging.Level;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequest;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-import gov.fnal.controls.servers.dpm.protocols.HandlerType;
-import gov.fnal.controls.servers.dpm.protocols.Protocol;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.Collection;
-import java.util.logging.Level;
+import gov.fnal.controls.servers.dpm.DPMServer;
+import gov.fnal.controls.servers.dpm.DPMList;
+import gov.fnal.controls.servers.dpm.JobInfo;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.protocols.Protocol;
+import gov.fnal.controls.servers.dpm.protocols.HandlerType;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 

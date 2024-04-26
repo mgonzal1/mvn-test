@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 
 class StatSet
 {
-	public int stats[] = new int[6];
+	private int stats[] = new int[6];
 
 	StatSet()
 	{

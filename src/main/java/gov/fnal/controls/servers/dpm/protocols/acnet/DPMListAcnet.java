@@ -2,6 +2,7 @@
 package gov.fnal.controls.servers.dpm.protocols.acnet;
 
 import gov.fnal.controls.servers.dpm.DPMList;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequest;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
