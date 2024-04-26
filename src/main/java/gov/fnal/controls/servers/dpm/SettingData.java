@@ -1,6 +1,7 @@
 // $Id: SettingData.java,v 1.3 2023/07/20 19:44:27 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 public abstract class SettingData
@@ -10,10 +11,10 @@ public abstract class SettingData
 	public static interface Handler
 	{
 		public void handle(WhatDaq whatDaq, byte[] data);
-		public void handle(WhatDaq whatDaq, double data);
-		public void handle(WhatDaq whatDaq, double[] data);
-		public void handle(WhatDaq whatDaq, String data);
-		public void handle(WhatDaq whatDaq, String[] data);
+		public void handle(WhatDaq whatDaq, double data) throws AcnetStatusException;
+		public void handle(WhatDaq whatDaq, double[] data) throws AcnetStatusException;
+		public void handle(WhatDaq whatDaq, String data) throws AcnetStatusException;
+		public void handle(WhatDaq whatDaq, String[] data) throws AcnetStatusException;
 	}
 
 	abstract public void deliverTo(WhatDaq whatDaq, Handler handler);

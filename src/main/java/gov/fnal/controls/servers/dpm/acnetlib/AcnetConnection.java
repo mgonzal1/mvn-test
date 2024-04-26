@@ -1,4 +1,4 @@
-// $Id: AcnetConnection.java,v 1.3 2024/02/22 16:29:45 kingc Exp $
+// $Id: AcnetConnection.java,v 1.4 2024/04/01 15:30:49 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.net.InetAddress;
@@ -12,7 +12,7 @@ import java.util.logging.Level;
 abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, AcnetMessageHandler, AcnetRequestHandler
 {
     final HashMap<RequestId, AcnetRequestContext> requestsOut = new HashMap<>();
-	 HashMap<ReplyId, AcnetRequest> requestsIn = new HashMap<>();
+	final HashMap<ReplyId, AcnetRequest> requestsIn = new HashMap<>();
 	final StatSet stats = new StatSet();
 
     int name;
@@ -203,8 +203,7 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 		{
 			this.queue = new LinkedBlockingQueue<>();
 			this.thread = new Thread(this);
-			
-			this.thread.setName("ACNET - " + connectedName() + " reply thread");
+			this.thread.setName("ACNET " + connectedName() + " reply");
 			this.thread.start();
 		}
 

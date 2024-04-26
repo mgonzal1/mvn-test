@@ -1,12 +1,10 @@
 // $Id: DeviceCache.java,v 1.7 2024/02/22 16:33:02 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools;
 
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
@@ -18,9 +16,6 @@ import gov.fnal.controls.service.proto.Dbnews;
 
 import gov.fnal.controls.servers.dpm.DPMRequest;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetMessage;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetMessageHandler;
 

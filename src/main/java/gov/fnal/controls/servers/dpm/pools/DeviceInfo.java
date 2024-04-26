@@ -63,8 +63,8 @@ public class DeviceInfo
 	{
 		public static class Primary
 		{
-			public int index;//removed final
-			public int inputLen;//removed final
+			final public int index;
+			final public int inputLen;
 			public final String units;
 
 			public Primary(ResultSet rs) throws SQLException
@@ -100,9 +100,9 @@ public class DeviceInfo
 				}
 			}
 
-			public  String units;
-			public  int index;
-			public  double[] constants;
+			public final  String units;
+			public final int index;
+			public final double[] constants;
 			//public final EnumString[] enumStrings;
 			public  Map<Object, EnumString> enums;
 			public Common(ResultSet rs) throws SQLException{

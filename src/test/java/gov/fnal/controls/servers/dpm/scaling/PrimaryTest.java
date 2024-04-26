@@ -3,7 +3,7 @@ package gov.fnal.controls.servers.dpm.scaling;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 import org.junit.jupiter.api.Test;
-import org.opentest4j.AssertionFailedError;
+import org.mockito.Mockito;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,10 +18,11 @@ public class PrimaryTest {
 
     private static Primary getPrimary(int inputLen, int index) throws SQLException {
         DeviceInfo.ReadSetScaling readSetScaling = mock(DeviceInfo.ReadSetScaling.class);
-        DeviceInfo.ReadSetScaling.Primary primary = new DeviceInfo.ReadSetScaling.Primary(mock(ResultSet.class));
-        primary.inputLen = inputLen;
-        primary.index = index;
-        readSetScaling.primary = primary;
+        ResultSet resultSet = mock(ResultSet.class);
+        Mockito.when(resultSet.getInt("primary_index")).thenReturn(index);
+        Mockito.when(resultSet.getInt("scaling_length")).thenReturn(inputLen);
+        Mockito.when(resultSet.getString("primary_text")).thenReturn("primary_unites");
+        readSetScaling.primary = new DeviceInfo.ReadSetScaling.Primary(resultSet);
         return new Primary(readSetScaling);
     }
 

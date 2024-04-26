@@ -2,7 +2,6 @@
 package gov.fnal.controls.servers.dpm;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.AcceleratorPool;
 import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;

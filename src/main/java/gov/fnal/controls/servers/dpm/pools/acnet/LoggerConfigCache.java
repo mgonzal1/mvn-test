@@ -5,7 +5,6 @@ import gov.fnal.controls.servers.dpm.DPMRequest;
 import gov.fnal.controls.servers.dpm.DPMServer;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.acnetlib.Node;
 import gov.fnal.controls.servers.dpm.drf3.AcnetRequest;
 import gov.fnal.controls.servers.dpm.events.DataEvent;
 import gov.fnal.controls.servers.dpm.events.DataEventFactory;

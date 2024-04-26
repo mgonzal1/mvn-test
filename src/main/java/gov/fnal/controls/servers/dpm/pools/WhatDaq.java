@@ -1,19 +1,41 @@
 // $Id: WhatDaq.java,v 1.14 2024/03/05 17:25:21 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools;
 
-import gov.fnal.controls.servers.dpm.DPMList;
-import gov.fnal.controls.servers.dpm.DPMRequest;
+import java.util.Objects;
+import java.util.EnumSet;
+import java.util.Arrays;
+import java.text.ParseException;
+import java.nio.ByteBuffer;
+import java.util.logging.Level;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.drf3.*;
-import gov.fnal.controls.servers.dpm.events.NeverEvent;
-import gov.fnal.controls.servers.dpm.events.*;
 
-import java.nio.ByteBuffer;
-import java.text.ParseException;
-import java.util.EnumSet;
-import java.util.Objects;
+import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.events.NeverEvent;
+import gov.fnal.controls.servers.dpm.events.DefaultDataEvent;
+import gov.fnal.controls.servers.dpm.events.DataEventFactory;
+import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
+
+import gov.fnal.controls.servers.dpm.drf3.Range;
+import gov.fnal.controls.servers.dpm.drf3.DeviceFormatException;
+import gov.fnal.controls.servers.dpm.drf3.TimeFreq;
+import gov.fnal.controls.servers.dpm.drf3.TimeFreqUnit;
+import gov.fnal.controls.servers.dpm.drf3.PeriodicEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
+
+import gov.fnal.controls.servers.dpm.drf3.Field;
+import gov.fnal.controls.servers.dpm.drf3.Property;
+import gov.fnal.controls.servers.dpm.drf3.EventFactory;
+import gov.fnal.controls.servers.dpm.drf3.AcnetRequest;
+import gov.fnal.controls.servers.dpm.drf3.FieldFormatException;
+import gov.fnal.controls.servers.dpm.drf3.PropertyFormatException;
+
+import gov.fnal.controls.servers.dpm.DPMList;
+import gov.fnal.controls.servers.dpm.DPMRequest;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 {
@@ -26,21 +48,21 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 
 	public final DPMList list;
 	public final long refId;
-	public  DeviceInfo dInfo;
+	public final DeviceInfo dInfo;
 	public final Field field;
-	public  DeviceInfo.PropertyInfo pInfo;
+	public final DeviceInfo.PropertyInfo pInfo;
 	public final Property property;
 	public final Event event;
 	public final String alarmListName;
 	public final String daqName;
 	public final String loggedName;
 
-	public  int di;
-	public  int pi;
+	final protected int di;
+	final protected int pi;
 	final protected int dipi;
 	final protected String name;
 	protected int error;
-	public int length;
+	protected int length;
 	protected int offset;
 	protected int maxLength;
 	protected int dataTypeId;
@@ -107,7 +129,7 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 		} catch (Exception e) {
 			throw new AcnetStatusException(ACNET_NXE, e);
 		}
-	
+
 		this.list = list;
 		this.refId = refId;
 		this.receiveDataId = 0;
@@ -133,7 +155,7 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 		System.arraycopy(pInfo.ssdn, 0, this.ssdn, 0, pInfo.ssdn.length);
 		this.ftd = (pInfo.ftd & 0xffff);
 		this.poolMask = 0;
-		this.receiveData = null; 
+		this.receiveData = null;
 		this.when = EventFactory.createEvent(this.event);
 		this.defaultEvent = (this.when instanceof DefaultDataEvent);
 		this.alarmListName = "";
@@ -149,10 +171,10 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 		// Setup length and offset
 
 		final Range range = acnetReq.getRange();
-		
+
 		switch (range.getType()) {
-		 	case ARRAY:
-		 		offset = range.getStartIndex() * pInfo.atomicSize;
+			case ARRAY:
+				offset = range.getStartIndex() * pInfo.atomicSize;
 				length = range.getLength() * pInfo.atomicSize;
 				break;
 
@@ -198,14 +220,14 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 
 		// Setup array info
 
-       	if (offset != 0 && defaultLength != 0 && (length % pInfo.atomicSize) == 0)
-	    	this.arrayElement = offset / defaultLength;
-		else 
+		if (offset != 0 && defaultLength != 0 && (length % pInfo.atomicSize) == 0)
+			this.arrayElement = offset / defaultLength;
+		else
 			this.arrayElement = 0;
 
 		switch (this.property) {
 			case READING:
-		 	case SETTING:
+			case SETTING:
 				this.numElements = length / pInfo.atomicSize;
 				break;
 		}
@@ -246,7 +268,7 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 		this.ftd = whatDaq.ftd;
 		this.poolMask = 0;
 		this.receiveDataId = whatDaq.receiveDataId;
-		this.receiveData = this; 
+		this.receiveData = this;
 		this.when = whatDaq.when;
 		this.defaultEvent = whatDaq.defaultEvent;
 		this.alarmListName = whatDaq.alarmListName;
@@ -325,21 +347,21 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 		switch (property) {
 			case SETTING:
 			case CONTROL:
-		 		return true;
+				return true;
 
-		 	default:
-		 		return false;
+			default:
+				return false;
 		}
 	}
 
 	public boolean isStateDevice()
 	{
-		return name.charAt(0) == 'V';		
+		return name.charAt(0) == 'V';
 	}
 
 	public boolean hasEvent()
 	{
-		return !(when instanceof NeverEvent);		
+		return !(when instanceof NeverEvent);
 	}
 
 	public boolean isRepetitive()
@@ -357,40 +379,40 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 		this.user = user;
 	}
 
-    private DeviceInfo.PropertyInfo propInfo() throws AcnetStatusException
-    {
-       	DeviceInfo.PropertyInfo pInfo = null;
+	private DeviceInfo.PropertyInfo propInfo() throws AcnetStatusException
+	{
+		DeviceInfo.PropertyInfo pInfo = null;
 
-        switch (property) {
-            case STATUS:
-                if (dInfo.status != null)
-                    return dInfo.status.prop;
-                break;
+		switch (property) {
+			case STATUS:
+				if (dInfo.status != null)
+					return dInfo.status.prop;
+				break;
 
-            case CONTROL:
-                if (dInfo.control != null)
-                    return dInfo.control.prop;
-                break;
+			case CONTROL:
+				if (dInfo.control != null)
+					return dInfo.control.prop;
+				break;
 
-            case READING:
-                if (dInfo.reading != null)
-                    return dInfo.reading.prop;
-                break;
+			case READING:
+				if (dInfo.reading != null)
+					return dInfo.reading.prop;
+				break;
 
-            case SETTING:
-                if (dInfo.setting != null)
-                    return dInfo.setting.prop;
-                break;
+			case SETTING:
+				if (dInfo.setting != null)
+					return dInfo.setting.prop;
+				break;
 
-            case ANALOG:
-                if (dInfo.analogAlarm != null)
-                    return dInfo.analogAlarm.prop;
-                break;
+			case ANALOG:
+				if (dInfo.analogAlarm != null)
+					return dInfo.analogAlarm.prop;
+				break;
 
-            case DIGITAL:
-                if (dInfo.digitalAlarm != null)
-                    return dInfo.digitalAlarm.prop;
-                break;
+			case DIGITAL:
+				if (dInfo.digitalAlarm != null)
+					return dInfo.digitalAlarm.prop;
+				break;
 
 			case DESCRIPTION:
 				return new DeviceInfo.PropertyInfo(pi, propToNode(), 128, 1);
@@ -403,10 +425,10 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 
 			case ALARM_LIST_NAME:
 				return new DeviceInfo.PropertyInfo(pi, propToNode(), 128, 1);
-        }
+		}
 
-        throw new AcnetStatusException(DBM_NOPROP);
-    }
+		throw new AcnetStatusException(DBM_NOPROP);
+	}
 
 	private int propToNode() throws AcnetStatusException
 	{
@@ -428,7 +450,7 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 		if (dInfo.digitalAlarm != null)
 			return dInfo.digitalAlarm.prop.node;
 
-        throw new AcnetStatusException(DBM_NOPROP);
+		throw new AcnetStatusException(DBM_NOPROP);
 	}
 
 	public String getUnits()
@@ -437,16 +459,16 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 			final DeviceInfo.ReadSetScaling scaling;
 
 			switch (property) {
-			 case READING:
-			 	scaling = dInfo.reading.scaling;
-				break;
+				case READING:
+					scaling = dInfo.reading.scaling;
+					break;
 
-			 case SETTING:
-			 	scaling = dInfo.reading.scaling;
-				break;
+				case SETTING:
+					scaling = dInfo.reading.scaling;
+					break;
 
-			 default:
-			 	return null;
+				default:
+					return null;
 			}
 
 			return field == Field.PRIMARY ? scaling.primary.units : scaling.common.units;
@@ -460,13 +482,13 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 		setting = null;
 	}
 
-    final public void setSetting(byte data[]) throws AcnetStatusException
+	final public void setSetting(byte data[]) throws AcnetStatusException
 	{
-        if (data.length == length) {
+		if (data.length == length) {
 			setting = data;
 		} else
 			throw new AcnetStatusException(DIO_INVLEN);
-    }
+	}
 
 	final private int end()
 	{
@@ -483,7 +505,7 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 
 	final public boolean contains(WhatDaq whatDaq)
 	{
-		return di == whatDaq.di && pi == whatDaq.pi && 
+		return di == whatDaq.di && pi == whatDaq.pi &&
 				whatDaq.offset >= offset && whatDaq.end() <= end();
 	}
 
@@ -495,7 +517,7 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 
 		if (obj instanceof WhatDaq)
 			return compareTo((WhatDaq) obj) == 0;
-	
+
 		return false;
 	}
 
@@ -555,15 +577,15 @@ public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 	public String toString()
 	{
 		return String.format("%-14s %-8s %-8d %-16s L:%-6d O:%-6d %02x%02x/%02x%02x/%02x%02x/%02x%02x %s",
-								name, node.name(), di, property, length, offset,
-								ssdn[1], ssdn[0], ssdn[3], ssdn[2], ssdn[5], ssdn[4], ssdn[7], ssdn[6],
-								setting != null ? "SettingReady" : "");
+				name, node.name(), di, property, length, offset,
+				ssdn[1], ssdn[0], ssdn[3], ssdn[2], ssdn[5], ssdn[4], ssdn[7], ssdn[6],
+				setting != null ? "SettingReady" : "");
 	}
 
 	public boolean isArray()
 	{
 		return (pi == Property.READING.indexValue || pi == Property.SETTING.indexValue)
-					&& length != defaultLength && numElements > 1 && rawOffset == defaultLength;
+				&& length != defaultLength && numElements > 1 && rawOffset == defaultLength;
 	}
 
 	public int getDeviceIndex()

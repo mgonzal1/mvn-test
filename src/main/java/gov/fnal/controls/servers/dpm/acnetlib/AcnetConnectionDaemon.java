@@ -1,4 +1,4 @@
-// $Id: AcnetConnectionDaemon.java,v 1.1 2024/02/22 16:29:45 kingc Exp $
+// $Id: AcnetConnectionDaemon.java,v 1.2 2024/04/01 15:30:49 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.net.InetAddress;
@@ -22,7 +22,7 @@ abstract class AcnetConnectionDaemon extends AcnetConnection implements Delayed
 		
 		ConnectionMonitor()
 		{
-			setName("AcnetConnectionDaemon.ConnectionMonitor");
+			setName("ACNET monitor");
 			setDaemon(true);
 			start();
 		}
@@ -87,7 +87,7 @@ abstract class AcnetConnectionDaemon extends AcnetConnection implements Delayed
 	{
 		super(name, vNode);
 
-		this.pid = 12;
+		this.pid = AcnetInterface.getPid();
 		this.cmdBuf = ByteBuffer.allocateDirect(16);
     }
 

@@ -13,13 +13,9 @@ import java.text.FieldPosition;
 import java.text.SimpleDateFormat;
 
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequestContext;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetReply;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetReplyHandler;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.acnetlib.Node;
 
 import gov.fnal.controls.servers.dpm.Errors;
 import gov.fnal.controls.servers.dpm.DPMRequest;

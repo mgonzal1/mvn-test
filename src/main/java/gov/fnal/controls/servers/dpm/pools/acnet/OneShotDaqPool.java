@@ -1,49 +1,51 @@
-// $Id: OneShotDaqPool.java,v 1.11 2024/02/22 16:32:14 kingc Exp $
+// $Id: OneShotDaqPool.java,v 1.12 2024/03/27 20:58:32 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
+
+import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.logging.Level;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
+
 import gov.fnal.controls.servers.dpm.events.DataEvent;
 import gov.fnal.controls.servers.dpm.events.OnceImmediateEvent;
-import gov.fnal.controls.servers.dpm.pools.PoolUser;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.logging.Level;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.PoolUser;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 {
-    private static final DataEvent event = new OnceImmediateEvent();
+	private static final DataEvent event = new OnceImmediateEvent();
 
 	int lastCompletedStatus = 0;
 	long updateTime = 0;
 	long procTime = 0;
 
-    ArrayList<WhatDaq> activeReqs = new ArrayList<>();
-    LinkedList<WhatDaq> queuedReqs = new LinkedList<>();
+	ArrayList<WhatDaq> activeReqs = new ArrayList<>();
+	LinkedList<WhatDaq> queuedReqs = new LinkedList<>();
 
 	DaqSendInterface xtrans = null;
 
-    public OneShotDaqPool(Node Node)
+	public OneShotDaqPool(Node Node)
 	{
 		super(Node, event);
-    }
+	}
 
 	@Override
-    synchronized public void insert(WhatDaq whatDaq)
+	synchronized public void insert(WhatDaq whatDaq)
 	{
-        if (whatDaq.length() > DaqDefinitions.MaxReplyDataLength()) {
-            PoolSegmentAssembly.insert(whatDaq, this, 2048, false);
-            return;
-        }
+		if (whatDaq.length() > DaqDefinitions.MaxReplyDataLength()) {
+			PoolSegmentAssembly.insert(whatDaq, this, 2048, false);
+			return;
+		}
 
-        queuedReqs.add(whatDaq);
-    }
+		queuedReqs.add(whatDaq);
+	}
 
 	synchronized void insert(Collection<WhatDaq> whatDaqs)
 	{
@@ -52,7 +54,7 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 	}
 
 	@Override
-    synchronized public void cancel(PoolUser user, int error)
+	synchronized public void cancel(PoolUser user, int error)
 	{
 		Iterator<WhatDaq> iter = activeReqs.iterator();
 
@@ -63,9 +65,9 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 				whatDaq.getReceiveData().receiveStatus(error);
 				iter.remove();
 			}
-        }
+		}
 
-        iter = queuedReqs.iterator();
+		iter = queuedReqs.iterator();
 
 		while (iter.hasNext()) {
 			final WhatDaq whatDaq = (WhatDaq) iter.next();
@@ -73,14 +75,14 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 			if (user == null || whatDaq.getUser() == user) {
 				whatDaq.getReceiveData().receiveStatus(error);
 			}
-        }
-    }
+		}
+	}
 
 	@Override
-    synchronized public boolean process(boolean __)
+	synchronized public boolean process(boolean __)
 	{
 		procTime = System.currentTimeMillis();
-            
+
 		try {
 			if (xtrans != null) {
 				try {
@@ -97,7 +99,7 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 			xtrans = DaqSendFactory.getDaqSendInterface(node, event, isSetting(), this, event.defaultTimeout());
 			xtrans.begin();
 		} catch (Exception e) {
-			logger.log(Level.FINE, "exception", e);
+			logger.log(Level.FINE, "OneShotDaqPool: exception", e);
 			return false;
 		}
 
@@ -118,13 +120,13 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 			xtrans = null;
 			return false;
 		}
-    }
+	}
 
 	@Override
-    synchronized public void completed(int status)
+	synchronized public void completed(int status)
 	{
-        lastCompletedStatus = status;
-        updateTime = System.currentTimeMillis();
+		lastCompletedStatus = status;
+		updateTime = System.currentTimeMillis();
 
 		if (status != 0) {
 			for (WhatDaq whatDaq : activeReqs)
@@ -132,15 +134,15 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 		}
 
 		activeReqs.clear();
-        xtrans = null;
+		xtrans = null;
 
 		process(false);
-    }
+	}
 
-    public static String dumpPools()
+	public static String dumpPools()
 	{
 		final StringBuilder buf = new StringBuilder("[OneShotDaqPool]\n");
 
 		return buf.toString();
-    }
+	}
 }

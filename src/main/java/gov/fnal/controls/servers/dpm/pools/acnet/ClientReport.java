@@ -1,8 +1,6 @@
 // $Id: ClientReport.java,v 1.8 2023/12/13 17:04:49 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 
 import java.nio.ByteBuffer;

@@ -1,23 +1,27 @@
-// $Id: AcceleratorPool.java,v 1.15 2024/03/05 17:26:39 kingc Exp $
+// $Id: AcceleratorPool.java,v 1.16 2024/03/27 21:03:59 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools;
 
-import gov.fnal.controls.servers.dpm.ConsoleUser;
-import gov.fnal.controls.servers.dpm.SettingData;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.acnetlib.Node;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.nio.ByteOrder;
+import java.nio.ByteBuffer;
+
 import gov.fnal.controls.servers.dpm.drf3.Property;
+import gov.fnal.controls.servers.dpm.SettingData;
+import gov.fnal.controls.servers.dpm.ConsoleUser;
 import gov.fnal.controls.servers.dpm.pools.acnet.AcnetPoolImpl;
 import gov.fnal.controls.servers.dpm.pools.acnet.FTPPoolImpl;
-import gov.fnal.controls.servers.dpm.pools.database.DatabasePoolImpl;
 import gov.fnal.controls.servers.dpm.pools.epics.EpicsPoolImpl;
+import gov.fnal.controls.servers.dpm.pools.epics.PVAPool;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.database.DatabasePoolImpl;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
@@ -28,8 +32,8 @@ public class AcceleratorPool
 
 	private final ByteBuffer buf;
 
-	final PoolInterface pools[] = { new AcnetPoolImpl(), new EpicsPoolImpl(), 
-									new DatabasePoolImpl(), new FTPPoolImpl() };
+	final PoolInterface pools[] = { new AcnetPoolImpl(), new EpicsPoolImpl(),
+			new DatabasePoolImpl(), new FTPPoolImpl() };
 
 	public static void init() throws Exception
 	{
@@ -61,20 +65,20 @@ public class AcceleratorPool
 			return pools[2];
 		} else {
 			switch (whatDaq.dInfo.type) {
-			 case Acnet:
-			 {
-			 	if ((whatDaq.property == Property.READING) && (whatDaq.getEventFrequency() > 20.0)) {
-					logger.log(Level.FINE, whatDaq + " was upgraded to FTP protocol for frequency - " 
-									+ whatDaq.getEventFrequency() + "Hz for event: " + whatDaq.getEvent()
-									+ " " + whatDaq.event);
-					return pools[3];
-				} else {
-			 		return pools[0];
+				case Acnet:
+				{
+					if ((whatDaq.property == Property.READING) && (whatDaq.getEventFrequency() > 20.0)) {
+						logger.log(Level.FINE, whatDaq + " was upgraded to FTP protocol for frequency - "
+								+ whatDaq.getEventFrequency() + "Hz for event: " + whatDaq.getEvent()
+								+ " " + whatDaq.event);
+						return pools[3];
+					} else {
+						return pools[0];
+					}
 				}
-			 }
 
-			 case Epics:
-				return pools[1];	
+				case Epics:
+					return pools[1];
 			}
 		}
 
@@ -98,7 +102,7 @@ public class AcceleratorPool
 		getPool(whatDaq).addRequest(whatDaq);
 	}
 
-	public void addSetting(WhatDaq whatDaq, SettingData setting)
+	public void addSetting(WhatDaq whatDaq, SettingData setting) throws AcnetStatusException
 	{
 		getPool(whatDaq).addSetting(whatDaq, setting);
 	}
@@ -127,13 +131,13 @@ public class AcceleratorPool
 
 	synchronized public void logSettings(ConsoleUser user, String location, List<WhatDaq> settings) throws AcnetStatusException
 	{
-	//	final ArrayList<WhatDaq> successful = new ArrayList<>();
+		//	final ArrayList<WhatDaq> successful = new ArrayList<>();
 
-	//	for (SettingStatus ss : settingStatus) {
-	//		if (ss.successful()) {
-	//			successful.add(ss.whatDaq);
-	//		}
-	//	}
+		//	for (SettingStatus ss : settingStatus) {
+		//		if (ss.successful()) {
+		//			successful.add(ss.whatDaq);
+		//		}
+		//	}
 
 		//logger.fine(String.format("%s LogSettings - %d setting(s)", list.id(), settings.size()));
 
@@ -194,13 +198,13 @@ public class AcceleratorPool
 			buf.putInt(whatDaq.dipi());
 			buf.putShort((short) whatDaq.length());
 			buf.putInt(whatDaq.offset());
-			buf.put(whatDaq.setting(), 0, whatDaq.length() > 4 ? 4 : whatDaq.length()); 
+			buf.put(whatDaq.setting(), 0, whatDaq.length() > 4 ? 4 : whatDaq.length());
 		}
 
 		buf.flip();
 
 		//try {
-			connection.send("SETSDB", "SETSDB", buf);
+		connection.send("SETSDB", "SETSDB", buf);
 		//} catch (Exception e) {
 		//	logger.warning(list.id() + " unable to log settings - " + e);
 		//}
@@ -219,4 +223,3 @@ public class AcceleratorPool
 		return buf.toString();
 	}
 }
-

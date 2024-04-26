@@ -17,8 +17,8 @@ class DaqSendAcnet implements DaqSendInterface
 	private final Completable listCompletion;
 	private final ArrayList<DaqRequestList> reqLists = new ArrayList<>();
 
-	DaqSendAcnet(Node node, DataEvent event, boolean isSetting, 
-					Completable listCompletion, long timeout)
+	DaqSendAcnet(Node node, DataEvent event, boolean isSetting,
+				 Completable listCompletion, long timeout)
 	{
 		this.node = node;
 		this.event = event;

@@ -2,7 +2,6 @@
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.Node;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 import java.util.Iterator;

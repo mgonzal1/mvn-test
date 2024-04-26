@@ -1,4 +1,4 @@
-// $Id: AcnetRequestContext.java,v 1.4 2024/03/06 15:35:09 kingc Exp $
+// $Id: AcnetRequestContext.java,v 1.5 2024/03/27 21:09:26 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.util.Timer;
@@ -6,14 +6,14 @@ import java.util.TimerTask;
 
 final public class AcnetRequestContext implements AcnetConstants, AcnetErrors, AcnetReplyHandler
 {
-	final static Timer timeoutTimer = new Timer("Request timeout timer");
+	static Timer timeoutTimer = null; //new Timer("Request timeout timer");
 
 	//final AtomicReference<AcnetConnection> connection;
 	volatile AcnetConnection connection;
-	 String task;
+	final String task;
 	final int taskId;
-	 Node node;
-	 RequestId requestId;
+	final Node node;
+	final RequestId requestId;
 	final boolean isMult;
 	final long timeout;
 
@@ -49,8 +49,11 @@ final public class AcnetRequestContext implements AcnetConstants, AcnetErrors, A
 
 	synchronized void startTimeoutTimer()
 	{
-		if (timeoutTimer != null)
-			timeoutTimer.cancel();
+		if (timeoutTimer == null)
+			timeoutTimer = new Timer("Request timeout timer");
+
+		//if (timeoutTimer != null)
+			//timeoutTimer.cancel();
 
 		timeoutTask = new TimeoutTask();
 		timeoutTimer.schedule(timeoutTask, timeout);

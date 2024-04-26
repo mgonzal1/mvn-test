@@ -24,7 +24,7 @@ class DaqRequestList
 	volatile DaqSendTransaction transaction;
     final Completable listCompletion;
 
-    DaqRequestList(Node node, DataEvent event, boolean isSetting, Completable listCompletion, long timeout) 
+    DaqRequestList(Node node, DataEvent event, boolean isSetting, Completable listCompletion, long timeout)
     {
 		this.node = node;
         this.event = event;
