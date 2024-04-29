@@ -10,7 +10,7 @@ name: Java CI with Maven
 
 on:
   issues:
-    types: [opened, edited, closed, deleted]
+    types: [opened, reopened, closed, deleted]
 #  schedule:
 #    - cron: "13 22 * * *"   # <=== One time in a day at 6 PM
 
