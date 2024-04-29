@@ -1,4 +1,4 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+it# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
 
 # This workflow uses actions that are not certified by GitHub.
@@ -10,7 +10,7 @@ name: Java CI with Maven
 
 on:
   issues:
-    types: [opened, deleted]
+    types: [opened, edited, closed, deleted]
 #  schedule:
 #    - cron: "13 22 * * *"   # <=== One time in a day at 6 PM
 
