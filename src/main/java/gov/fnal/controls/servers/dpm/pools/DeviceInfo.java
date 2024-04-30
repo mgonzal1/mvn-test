@@ -103,9 +103,15 @@ public class DeviceInfo
 
 			public final String units;
 			public final int index;
-			public final double[] constants;
+			public double[] constants;
 			//public final EnumString[] enumStrings;
 			public final Map<Object, EnumString> enums;
+			public Common( ResultSet rs) throws SQLException {
+				this.index = rs.getInt("common_index");
+				this.units = rs.getString("common_text");
+				this.constants = new double[rs.getInt("num_constants")];//new ArrayList<Double>();
+				this.enums = new HashMap<>();
+			}
 
 			Common(DBMaps dbMaps, ResultSet rs) throws SQLException
 			{
@@ -148,7 +154,7 @@ public class DeviceInfo
 		public final DisplayLength displayLength;
 
 		public  Primary primary;
-		public final Common common;
+		public  Common common;
 
 		ReadSetScaling(DBMaps dbMaps, ResultSet rs) throws SQLException
 		{
@@ -397,7 +403,7 @@ public class DeviceInfo
 	final public DigitalAlarm digitalAlarm;
 	final public List<String> family;
 
-	DeviceInfo(DBMaps dbMaps, ResultSet rs) throws SQLException
+	public DeviceInfo(DBMaps dbMaps, ResultSet rs) throws SQLException
 	{
 		this.di = rs.getInt("di");
 		this.name = rs.getString("name");
