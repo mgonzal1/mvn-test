@@ -1,12 +1,14 @@
 // $Id: DPMReadSetScaling.java,v 1.10 2024/01/23 23:37:18 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.drf3.Property;
-import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
 import java.nio.ByteBuffer;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+//import gov.fnal.controls.service.proto.Lookup_v2;
+import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
+
+import gov.fnal.controls.servers.dpm.drf3.Property;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 public interface DPMReadSetScaling extends Scaling
 {

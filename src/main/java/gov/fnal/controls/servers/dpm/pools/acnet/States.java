@@ -1,6 +1,7 @@
 // $Id: States.java,v 1.9 2024/04/01 15:28:45 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
+import java.util.HashSet;
 import java.nio.ByteOrder;
 import java.nio.ByteBuffer;
 import java.util.logging.Level;

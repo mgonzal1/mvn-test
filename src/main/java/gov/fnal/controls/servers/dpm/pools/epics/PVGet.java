@@ -1,10 +1,14 @@
 // $Id: PVGet.java,v 1.4 2023/09/26 20:52:04 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
-import org.epics.pva.client.PVAChannel;
-import org.epics.pva.data.PVAStructure;
-
 import java.util.BitSet;
+
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.client.PVAChannel;
+
+import gov.fnal.controls.servers.dpm.pools.epics.PVAPool;
+import gov.fnal.controls.servers.dpm.pools.epics.EpicsRequest;
+import gov.fnal.controls.servers.dpm.pools.epics.EpicsListener;
 
 public class PVGet implements EpicsListener
 {

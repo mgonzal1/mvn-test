@@ -1,10 +1,10 @@
 // $Id: DPMDigitalAlarmScaling.java,v 1.9 2024/01/24 21:15:41 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
+import java.nio.ByteBuffer;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
-import java.nio.ByteBuffer;
 
 public interface DPMDigitalAlarmScaling extends Scaling
 {

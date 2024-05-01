@@ -1,28 +1,37 @@
 // $Id: FEDirect.java,v 1.4 2024/03/18 15:29:03 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.DPMProtocolReplier;
+import static java.lang.System.out;
+
+import java.util.Date;
+import java.util.ArrayList;
+import java.util.logging.Logger;
+import java.io.IOException;
+import java.nio.ByteOrder;
+import java.nio.ByteBuffer;
+import java.text.FieldPosition;
+import java.text.SimpleDateFormat;
+
+
+import gov.fnal.controls.servers.dpm.*;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequestContext;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetReply;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetReplyHandler;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
+
+import gov.fnal.controls.servers.dpm.Errors;
 import gov.fnal.controls.servers.dpm.DPMRequest;
 import gov.fnal.controls.servers.dpm.DataReplier;
-import gov.fnal.controls.servers.dpm.Errors;
-import gov.fnal.controls.servers.dpm.acnetlib.*;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.DPMProtocolReplier;
 import gov.fnal.controls.servers.dpm.pools.DeviceCache;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.scaling.DPMAnalogAlarmScaling;
-import gov.fnal.controls.servers.dpm.scaling.DPMBasicStatusScaling;
 import gov.fnal.controls.servers.dpm.scaling.DPMDigitalAlarmScaling;
-
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.text.FieldPosition;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.logging.Logger;
-
-import static java.lang.System.out;
+import gov.fnal.controls.servers.dpm.scaling.DPMBasicStatusScaling;
+import gov.fnal.controls.servers.dpm.events.DataEvent;
 
 public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolReplier
 {

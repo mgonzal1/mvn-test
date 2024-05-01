@@ -2,12 +2,18 @@
 package gov.fnal.controls.servers.dpm.drf3;
 
 import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static gov.fnal.controls.servers.dpm.drf3.Field.*;
-import static gov.fnal.controls.servers.dpm.drf3.Property.*;
+import java.util.Collection;
+import java.util.Collections;
 import static java.util.Arrays.asList;
+
+import static gov.fnal.controls.servers.dpm.drf3.Property.*;
+import static gov.fnal.controls.servers.dpm.drf3.Field.*;
 
 public class AcnetRequest
 {
@@ -71,7 +77,7 @@ public class AcnetRequest
      * Validates the <i>device</i> attribute of a data request and converts it
      * to a canonical form.
      *
-     * @param str a <i>device</i> attribute; not <code>null</code>.
+     * @param s a <i>device</i> attribute; not <code>null</code>.
      * @return A canonical form of the device.
      * @throws DeviceFormatException if the device format is incorrect.
      */

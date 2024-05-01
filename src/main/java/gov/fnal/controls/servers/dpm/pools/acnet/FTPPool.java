@@ -21,6 +21,7 @@ import gov.fnal.controls.servers.dpm.acnetlib.AcnetReplyHandler;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
 
 import gov.fnal.controls.servers.dpm.scaling.DPMReadSetScaling;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.pools.PoolUser;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;

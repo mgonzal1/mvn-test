@@ -2,11 +2,14 @@
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Collection;
+import java.util.logging.Level;
 
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
 import gov.fnal.controls.servers.dpm.acnetlib.NodeFlags;
 import gov.fnal.controls.servers.dpm.events.DataEvent;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class DaqSendFactory implements NodeFlags
 {

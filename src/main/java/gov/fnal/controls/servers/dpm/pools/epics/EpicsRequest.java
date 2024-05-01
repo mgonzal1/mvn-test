@@ -1,10 +1,14 @@
 // $Id: EpicsRequest.java,v 1.3 2023/11/02 16:36:15 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
+import java.util.BitSet;
+import java.util.Objects;
+
 import gov.fnal.controls.servers.dpm.DPMRequest;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 
-import java.util.Objects;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.client.PVAChannel;
 
 
 public class EpicsRequest 

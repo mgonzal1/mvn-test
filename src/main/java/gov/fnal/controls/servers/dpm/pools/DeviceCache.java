@@ -1,19 +1,30 @@
 // $Id: DeviceCache.java,v 1.8 2024/04/11 20:21:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools;
 
-import gov.fnal.controls.db.DbServer;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Level;
+
+import gov.fnal.controls.service.proto.Dbnews;
+
 import gov.fnal.controls.servers.dpm.DPMRequest;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetMessage;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetMessageHandler;
-import gov.fnal.controls.service.proto.Dbnews;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.logging.Level;
-
+import gov.fnal.controls.db.DbServer;
 import static gov.fnal.controls.db.DbServer.getDbServer;
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 

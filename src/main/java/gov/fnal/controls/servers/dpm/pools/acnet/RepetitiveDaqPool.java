@@ -1,20 +1,25 @@
 // $Id: RepetitiveDaqPool.java,v 1.17 2024/04/11 19:20:07 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.acnetlib.NodeFlags;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.pools.AcceleratorPool;
-import gov.fnal.controls.servers.dpm.pools.PoolUser;
-import gov.fnal.controls.servers.dpm.pools.ReceiveData;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
-import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.HashMap;
+import java.util.logging.Level;
+import java.nio.ByteBuffer;
 import java.util.TimerTask;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
+import gov.fnal.controls.servers.dpm.acnetlib.NodeFlags;
+
+import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.PoolUser;
+import gov.fnal.controls.servers.dpm.pools.ReceiveData;
+import gov.fnal.controls.servers.dpm.pools.AcceleratorPool;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class RepetitiveDaqPool extends DaqPool implements NodeFlags, Completable, AcnetErrors
 {

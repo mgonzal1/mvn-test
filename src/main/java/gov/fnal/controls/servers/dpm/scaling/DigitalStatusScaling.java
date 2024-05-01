@@ -1,11 +1,11 @@
 // $Id: DigitalStatusScaling.java,v 1.4 2023/11/02 16:36:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
+import java.util.ArrayList;
+import java.sql.ResultSet;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-
-import java.sql.ResultSet;
-import java.util.ArrayList;
 
 import static gov.fnal.controls.db.DbServer.getDbServer;
 

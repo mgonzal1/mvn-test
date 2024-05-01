@@ -1,20 +1,20 @@
 // $Id: DPMListTCP.java,v 1.10 2023/11/02 16:36:15 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.tcp;
 
-import gov.fnal.controls.servers.dpm.DPMList;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
-
+import java.util.Set;
+import java.util.Iterator;
+import java.util.logging.Level;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.logging.Level;
+import java.nio.channels.SelectionKey;
+import java.net.InetAddress;
+import java.net.StandardSocketOptions;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.DPMList;
+import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 

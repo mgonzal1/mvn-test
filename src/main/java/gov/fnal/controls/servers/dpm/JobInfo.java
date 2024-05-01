@@ -1,15 +1,18 @@
 // $Id: JobInfo.java,v 1.18 2024/03/22 19:21:40 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.pools.DeviceCache;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Collection;
 import java.util.Map;
+import java.util.Collection;
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.sql.SQLException;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.DeviceCache;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public class JobInfo
 {

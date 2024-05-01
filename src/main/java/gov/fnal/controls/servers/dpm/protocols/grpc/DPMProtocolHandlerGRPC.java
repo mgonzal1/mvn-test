@@ -2,29 +2,37 @@
 package gov.fnal.controls.servers.dpm.protocols.grpc;
 
 //import java.util.UUID;
-
-import com.google.protobuf.ByteString;
-import com.google.protobuf.Empty;
-import gov.fnal.controls.servers.dpm.DPMCredentials;
-import gov.fnal.controls.servers.dpm.DPMRequest;
-import gov.fnal.controls.servers.dpm.DPMSession;
-import gov.fnal.controls.servers.dpm.SettingData;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
-import gov.fnal.controls.servers.dpm.protocols.HandlerType;
-import gov.fnal.controls.servers.dpm.protocols.Protocol;
-import gov.fnal.controls.service.proto.grpc.DPMGrpc.DPMImplBase;
-import gov.fnal.controls.service.proto.grpc.DPMProto.*;
-import gov.fnal.controls.service.proto.grpc.DeviceInfoProto.DeviceInfo;
-import io.grpc.*;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
-
 import java.io.IOException;
 import java.util.logging.Level;
+//import org.ietf.jgss.GSSException;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.service.proto.grpc.DPMProto.*;
+import gov.fnal.controls.service.proto.grpc.DPMGrpc.*;
+import gov.fnal.controls.service.proto.grpc.DeviceInfoProto.*;
+import gov.fnal.controls.servers.dpm.DPMSession;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.DPMRequest;
+import gov.fnal.controls.servers.dpm.SettingData;
+import gov.fnal.controls.servers.dpm.DPMCredentials;
+import gov.fnal.controls.servers.dpm.protocols.Protocol;
+import gov.fnal.controls.servers.dpm.protocols.HandlerType;
+import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+
+import io.grpc.Grpc;
+import io.grpc.Server;
+import io.grpc.ServerCall;
+import io.grpc.ServerInterceptor;
+import io.grpc.ServerBuilder;
+import io.grpc.ServerCallHandler;
+import io.grpc.Metadata;
+import io.grpc.stub.StreamObserver;
+import com.google.protobuf.Empty;
+import io.grpc.stub.ServerCallStreamObserver;
+
+import com.google.protobuf.ByteString;
 
 class IPInterceptor implements ServerInterceptor
 {

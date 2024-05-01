@@ -2,13 +2,12 @@
 
 package gov.fnal.controls.servers.dpm.protocols;
 
-import java.lang.reflect.Constructor;
+import java.util.Map;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
+import java.lang.reflect.Constructor;
 import java.util.logging.Level;
-
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class Config implements Iterable<DPMProtocolHandler>

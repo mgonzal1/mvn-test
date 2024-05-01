@@ -1,29 +1,37 @@
 // $Id: DPMListGRPC.java,v 1.13 2024/03/06 16:02:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.grpc;
 
-import com.google.protobuf.ByteString;
-import gov.fnal.controls.servers.dpm.DPMList;
-import gov.fnal.controls.servers.dpm.DPMProtocolReplier;
-import gov.fnal.controls.servers.dpm.DPMSession;
-import gov.fnal.controls.servers.dpm.SettingStatus;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
-import gov.fnal.controls.servers.dpm.scaling.DPMAnalogAlarmScaling;
-import gov.fnal.controls.servers.dpm.scaling.DPMBasicStatusScaling;
-import gov.fnal.controls.servers.dpm.scaling.DPMDigitalAlarmScaling;
-import gov.fnal.controls.service.proto.grpc.DPMProto.Data;
-import gov.fnal.controls.service.proto.grpc.DPMProto.Reading;
-import gov.fnal.controls.service.proto.grpc.DPMProto.StatusList;
-import io.grpc.stub.ServerCallStreamObserver;
-import io.grpc.stub.StreamObserver;
-import org.ietf.jgss.GSSException;
-
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.HashMap;
+import java.util.Collection;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Collection;
-import java.util.logging.Level;
+
+import org.ietf.jgss.GSSException;
+
+import gov.fnal.controls.servers.dpm.scaling.DPMBasicStatusScaling;
+import gov.fnal.controls.servers.dpm.scaling.DPMAnalogAlarmScaling;
+import gov.fnal.controls.servers.dpm.scaling.DPMDigitalAlarmScaling;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.service.proto.grpc.DPMProto.*;
+
+import gov.fnal.controls.servers.dpm.DPMSession;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.DPMList;
+import gov.fnal.controls.servers.dpm.SettingData;
+import gov.fnal.controls.servers.dpm.SettingStatus;
+import gov.fnal.controls.servers.dpm.DataReplier;
+import gov.fnal.controls.servers.dpm.DPMProtocolReplier;
+import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
+
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
+import io.grpc.stub.ServerCallStreamObserver;
+import com.google.protobuf.ByteString;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 

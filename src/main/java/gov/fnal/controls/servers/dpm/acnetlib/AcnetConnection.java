@@ -8,6 +8,7 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, AcnetMessageHandler, AcnetRequestHandler
 {

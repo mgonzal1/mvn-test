@@ -1,10 +1,9 @@
 // $Id: Errors.java,v 1.2 2024/03/19 22:10:41 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
-import gov.fnal.controls.db.CachedResultSet;
-
 import java.util.HashMap;
 
+import gov.fnal.controls.db.CachedResultSet;
 import static gov.fnal.controls.db.DbServer.getDbServer;
 
 public class Errors

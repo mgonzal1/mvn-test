@@ -1,11 +1,14 @@
 // $Id: DaqRequestList.java,v 1.11 2024/04/11 19:19:24 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
+import java.util.ArrayList;
+import java.util.logging.Level;
+
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
 import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
-import java.util.ArrayList;
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class DaqRequestList
 {

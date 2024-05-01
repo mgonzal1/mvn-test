@@ -1,9 +1,9 @@
 // $Id: DaqSendInterface.java,v 1.4 2023/06/12 16:22:10 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
 import java.util.Collection;
+
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 interface DaqSendInterface
 {

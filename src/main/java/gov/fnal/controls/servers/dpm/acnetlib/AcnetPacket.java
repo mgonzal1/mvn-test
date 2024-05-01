@@ -1,7 +1,9 @@
 // $Id: AcnetPacket.java,v 1.3 2024/02/22 16:29:45 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
+import java.nio.ByteOrder;
 import java.nio.ByteBuffer;
+import java.util.logging.Level;
 
 abstract public class AcnetPacket implements AcnetConstants
 {

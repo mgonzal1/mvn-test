@@ -6,7 +6,7 @@ import java.util.Objects;
 import gov.fnal.controls.servers.dpm.drf3.DiscreteRequest;
 import gov.fnal.controls.servers.dpm.drf3.ImmediateEvent;
 		
-public  class DPMRequest extends DiscreteRequest implements Comparable<DPMRequest>
+public final class DPMRequest extends DiscreteRequest implements Comparable<DPMRequest>
 {
 	private final Model model;
 

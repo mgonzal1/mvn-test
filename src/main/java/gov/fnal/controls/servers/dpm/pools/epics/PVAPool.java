@@ -1,19 +1,32 @@
 // $Id: PVAPool.java,v 1.7 2024/03/05 17:42:33 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
+import java.util.Set;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Iterator;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
+
+import gov.fnal.controls.servers.dpm.DPMServer;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.pools.AcceleratorPool;
-import org.epics.pva.client.*;
-import org.epics.pva.data.PVAInt;
-import org.epics.pva.data.PVAStructure;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+
+import org.epics.pva.data.PVAInt;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.client.GetRequest2;
+import org.epics.pva.client.PutRequest2;
+import org.epics.pva.client.PVAClient;
+import org.epics.pva.client.PVAChannel;
+import org.epics.pva.client.MonitorListener;
+import org.epics.pva.client.ClientChannelState;
+import org.epics.pva.client.ClientChannelListener;
 
 public class PVAPool extends TimerTask
 {

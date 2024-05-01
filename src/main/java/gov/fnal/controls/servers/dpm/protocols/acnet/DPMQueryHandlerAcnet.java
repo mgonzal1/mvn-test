@@ -11,6 +11,7 @@ import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequest;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 
 import gov.fnal.controls.servers.dpm.DPMServer;
+import gov.fnal.controls.servers.dpm.ListId;
 import gov.fnal.controls.servers.dpm.DPMList;
 import gov.fnal.controls.servers.dpm.JobInfo;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;

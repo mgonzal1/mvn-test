@@ -1,21 +1,23 @@
 // $Id: DPMListPC.java,v 1.24 2024/04/11 20:22:23 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.acnet.pc;
 
-import gov.fnal.controls.servers.dpm.SettingData;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequest;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
-import gov.fnal.controls.servers.dpm.protocols.acnet.DPMListAcnet;
-import gov.fnal.controls.service.proto.DPM;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.logging.Level;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import java.util.concurrent.Future;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
 
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequest;
+import gov.fnal.controls.service.proto.DPM;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.SettingData;
+import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
+import gov.fnal.controls.servers.dpm.protocols.acnet.DPMListAcnet;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.debug;
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class DPMListPC extends DPMListAcnet implements Runnable, DPM.Request.Receiver

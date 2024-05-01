@@ -1,6 +1,7 @@
 // $Id: DPMListJSON.java,v 1.19 2023/11/02 16:36:15 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.tcp.json;
  
+import java.util.Collection;
 import java.util.logging.Level;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.io.IOException;
@@ -8,9 +9,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
@@ -69,9 +73,9 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 		{
             long refId;
             int di;
-            String name;
-            String description;
-            String units;
+            java.lang.String name;
+            java.lang.String description;
+            java.lang.String units;
             short format_hint;
 		}
 

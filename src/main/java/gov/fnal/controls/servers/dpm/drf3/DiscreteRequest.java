@@ -2,6 +2,10 @@
 package gov.fnal.controls.servers.dpm.drf3;
 
 import java.util.Objects;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

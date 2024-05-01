@@ -2,16 +2,30 @@
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.LinkedList;
+import java.util.Random;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.InterfaceAddress;
-import java.net.NetworkInterface;
+import java.net.UnknownHostException;
+import java.net.SocketAddress;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.ByteOrder;
+import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.lang.management.ManagementFactory;
+
+import java.net.InetAddress;
+import java.net.Inet4Address;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.net.NetworkInterface;
 
 public class AcnetInterface implements AcnetConstants, AcnetErrors
 {
@@ -42,7 +56,7 @@ public class AcnetInterface implements AcnetConstants, AcnetErrors
 				throw new RuntimeException(e);
 			}
 			bindFailed = false;
-		} catch (IOException e) {
+		} catch (java.io.IOException e) {
 			logger.log(Level.INFO, "Using the ACNET daemon");
 
 			bindFailed = true;

@@ -1,18 +1,20 @@
 // $Id: OneShotDaqPool.java,v 1.12 2024/03/27 20:58:32 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.events.OnceImmediateEvent;
-import gov.fnal.controls.servers.dpm.pools.PoolUser;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
+import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.logging.Level;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
+
+import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.events.OnceImmediateEvent;
+
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.PoolUser;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 

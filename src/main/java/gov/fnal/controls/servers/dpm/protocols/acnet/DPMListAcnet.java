@@ -1,13 +1,15 @@
 // $Id: DPMListAcnet.java,v 1.16 2023/12/13 17:04:49 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.acnet;
 
-import gov.fnal.controls.servers.dpm.DPMList;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
+import java.net.InetAddress;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequest;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.DPMList;
 import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
 
-import java.net.InetAddress;
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 abstract public class DPMListAcnet extends DPMList
 {

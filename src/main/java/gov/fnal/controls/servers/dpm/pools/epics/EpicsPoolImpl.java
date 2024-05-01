@@ -1,31 +1,35 @@
 // $Id: EpicsPoolImpl.java,v 1.11 2024/03/27 21:16:40 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
-import gov.fnal.controls.servers.dpm.SettingData;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.Filter;
+import java.util.logging.LogRecord;
+import java.time.Instant;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.pools.PoolInterface;
-import gov.fnal.controls.servers.dpm.pools.PoolType;
+
+import gov.fnal.controls.service.proto.DPM;
+
+import gov.fnal.controls.servers.dpm.SettingData;
 import gov.fnal.controls.servers.dpm.pools.ReceiveData;
+import gov.fnal.controls.servers.dpm.pools.PoolType;
+import gov.fnal.controls.servers.dpm.pools.PoolInterface;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.scaling.ScalingFactory;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+
 import org.epics.pva.client.PVAChannel;
-import org.epics.pva.data.PVADoubleArray;
 import org.epics.pva.data.PVANumber;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.PVAStructures;
-
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.logging.Filter;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-
-import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+import org.epics.pva.data.PVADoubleArray;
 
 public class EpicsPoolImpl implements PoolInterface, SettingData.Handler, AcnetErrors
 {

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.TimerTask;
 import java.util.Collections;
 import java.util.logging.Level;
+import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -16,6 +17,7 @@ import org.ietf.jgss.GSSName;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.db.DbServer;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.service.proto.DPMScope;
 
 import static gov.fnal.controls.db.DbServer.getDbServer;
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;

@@ -2,15 +2,17 @@
 
 package gov.fnal.controls.servers.dpm;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-import gov.fnal.controls.servers.dpm.scaling.DPMAnalogAlarmScaling;
-import gov.fnal.controls.servers.dpm.scaling.DPMBasicStatusScaling;
-import gov.fnal.controls.servers.dpm.scaling.DPMDigitalAlarmScaling;
-
+import java.util.Collection;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Collection;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+
+import gov.fnal.controls.servers.dpm.scaling.DPMAnalogAlarmScaling;
+import gov.fnal.controls.servers.dpm.scaling.DPMDigitalAlarmScaling;
+import gov.fnal.controls.servers.dpm.scaling.DPMBasicStatusScaling;
+
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 public interface DPMProtocolReplier extends TimeNow
 {

@@ -93,7 +93,7 @@ public class DeviceInfo
 				public final String shortText;
 				public final String longText;
 
-				EnumString(ResultSet rs) throws SQLException
+				 public EnumString(ResultSet rs) throws SQLException
 				{
 					this.value = rs.getInt("value");
 					this.shortText = rs.getString("short_name");
@@ -105,7 +105,7 @@ public class DeviceInfo
 			public final int index;
 			public double[] constants;
 			//public final EnumString[] enumStrings;
-			public final Map<Object, EnumString> enums;
+			public  Map<Object, EnumString> enums;
 			public Common( ResultSet rs) throws SQLException {
 				this.index = rs.getInt("common_index");
 				this.units = rs.getString("common_text");

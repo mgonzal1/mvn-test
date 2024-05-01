@@ -1,4 +1,4 @@
-package gov.fnal.controls.servers.dpm.pools.acnet;// $Id: DaqPoolObserverInterface.java,v 1.2 2024/02/22 16:32:14 kingc Exp $
+// $Id: DaqPoolObserverInterface.java,v 1.2 2024/02/22 16:32:14 kingc Exp $
 //package gov.fnal.controls.servers.dpm.pools.acnet;
 
 //import gov.fnal.controls.servers.dpm.pools.WhatDaq;

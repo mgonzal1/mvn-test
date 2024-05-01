@@ -4,6 +4,7 @@ package gov.fnal.controls.servers.dpm.pools.acnet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.TimerTask;
 import java.io.FileReader;
 import java.io.BufferedReader;

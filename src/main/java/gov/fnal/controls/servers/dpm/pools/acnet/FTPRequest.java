@@ -1,13 +1,13 @@
 // $Id: FTPRequest.java,v 1.10 2024/01/16 20:31:15 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
+import java.nio.ByteBuffer;
+
 import gov.fnal.controls.servers.dpm.events.AbsoluteTimeEvent;
 import gov.fnal.controls.servers.dpm.events.DataEvent;
 import gov.fnal.controls.servers.dpm.events.DataEventObserver;
-import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
-import java.nio.ByteBuffer;
+import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 
 
 class FTPRequest implements DataEventObserver, ReceiveData

@@ -1,7 +1,7 @@
 // $Id: AcnetStatusException.java,v 1.1 2023/11/02 16:35:17 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
-public class AcnetStatusException extends Exception
+public class AcnetStatusException extends java.lang.Exception
 {
     public final int status;
 

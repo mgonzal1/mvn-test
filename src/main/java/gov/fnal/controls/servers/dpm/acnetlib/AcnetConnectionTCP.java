@@ -1,22 +1,22 @@
 // $Id: AcnetConnectionTCP.java,v 1.4 2024/03/06 15:38:07 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
+import java.util.Iterator;
+import java.util.logging.Level;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
 import java.net.StandardSocketOptions;
+import java.net.NetworkInterface;
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.Iterator;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 class AcnetConnectionTCP extends AcnetConnectionDaemon
 {

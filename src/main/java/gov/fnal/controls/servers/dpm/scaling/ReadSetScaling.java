@@ -1,8 +1,8 @@
 // $Id: ReadSetScaling.java,v 1.7 2024/01/05 21:26:06 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 
 class ReadSetScaling implements Scaling
 {

@@ -1,13 +1,14 @@
 // $Id: ExternalTrigger.java,v 1.5 2024/03/05 17:30:11 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
 import java.util.List;
 import java.util.StringTokenizer;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.events.DataEvent;
 
 class ExternalTrigger implements Trigger, AcnetErrors
 {

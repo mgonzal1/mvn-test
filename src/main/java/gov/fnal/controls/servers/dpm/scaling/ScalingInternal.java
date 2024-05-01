@@ -3,6 +3,7 @@ package gov.fnal.controls.servers.dpm.scaling;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import static gov.fnal.controls.db.DbServer.getDbServer;
 

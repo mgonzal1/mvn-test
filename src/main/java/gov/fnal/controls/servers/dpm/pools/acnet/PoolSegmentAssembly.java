@@ -1,12 +1,12 @@
 // $Id: PoolSegmentAssembly.java,v 1.5 2024/01/22 22:00:21 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.pools.ReceiveData;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.ArrayList;
+import java.nio.ByteBuffer;
+
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 
 class PoolSegmentAssembly
 {

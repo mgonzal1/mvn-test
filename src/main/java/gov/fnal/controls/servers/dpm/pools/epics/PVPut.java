@@ -1,10 +1,14 @@
 // $Id: PVPut.java,v 1.2 2023/05/25 16:57:54 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
-import org.epics.pva.client.PVAChannel;
-import org.epics.pva.data.PVAStructure;
-
 import java.util.BitSet;
+
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.client.PVAChannel;
+
+import gov.fnal.controls.servers.dpm.pools.epics.PVAPool;
+import gov.fnal.controls.servers.dpm.pools.epics.EpicsRequest;
+import gov.fnal.controls.servers.dpm.pools.epics.EpicsListener;
 
 public class PVPut implements EpicsListener
 {

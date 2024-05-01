@@ -11,6 +11,8 @@ import gov.fnal.controls.servers.dpm.pools.PoolType;
 import gov.fnal.controls.servers.dpm.pools.PoolInterface;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+
 public class DatabasePoolImpl implements PoolInterface, AcnetErrors
 {
 	private final ArrayList<WhatDaq> requests = new ArrayList<>();

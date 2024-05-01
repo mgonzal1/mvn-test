@@ -1,16 +1,24 @@
 // $Id: DataLoggerFetchJob.java,v 1.12 2024/02/22 16:32:14 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.TimeNow;
-import gov.fnal.controls.servers.dpm.acnetlib.*;
-import gov.fnal.controls.servers.dpm.pools.LoggerEvent;
-import gov.fnal.controls.servers.dpm.pools.LoggerRequest;
-import gov.fnal.controls.servers.dpm.pools.PoolUser;
-import gov.fnal.controls.servers.dpm.pools.ReceiveData;
-
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.TimerTask;
+
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetInterface;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetRequestContext;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetReply;
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetReplyHandler;
+
+import gov.fnal.controls.servers.dpm.TimeNow;
+import gov.fnal.controls.servers.dpm.pools.PoolUser;
+import gov.fnal.controls.servers.dpm.pools.ReceiveData;
+import gov.fnal.controls.servers.dpm.pools.LoggerRequest;
+import gov.fnal.controls.servers.dpm.pools.LoggerEvent;
 
 public class DataLoggerFetchJob extends TimerTask implements AcnetReplyHandler, AcnetErrors, TimeNow
 {

@@ -1,17 +1,28 @@
 // $Id: AcnetPoolImpl.java,v 1.15 2024/04/11 19:17:07 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.SettingData;
+import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Timer;
+import java.util.logging.Level;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.pools.PoolInterface;
-import gov.fnal.controls.servers.dpm.pools.PoolType;
+
+import gov.fnal.controls.servers.dpm.SettingData;
 import gov.fnal.controls.servers.dpm.pools.PoolUser;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.PoolType;
+import gov.fnal.controls.servers.dpm.pools.PoolInterface;
+
 import gov.fnal.controls.servers.dpm.scaling.ScalingFactory;
 
-import java.util.*;
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetErrors
 {

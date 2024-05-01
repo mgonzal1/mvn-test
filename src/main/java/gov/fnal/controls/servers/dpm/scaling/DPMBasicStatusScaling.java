@@ -1,10 +1,10 @@
 // $Id: DPMBasicStatusScaling.java,v 1.7 2023/11/02 16:36:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
+import java.nio.ByteBuffer;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
-import java.nio.ByteBuffer;
 
 public interface DPMBasicStatusScaling extends Scaling
 {

@@ -8,7 +8,9 @@ import java.nio.channels.SocketChannel;
 import java.util.Map;
 import java.util.HashMap;
 
-class HttpRequest 
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+
+class HttpRequest
 {
 	private String method;
 	private String url;

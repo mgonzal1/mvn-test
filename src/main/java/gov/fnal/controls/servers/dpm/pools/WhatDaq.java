@@ -1,19 +1,41 @@
 // $Id: WhatDaq.java,v 1.14 2024/03/05 17:25:21 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools;
 
-import gov.fnal.controls.servers.dpm.DPMList;
-import gov.fnal.controls.servers.dpm.DPMRequest;
+import java.util.Objects;
+import java.util.EnumSet;
+import java.util.Arrays;
+import java.text.ParseException;
+import java.nio.ByteBuffer;
+import java.util.logging.Level;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.drf3.*;
-import gov.fnal.controls.servers.dpm.events.NeverEvent;
-import gov.fnal.controls.servers.dpm.events.*;
 
-import java.nio.ByteBuffer;
-import java.text.ParseException;
-import java.util.EnumSet;
-import java.util.Objects;
+import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.events.NeverEvent;
+import gov.fnal.controls.servers.dpm.events.DefaultDataEvent;
+import gov.fnal.controls.servers.dpm.events.DataEventFactory;
+import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
+
+import gov.fnal.controls.servers.dpm.drf3.Range;
+import gov.fnal.controls.servers.dpm.drf3.DeviceFormatException;
+import gov.fnal.controls.servers.dpm.drf3.TimeFreq;
+import gov.fnal.controls.servers.dpm.drf3.TimeFreqUnit;
+import gov.fnal.controls.servers.dpm.drf3.PeriodicEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
+
+import gov.fnal.controls.servers.dpm.drf3.Field;
+import gov.fnal.controls.servers.dpm.drf3.Property;
+import gov.fnal.controls.servers.dpm.drf3.EventFactory;
+import gov.fnal.controls.servers.dpm.drf3.AcnetRequest;
+import gov.fnal.controls.servers.dpm.drf3.FieldFormatException;
+import gov.fnal.controls.servers.dpm.drf3.PropertyFormatException;
+
+import gov.fnal.controls.servers.dpm.DPMList;
+import gov.fnal.controls.servers.dpm.DPMRequest;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public class WhatDaq implements AcnetErrors, ReceiveData, Comparable<WhatDaq>
 {

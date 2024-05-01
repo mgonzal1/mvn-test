@@ -1,12 +1,14 @@
 // $Id: Scaling.java,v 1.9 2024/01/05 21:31:06 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
+import java.nio.ByteBuffer;
+
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.drf3.Property;
+//import gov.fnal.controls.service.proto.Lookup_v2;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 
-import java.nio.ByteBuffer;
+import gov.fnal.controls.servers.dpm.drf3.Property;
 
 public interface Scaling extends AcnetErrors
 {

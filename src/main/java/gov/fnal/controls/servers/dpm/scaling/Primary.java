@@ -1,9 +1,9 @@
 // $Id: Primary.java,v 1.1 2024/01/05 21:26:06 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
+import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 
 class Primary implements AcnetErrors
 {

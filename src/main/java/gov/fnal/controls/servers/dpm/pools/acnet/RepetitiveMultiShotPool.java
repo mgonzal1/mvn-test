@@ -1,14 +1,15 @@
 // $Id: RepetitiveMultiShotPool.java,v 1.7 2024/02/22 16:32:14 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
-import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.pools.PoolUser;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
+import gov.fnal.controls.servers.dpm.acnetlib.Node;
+
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.PoolUser;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
@@ -29,7 +30,7 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
     final OneShotDaqPool pool;
 	final long delayTime;
 	final long repeatRate;
-    
+
     public RepetitiveMultiShotPool(Node node, long delayTime, long repeatRate)
 	{
         super(node, null);
@@ -111,7 +112,7 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
 
 			//if (!event.isRepetitive())
 			//	process();
-			
+
 			//multiShotPool.process(false);
 		}
     }
@@ -120,7 +121,7 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
 	public String toString()
 	{
 		final String header =  String.format("RepetitiveMultiShotPool %-4d %-10s event:%-16s status:%04x procd:%tc",
-												id, node.name(), event, lastCompletedStatus & 0xffff, procTime); 
+												id, node.name(), event, lastCompletedStatus & 0xffff, procTime);
 
 		final StringBuilder buf = new StringBuilder(header);
 
@@ -132,7 +133,7 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
 
 		buf.append('\n');
 		buf.append(xtrans);
-	
+
         buf.append("\ninserts: ").append(totalInserts);
         buf.append(", procs: ").append(totalProcs);
         buf.append(", packets: ").append(totalTransactions);

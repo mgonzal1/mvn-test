@@ -65,7 +65,7 @@ class BasicStatusScaling implements Scaling
 
 			//for (Lookup_v2.StatusAttribute sAttr : dInfo.status.attributes) {
 			for (DeviceInfo.Status.Attribute sAttr : dInfo.status.attributes) {
-				Attribute attr = new Attribute();
+				BasicStatusScaling.Attribute attr = new BasicStatusScaling.Attribute();
 				
 				attr.mask = sAttr.mask;
 				attr.matchValue = sAttr.match;
