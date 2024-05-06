@@ -246,7 +246,7 @@ public class EpicsPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	public void handle(WhatDaq whatDaq, double setting)
 	{
 		try {
-			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), Double.valueOf(setting));
+			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), new Double(setting));
 		
 			requests.add(eReq);
 		} catch (AcnetStatusException e) {
@@ -258,7 +258,7 @@ public class EpicsPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	public void handle(WhatDaq whatDaq, double[] setting)
 	{
 		try {
-			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), Double.valueOf(setting[0]));
+			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), new Double(setting[0]));
 		
 			requests.add(eReq);
 		} catch (AcnetStatusException e) {

@@ -38,7 +38,7 @@ class DIPI implements Comparable<DIPI>
 	{
 		this.di = di;
 		this.pi = pi;
-		this.dipi = di + (pi << 24);
+		this.dipi = new Integer(di + (pi << 24));
 	}
 
 	@Override

@@ -270,7 +270,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 	{
 		final ArrayList<String> p = new ArrayList<>();
 
-		for (Entry<String, String> e : properties.entrySet())
+		for (Map.Entry<String, String> e : properties.entrySet())
 			p.add(e.getKey() + ":" + e.getValue());
 
 		return p.toArray(new String[p.size()]);
@@ -283,7 +283,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 
 	public boolean restartable()
 	{
-		for (Entry<Model, JobInfo> entry : jobs.entrySet()) {
+		for (Map.Entry<Model, JobInfo> entry : jobs.entrySet()) {
 			if (!entry.getKey().restartable() && !entry.getValue().completed())
 				return false;
 		}

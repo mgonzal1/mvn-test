@@ -1,6 +1,6 @@
 // $Id: DeltaTimeThread.java,v 1.4 2024/01/10 20:57:18 kingc Exp $
+//package gov.fnal.controls.servers.dpm.events;
 
-package gov.fnal.controls.servers.dpm.events;
 /**
  * This class provides for the delta time event thread.
  * @author Cahill

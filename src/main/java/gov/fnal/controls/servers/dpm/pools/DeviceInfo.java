@@ -71,7 +71,7 @@ public class DeviceInfo
 			public final int inputLen;
 			public final String units;
 
-			public Primary(ResultSet rs) throws SQLException
+			Primary(ResultSet rs) throws SQLException
 			{
 				this.index = rs.getInt("primary_index");
 				this.inputLen = rs.getInt("scaling_length");
@@ -93,7 +93,7 @@ public class DeviceInfo
 				public final String shortText;
 				public final String longText;
 
-				 public EnumString(ResultSet rs) throws SQLException
+				EnumString(ResultSet rs) throws SQLException
 				{
 					this.value = rs.getInt("value");
 					this.shortText = rs.getString("short_name");
@@ -103,15 +103,9 @@ public class DeviceInfo
 
 			public final String units;
 			public final int index;
-			public double[] constants;
+			public final double[] constants;
 			//public final EnumString[] enumStrings;
-			public  Map<Object, EnumString> enums;
-			public Common( ResultSet rs) throws SQLException {
-				this.index = rs.getInt("common_index");
-				this.units = rs.getString("common_text");
-				this.constants = new double[rs.getInt("num_constants")];//new ArrayList<Double>();
-				this.enums = new HashMap<>();
-			}
+			public final Map<Object, EnumString> enums;
 
 			Common(DBMaps dbMaps, ResultSet rs) throws SQLException
 			{
@@ -153,8 +147,8 @@ public class DeviceInfo
 		public final DisplayFormat displayFormat;
 		public final DisplayLength displayLength;
 
-		public  Primary primary;
-		public  Common common;
+		public final Primary primary;
+		public final Common common;
 
 		ReadSetScaling(DBMaps dbMaps, ResultSet rs) throws SQLException
 		{
@@ -403,7 +397,7 @@ public class DeviceInfo
 	final public DigitalAlarm digitalAlarm;
 	final public List<String> family;
 
-	public DeviceInfo(DBMaps dbMaps, ResultSet rs) throws SQLException
+	DeviceInfo(DBMaps dbMaps, ResultSet rs) throws SQLException
 	{
 		this.di = rs.getInt("di");
 		this.name = rs.getString("name");

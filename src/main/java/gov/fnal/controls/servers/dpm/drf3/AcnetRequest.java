@@ -1,7 +1,6 @@
 // $Id: AcnetRequest.java,v 1.2 2023/10/04 19:38:05 kingc Exp $
 package gov.fnal.controls.servers.dpm.drf3;
 
-import java.util.*;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.EnumMap;
@@ -77,7 +76,7 @@ public class AcnetRequest
      * Validates the <i>device</i> attribute of a data request and converts it
      * to a canonical form.
      *
-     * @param s a <i>device</i> attribute; not <code>null</code>.
+     * @param str a <i>device</i> attribute; not <code>null</code>.
      * @return A canonical form of the device.
      * @throws DeviceFormatException if the device format is incorrect.
      */
