@@ -1,8 +1,7 @@
-package gov.fnal.controls.servers.dpm.pool;
+package gov.fnal.controls.servers.dpm.pools;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.epics.EpicsListener;
-import gov.fnal.controls.servers.dpm.pools.epics.EpicsRequest;
 import org.junit.jupiter.api.Test;
 
 import static org.mockito.Mockito.mock;
