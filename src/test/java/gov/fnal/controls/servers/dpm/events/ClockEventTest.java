@@ -12,4 +12,20 @@ public class ClockEventTest {
         ClockEvent clockEvent = new ClockEvent(8900, false, 2000L, true);
 
     }
+    @Test
+    public void ClockEventTest2() {
+        ClockEvent clockEvent = new ClockEvent(8900, true, 2000L, true);
+
+    }
+    @Test
+    public void ClockEventTest3() {
+        ClockEvent clockEvent = new ClockEvent(8900, false, 2000L, false);
+
+    }
+    @Test
+    public void ClockEventTest4() {
+        ClockEvent clockEvent = new ClockEvent(8900, true, 2000L, false);
+
+    }
+
 }

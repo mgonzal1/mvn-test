@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.ByteBuffer;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 public class AcnetRequestTest {
 
