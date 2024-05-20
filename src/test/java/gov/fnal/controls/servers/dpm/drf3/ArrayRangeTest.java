@@ -44,7 +44,6 @@ public class ArrayRangeTest {
 
     @Test //startIndex == 0 && endIndex == MAXIMUM
     public void test_InvalidFullRange() {
-
         assertThrows(IllegalArgumentException.class, () -> new ArrayRange(0,-2147483648));
     }
 }
