@@ -2,6 +2,8 @@ package gov.fnal.controls.servers.dpm.events;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class ClockEventTest {
 
     private static final int MAX_NUMBER_EVENTS = 256;
@@ -26,6 +28,13 @@ public class ClockEventTest {
     public void ClockEventTest4() {
         ClockEvent clockEvent = new ClockEvent(8900, true, 2000L, false);
 
+    }
+
+    @Test
+    public void ClockTest_ftd(){
+
+        ClockEvent clockEvent = new ClockEvent(2000, false, 0L);
+        assertEquals(34768,clockEvent.ftd());
     }
 
 }
