@@ -32,20 +32,17 @@ public class ArrayRangeTest {
         assertEquals(32747, length);
     }
 
-    //startIndex < 0 || startIndex > MAX_INDEX (32767)
-    @Test
+    @Test //startIndex < 0 || startIndex > MAX_INDEX (32767)
     public void test_InvalidStartIndex(){
         assertThrows(IllegalArgumentException.class, () -> new ArrayRange(-1, 32768));
     }
 
-    //endIndex != MAXIMUM && (endIndex < startIndex || endIndex > MAX_INDEX
-    @Test
+    @Test  //endIndex != MAXIMUM && (endIndex < startIndex || endIndex > MAX_INDEX
     public void test_InvalidEndIndex() {
         assertThrows(IllegalArgumentException.class, () -> new ArrayRange(30, 23));
     }
 
-    //startIndex == 0 && endIndex == MAXIMUM
-    @Test
+    @Test //startIndex == 0 && endIndex == MAXIMUM
     public void test_InvalidFullRange() {
         assertThrows(IllegalArgumentException.class, () -> new ArrayRange(0,-2147483648));
     }
