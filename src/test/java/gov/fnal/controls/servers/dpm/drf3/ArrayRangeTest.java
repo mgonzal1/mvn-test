@@ -8,25 +8,25 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class ArrayRangeTest {
 
     @Test
-    public void tes_getType() {
+    public void test_getType() {
         ArrayRange range = new ArrayRange(12, 32758);
         final RangeType type = range.getType();
         assertEquals("ARRAY", type.name());
     }
     @Test
-    public void tes_getStartIndex() {
+    public void test_getStartIndex() {
         ArrayRange range = new ArrayRange(12, 32758);
         final int startIndex = range.getStartIndex();
         assertEquals(12, startIndex);
     }
     @Test
-    public void tes_getEndIndex() {
+    public void test_getEndIndex() {
         ArrayRange range = new ArrayRange(12, 32758);
         final int endIndex = range.getEndIndex();
         assertEquals(32758, endIndex);
     }
     @Test
-    public void tes_getLength() {
+    public void test_getLength() {
         ArrayRange range = new ArrayRange(12, 32758);
         final int length = range.getLength();
         assertEquals(32747, length);
