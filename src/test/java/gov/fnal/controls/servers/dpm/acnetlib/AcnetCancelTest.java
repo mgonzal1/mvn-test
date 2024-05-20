@@ -22,6 +22,7 @@ public class AcnetCancelTest {
         acnetCancel.handle(acnetConnection);
     }
 
+
     private static class AcnetConnectionInternalStub extends AcnetConnectionInternal{
         final HashMap<ReplyId, AcnetRequest> requestsIn = new HashMap<>();
         Buffer buf = BufferCache.alloc();
