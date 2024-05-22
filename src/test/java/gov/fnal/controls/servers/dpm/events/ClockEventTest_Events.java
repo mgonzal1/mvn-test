@@ -11,35 +11,25 @@ public class ClockEventTest_Events {
     private static final String[] names = new String[MAX_NUMBER_EVENTS];
 
     @Test
-    public void ClockEventTest1() {
-        ClockEvent clockEvent = new ClockEvent(8900, false, 2000L, true);
+    public void ClockTest_ftdWhenDelayIsNotZero(){
 
-    }
-    @Test
-    public void ClockEventTest2() {
-        ClockEvent clockEvent = new ClockEvent(8900, true, 2000L, true);
-
+        ClockEvent clockEvent = new ClockEvent(2000, false, 10);
+        assertEquals(0,clockEvent.ftd());
     }
 
     @Test
-    public void ClockEventTest3() {
+    public void ClockTest_ftdWhenDelayIsZero(){
 
-        ClockEvent clockEvent = new ClockEvent(8900, false, 2000L, false);
-    }
-
-    @Test
-    public void ClockEventTest4() {
-
-        ClockEvent clockEvent = new ClockEvent(8900, true, 2000L, false);
+        ClockEvent clockEvent = new ClockEvent(2000, false);
+        assertEquals(34768,clockEvent.ftd());
     }
 
     @Test
     public void ClockTest_ftd(){
 
-        ClockEvent clockEvent = new ClockEvent(2000, false, 0L);
-        assertEquals(34768,clockEvent.ftd());
+        ClockEvent clockEvent = new ClockEvent(23237);
+        assertEquals(56005,clockEvent.ftd());
     }
-
     @Test
     public void ClockTest_ClockEventNumberToNameWhenClockEventIsGreaterThan256(){
 
