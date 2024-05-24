@@ -57,7 +57,7 @@ public class EventTest {
         });
     }
 
-    //periodic event test cases
+    //Periodic event test cases
     @Test
     public void test_PeriodicEventForP() throws EventFormatException {
 
