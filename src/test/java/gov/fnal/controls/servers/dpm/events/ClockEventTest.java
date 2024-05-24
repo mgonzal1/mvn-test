@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ClockEventTest_Events {
+public class ClockEventTest {
 
     private static final int MAX_NUMBER_EVENTS = 256;
     private static final String[] names = new String[MAX_NUMBER_EVENTS];
