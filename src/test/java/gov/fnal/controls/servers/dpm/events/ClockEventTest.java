@@ -6,10 +6,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ClockEventTest {
-
-    private static final int MAX_NUMBER_EVENTS = 256;
-    //private static final String[] names = new String[MAX_NUMBER_EVENTS];
-
     @Test
     public void ClockTest_ftdWhenDelayIsNotZero(){
         ClockEvent clockEvent = new ClockEvent(2000, false, 10);
@@ -29,7 +25,6 @@ public class ClockEventTest {
     }
     @Test
     public void ClockTest_ClockEventNumberToNameWhenClockEventIsGreaterThan256(){
-        ClockEvent clockEvent = new ClockEvent(2000);
         assertEquals("invalid clock event", ClockEvent.clockEventNumberToName(350));
     }
 
