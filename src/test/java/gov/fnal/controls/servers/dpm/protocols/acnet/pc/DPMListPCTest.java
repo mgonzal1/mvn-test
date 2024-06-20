@@ -14,6 +14,7 @@ public class DPMListPCTest {
     public void test_dispose() throws AcnetStatusException {
         DPMProtocolHandler dpmProtocolHandler = mock(DPMProtocolHandler.class);
         AcnetRequest acnetRequest = mock(AcnetRequest.class);
+        when(acnetRequest.getName(0)).thenReturn("testNode");
         doNothing().when(acnetRequest).sendLastStatus(12);
         DPMListPC dpmListPC = new DPMListPC(dpmProtocolHandler, acnetRequest);
         Assertions.assertTrue(dpmListPC.dispose(12));

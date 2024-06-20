@@ -16,7 +16,7 @@ public class AcnetPoolImplTest {
     @Test
     public void test_addRequest() {
         AcnetPoolImpl acnetPool = new AcnetPoolImpl();
-        var whatDaq = mock(WhatDaq.class);
+        WhatDaq whatDaq = mock(WhatDaq.class);
         acnetPool.addRequest(whatDaq);
         Assertions.assertEquals(1, acnetPool.requests().size());
     }
@@ -24,16 +24,16 @@ public class AcnetPoolImplTest {
     @Test
     public void test_addSettings() throws AcnetStatusException {
         AcnetPoolImpl acnetPool = new AcnetPoolImpl();
-        var whatDaq = mock(WhatDaq.class);
-        var setting = mock(SettingData.class);
+        WhatDaq whatDaq = mock(WhatDaq.class);
+        SettingData setting = mock(SettingData.class);
         acnetPool.addSetting(whatDaq, setting);
     }
 
     @Test
     public void test_handle() throws AcnetStatusException {
         AcnetPoolImpl acnetPool = new AcnetPoolImpl();
-        var receiveData = new ReceiveDataStub();
-        var whatDaq = new WhatDaq(mock(WhatDaq.class), 5, 10, 10, receiveData);
+        ReceiveData receiveData = new ReceiveDataStub();
+        WhatDaq whatDaq = new WhatDaq(mock(WhatDaq.class), 5, 10, 10, receiveData);
         byte[] setting = {65, 66, 67, 68, 69};
         acnetPool.handle(whatDaq, setting);
     }
