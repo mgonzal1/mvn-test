@@ -53,11 +53,16 @@ jobs:
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Download JAR file
+      uses: actions/download-artifact@v4
+      with:
+        name: dpm-artifact
+        
     - name: Upload JAR to Release
       uses: actions/upload-release-asset@v1.0.2
       with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: target/DPM.jar
+          asset_path: dpm-artifact/DPM.jar
           asset_name: DPM.jar
           asset_content_type: application/java-archive
       env:
