@@ -45,10 +45,10 @@ jobs:
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1.0.0
+      uses: actions/create-release@v1.1.4
       with:
           tag_name: v1.0.0
-          release_name: Release v1.0.0
+          release_name: Release v1.1.4
           body: 'Release of JAR file.'
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
