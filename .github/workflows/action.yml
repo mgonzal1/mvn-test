@@ -62,7 +62,7 @@ jobs:
       uses: actions/upload-release-asset@v1.0.2
       with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dpm-artifact/DPM.jar
+          asset_path: target/dpm-artifact
           asset_name: DPM.jar
           asset_content_type: application/java-archive
       env:
