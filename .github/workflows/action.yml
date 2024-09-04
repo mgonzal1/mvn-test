@@ -60,17 +60,12 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: dpm-artifact
-        
-    - name: Extract JAR file
-      run: |
-          mkdir extracted
-          unzip dpm-artifact.zip -d extracted
     
     - name: Upload JAR to Release
       uses: actions/upload-release-asset@v1.0.2
       with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: extracted/data-pool-manager-maven-1.0-SNAPSHOT.jar
+          asset_path: target/data-pool-manager-maven-1.0-SNAPSHOT.jar
           asset_name: DPM.jar
           asset_content_type: application/java-archive
       env:
