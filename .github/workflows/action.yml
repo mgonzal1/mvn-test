@@ -45,7 +45,7 @@ jobs:
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: actions/create-release@v1.0.0
       with:
           tag_name: v1.0.0
           release_name: Release v1.0.0
@@ -54,10 +54,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload JAR to Release
-      uses: actions/upload-release-asset@v1
+      uses: actions/upload-release-asset@v1.1.1
       with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: target/DPM.jar
+          asset_path: target/*.jar
           asset_name: DPM.jar
           asset_content_type: application/java-archive
       env:
