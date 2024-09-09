@@ -19,6 +19,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history and tags
+
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
@@ -41,9 +44,8 @@ jobs:
     - name: Get Latest Tag
       id: get_tag
       run: |
-        TAG=$(git describe --tags --abbrev=0)
+        TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
         echo "LATEST_TAG=$TAG" >> $GITHUB_ENV
-        echo "LATEST_TAG=${TAG:-v0.0.0}" >> $GITHUB_ENV
 
     - name: Increment Version
       id: increment_version
@@ -91,6 +93,7 @@ jobs:
           asset_content_type: application/java-archive
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     #- name: Update dependency graph
