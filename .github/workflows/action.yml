@@ -9,21 +9,12 @@
 name: Java CI with Maven
 
 on:
-  issues:
-    types: [opened, reopened, closed, deleted]
-  issue_comment:
-    types: [created, deleted]  
-#  schedule:
-#    - cron: "13 22 * * *"   # <=== One time in a day at 6 PM
-
-#  push:
-#    branches: [ "main" ]
-#  pull_request:
-#    branches: [ "main" ]
+  push:
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -34,40 +25,47 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: maven
+
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
     - name: List files
       run: ls -la
-  
+
     - name: Upload JAR file
       uses: actions/upload-artifact@v4
       with:
         name: dpm-artifact
         path: target/*.jar
 
-    - name: Get Current Version
-      id: get_version
+    - name: Get Latest Tag
+      id: get_tag
       run: |
-        if [ -f version.txt ]; then
-          VERSION=$(cat version.txt)
-        else
-          VERSION="v1.0.1"
-        fi
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
+        TAG=$(git describe --tags --abbrev=0)
+        echo "LATEST_TAG=$TAG" >> $GITHUB_ENV
+        echo "LATEST_TAG=${TAG:-v0.0.0}" >> $GITHUB_ENV
 
     - name: Increment Version
       id: increment_version
       run: |
-        VERSION=${{ env.VERSION }}
-        IFS='.' read -r -a parts <<< "$VERSION"
+        TAG=${{ env.LATEST_TAG }}
+        IFS='.' read -r -a parts <<< "$TAG"
         major=${parts[0]#v}
         minor=${parts[1]}
         patch=${parts[2]}
         patch=$((patch + 1))
         NEW_VERSION="v$major.$minor.$patch"
-        echo "$NEW_VERSION" > version.txt
         echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+    - name: Create New Git Tag
+      id: create_tag
+      run: |
+        git config --global user.email "actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git tag ${{ env.NEW_VERSION }}
+        git push origin ${{ env.NEW_VERSION }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Create Release
       id: create_release
@@ -78,27 +76,17 @@ jobs:
         body: 'Release of JAR file.'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-    # - name: Create Release
-    #   id: create_release
-    #   uses: actions/create-release@v1.1.4
-    #   with:
-    #       tag_name: v1.0.0
-    #       release_name: Release v1.1.1
-    #       # body: 'Release of JAR file.'
-    #   env:
-    #       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Download JAR file
       uses: actions/download-artifact@v4
       with:
         name: dpm-artifact
-    
+
     - name: Upload JAR to Release
       uses: actions/upload-release-asset@v1.0.2
       with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: target/data-pool-manager-maven-1.0-SNAPSHOT.jar
+          asset_path: target/*.jar
           asset_name: DPM.jar
           asset_content_type: application/java-archive
       env:
