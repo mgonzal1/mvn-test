@@ -52,7 +52,7 @@ jobs:
         if [ -f version.txt ]; then
           VERSION=$(cat version.txt)
         else
-          VERSION="v1.0.1"
+          VERSION="v1.0.0"
         fi
         echo "VERSION=$VERSION" >> $GITHUB_ENV
 
