@@ -6,7 +6,7 @@
 
     <groupId>org.example</groupId>
     <artifactId>data-pool-manager-maven</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
 
      <properties>
         <maven.compiler.source>21</maven.compiler.source>
@@ -24,51 +24,49 @@
             <artifactId>dpm</artifactId>
             <version>1.0</version>
             <scope>system</scope>
-            <systemPath>${GITHUB_WORKSPACE}/lib/dpm-1.0.jar</systemPath>
+            <systemPath>${project.basedir}/lib/dpm-1.0.jar</systemPath>
         </dependency>
-
         <dependency>
             <groupId>org.epics</groupId>
             <artifactId>pva-phoebus</artifactId>
             <version>1.0</version>
             <scope>system</scope>
-            <systemPath>${GITHUB_WORKSPACE}/lib/pva-phoebus-1.0.jar</systemPath>
+            <systemPath>${project.basedir}/lib/pva-phoebus-1.0.jar</systemPath>
         </dependency>
-
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc</artifactId>
             <version>1.44.1</version>
             <scope>system</scope>
-            <systemPath>${GITHUB_WORKSPACE}/lib/grpc-1.44.1.jar</systemPath>
+            <systemPath>${project.basedir}/lib/grpc-1.44.1.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>db.client</groupId>
             <artifactId>db</artifactId>
             <version>1.0</version>
             <scope>system</scope>
-            <systemPath>${GITHUB_WORKSPACE}/lib/db-client.jar</systemPath>
+            <systemPath>${project.basedir}/lib/db-client.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>kerberos.client</groupId>
             <artifactId>kerberos</artifactId>
             <version>1.0</version>
             <scope>system</scope>
-            <systemPath>${GITHUB_WORKSPACE}/lib/kerberos-client.jar</systemPath>
+            <systemPath>${project.basedir}/lib/kerberos-client.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>1.44.1</version>
             <scope>system</scope>
-            <systemPath>${GITHUB_WORKSPACE}/lib/postgresql-42.2.23.jar</systemPath>
+            <systemPath>${project.basedir}/lib/postgresql-42.2.23.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>proto</groupId>
             <artifactId>proto</artifactId>
             <version>1.44.1</version>
             <scope>system</scope>
-            <systemPath>${GITHUB_WORKSPACE}/lib/proto.jar</systemPath>
+            <systemPath>${project.basedir}/lib/proto.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
@@ -99,5 +97,5 @@
             <version>4.11.0</version>
             <scope>test</scope>
         </dependency>
-        </dependencies>
+    </dependencies>
 </project>
