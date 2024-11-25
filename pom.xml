@@ -20,25 +20,18 @@
             <version>2.9.1</version>
         </dependency>
         <dependency>
-            <groupId>com.dpm.server</groupId>
-            <artifactId>dpm</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/dpm-1.0.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>org.epics</groupId>
-            <artifactId>pva-phoebus</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/pva-phoebus-1.0.jar</systemPath>
-        </dependency>
-        <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc</artifactId>
             <version>1.44.1</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/grpc-1.44.1.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>pva</groupId>
+            <artifactId>pva</artifactId>
+            <version>1.44.1</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/pva.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>db.client</groupId>
@@ -68,10 +61,11 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/proto.jar</systemPath>
         </dependency>
+<!--        3.25.2-->
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.25.2</version>
+            <version>4.28.2</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
