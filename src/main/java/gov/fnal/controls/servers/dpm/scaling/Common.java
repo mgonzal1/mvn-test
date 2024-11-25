@@ -1,7 +1,6 @@
-// $Id: Common.java,v 1.1 2024/01/05 21:26:06 kingc Exp $
+// $Id: Common.java,v 1.2 2024/11/19 22:34:44 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
-//import gov.fnal.controls.service.proto.Lookup_v2;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
@@ -1665,8 +1664,6 @@ class Common implements AcnetErrors
 		if (check_low_high) {
 			// absolute limits may be wider than the table limits
 			limits_reversed = (common_values[0] > common_values[table_size - 1]);
-			if (false && limits_reversed)
-				System.out.println("ReadSetScaling, limits reversed");
 			if ((primary_value < primary_values[0])
 					&& (primary_value >= absolute_limits[0])) {
 				// value is low, but acceptable

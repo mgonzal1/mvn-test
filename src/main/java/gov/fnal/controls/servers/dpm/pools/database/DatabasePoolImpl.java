@@ -1,4 +1,4 @@
-// $Id: DatabasePoolImpl.java,v 1.6 2023/11/02 16:36:15 kingc Exp $
+// $Id: DatabasePoolImpl.java,v 1.8 2024/10/10 16:31:34 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.database;
 
 import java.util.ArrayList;
@@ -38,27 +38,62 @@ public class DatabasePoolImpl implements PoolInterface, AcnetErrors
 	@Override
 	public void processRequests()
 	{
-		final long t = System.currentTimeMillis();
+		final long now = System.currentTimeMillis();
 
 		for (WhatDaq whatDaq : requests) {
 			final ReceiveData r = whatDaq.getReceiveData();
 
-			switch (whatDaq.property) {
+			switch (whatDaq.property()) {
 			 case DESCRIPTION:
-			 	r.receiveData(whatDaq.dInfo.description, t, 0);
+			 	r.receiveData(whatDaq.description(), now, 0);
 				break;
 
 			 case INDEX:
-			 	r.receiveData((double) whatDaq.dInfo.di, t, 0);
+			 	r.receiveData(whatDaq.di(), now, 0);
 			 	break;
 
 			 case LONG_NAME:
-			 	r.receiveData(whatDaq.dInfo.longName, t, 0);
+			 	r.receiveData(whatDaq.longName(), now, 0);
 			 	break;
 
 			 case ALARM_LIST_NAME:
-			 	r.receiveData(whatDaq.alarmListName, t, 0);
+			 	r.receiveData(whatDaq.alarmListName(), now, 0);
 			 	break;
+
+			 case READING:
+			 case SETTING:
+			 	switch (whatDaq.field()) {
+				 case MIN:
+				 	r.receiveData(whatDaq.minimum(), now, 0);
+				 	break;
+
+				 case MAX:
+				 	r.receiveData(whatDaq.maximum(), now, 0);
+				 	break;
+
+				 case UNITS:
+			 		r.receiveData(whatDaq.units(), now, 0);
+				 	break;
+				}
+				break;
+
+/*
+			 case SETTING:
+			 	switch (whatDaq.field()) {
+				 case MIN:
+				 	r.receiveData(whatDaq.dInfo.setting.prop.minimum, now, 0);
+				 	break;
+
+				 case MAX:
+				 	r.receiveData(whatDaq.dInfo.setting.prop.maximum, now, 0);
+				 	break;
+
+				 case UNITS:
+			 		r.receiveData(whatDaq.units(), now, 0);
+				 	break;
+				}
+				break;
+				*/
 			}
 		}
 	}

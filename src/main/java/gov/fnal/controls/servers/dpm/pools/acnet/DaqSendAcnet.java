@@ -1,30 +1,27 @@
-// $Id: DaqSendAcnet.java,v 1.9 2024/02/22 16:32:14 kingc Exp $
+// $Id: DaqSendAcnet.java,v 1.11 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Collection;
 import java.util.ArrayList;
 
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 class DaqSendAcnet implements DaqSendInterface
 {
-	private final Node node;
-	private final DataEvent event;
-	private final boolean isSetting;
-	private final long timeout;
-	private final Completable listCompletion;
-	private final ArrayList<DaqRequestList> reqLists = new ArrayList<>();
+	final Node node;
+	final Event event;
+	final boolean isSetting;
+	final Completable listCompletion;
+	final ArrayList<DaqRequestList> reqLists = new ArrayList<>();
 
-	DaqSendAcnet(Node node, DataEvent event, boolean isSetting, 
-					Completable listCompletion, long timeout)
+	DaqSendAcnet(Node node, Event event, boolean isSetting, Completable listCompletion)
 	{
 		this.node = node;
 		this.event = event;
 		this.isSetting = isSetting;
 		this.listCompletion = listCompletion;
-		this.timeout = timeout;
 	}
 
 	@Override
@@ -57,7 +54,7 @@ class DaqSendAcnet implements DaqSendInterface
 			if (reqList.add(whatDaq))
 				return true;
 
-		final DaqRequestList reqList = new DaqRequestList(node, event, isSetting, listCompletion, timeout);
+		final DaqRequestList reqList = new DaqRequestList(node, event, isSetting, listCompletion);
 
 		reqLists.add(reqList);
 
@@ -93,15 +90,6 @@ class DaqSendAcnet implements DaqSendInterface
 		int ii = 1;
 		for (DaqRequestList reqList : reqLists)
 			buf.append(String.format("%3d) %s\n", ii++, reqList));
-
-		//final StringBuilder buf = new StringBuilder("DaqSendAcnet:\n");
-
-		//buf.append("\tevent:").append(event).append('\n');
-		//buf.append("\tisSet:").append(isSetting).append('\n');
-		//buf.append("\t").append("timeout:").append(timeout).append('\n');
-		//buf.append("\trequest count:").append(requestCount()).append('\n');
-		//buf.append("\tlist count:").append(reqLists.size()).append('\n');
-		//buf.append("\tcompletion:").append(listCompletion).append('\n');
 
 		return buf.toString();
 	}

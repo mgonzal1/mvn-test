@@ -1,4 +1,4 @@
-// $Id: AcceleratorPool.java,v 1.16 2024/03/27 21:03:59 kingc Exp $
+// $Id: AcceleratorPool.java,v 1.25 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools;
 
 import java.util.List;
@@ -10,11 +10,11 @@ import java.nio.ByteBuffer;
 import gov.fnal.controls.servers.dpm.drf3.Property;
 import gov.fnal.controls.servers.dpm.SettingData;
 import gov.fnal.controls.servers.dpm.ConsoleUser;
+import gov.fnal.controls.servers.dpm.DataSource;
 import gov.fnal.controls.servers.dpm.pools.acnet.AcnetPoolImpl;
 import gov.fnal.controls.servers.dpm.pools.acnet.FTPPoolImpl;
 import gov.fnal.controls.servers.dpm.pools.epics.EpicsPoolImpl;
 import gov.fnal.controls.servers.dpm.pools.epics.PVAPool;
-import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.pools.database.DatabasePoolImpl;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetConnection;
@@ -37,8 +37,6 @@ public class AcceleratorPool
 
 	public static void init() throws Exception
 	{
-		//Node.init();
-		//AdditionalDeviceInfo.init();
 		consolidationHits = 0;
 		DeviceCache.init();
 
@@ -61,25 +59,20 @@ public class AcceleratorPool
 
 	private PoolInterface getPool(WhatDaq whatDaq)
 	{
-		if (whatDaq.property.fromDatabase) {
-			return pools[2];
-		} else {
-			switch (whatDaq.dInfo.type) {
-			 case Acnet:
-			 {
-			 	if ((whatDaq.property == Property.READING) && (whatDaq.getEventFrequency() > 20.0)) {
-					logger.log(Level.FINE, whatDaq + " was upgraded to FTP protocol for frequency - " 
-									+ whatDaq.getEventFrequency() + "Hz for event: " + whatDaq.getEvent()
-									+ " " + whatDaq.event);
-					return pools[3];
-				} else {
-			 		return pools[0];
-				}
-			 }
+		final DataSource dataSource = whatDaq.request.dataSource();
 
-			 case Epics:
-				return pools[1];	
+		if (dataSource instanceof DatabaseSource) {
+			return pools[2];
+		} else if (dataSource instanceof AcnetSource) {
+			if ((whatDaq.property == Property.READING) && (whatDaq.getEventFrequency() > 20.0)) {
+				logger.log(Level.FINE, whatDaq + " was upgraded to FTP protocol for frequency - " + whatDaq.getEventFrequency() + "Hz for event: " + whatDaq.event());
+				return pools[3];
+			} else {
+				return pools[0];
 			}
+		} else if (dataSource instanceof EpicsSource) {
+			logger.log(Level.FINE, whatDaq + " is an Epics type device" );
+			return pools[1];	
 		}
 
 		return pools[0];
@@ -97,12 +90,12 @@ public class AcceleratorPool
 		this.buf = ByteBuffer.allocate(64 * 1024).order(ByteOrder.LITTLE_ENDIAN);
 	}
 
-	public void addRequest(WhatDaq whatDaq)
+	synchronized public void addRequest(WhatDaq whatDaq)
 	{
 		getPool(whatDaq).addRequest(whatDaq);
 	}
 
-	public void addSetting(WhatDaq whatDaq, SettingData setting) throws AcnetStatusException
+	synchronized public void addSetting(WhatDaq whatDaq, SettingData setting) throws AcnetStatusException
 	{
 		getPool(whatDaq).addSetting(whatDaq, setting);
 	}
@@ -117,13 +110,13 @@ public class AcceleratorPool
 		return requests;
 	}
 
-	public void processRequests()
+	synchronized public void processRequests()
 	{
 		for (PoolInterface p : pools)
 			p.processRequests();
 	}
 
-	public void cancelRequests()
+	synchronized public void cancelRequests()
 	{
 		for (PoolInterface p : pools)
 			p.cancelRequests();
@@ -131,19 +124,6 @@ public class AcceleratorPool
 
 	synchronized public void logSettings(ConsoleUser user, String location, List<WhatDaq> settings) throws AcnetStatusException
 	{
-	//	final ArrayList<WhatDaq> successful = new ArrayList<>();
-
-	//	for (SettingStatus ss : settingStatus) {
-	//		if (ss.successful()) {
-	//			successful.add(ss.whatDaq);
-	//		}
-	//	}
-
-		//logger.fine(String.format("%s LogSettings - %d setting(s)", list.id(), settings.size()));
-
-		//if (connection == null)
-		//	connection = AcnetInterface.open("SETSDB");
-
 		buf.clear();
 
 		// Type code 1000 for Java UserSettingSource
@@ -203,11 +183,7 @@ public class AcceleratorPool
 
 		buf.flip();
 
-		//try {
-			connection.send("SETSDB", "SETSDB", buf);
-		//} catch (Exception e) {
-		//	logger.warning(list.id() + " unable to log settings - " + e);
-		//}
+		connection.send("SETSDB", "SETSDB", buf);
 	}
 
 	public static String dumpPool(PoolType type)
@@ -223,4 +199,3 @@ public class AcceleratorPool
 		return buf.toString();
 	}
 }
-

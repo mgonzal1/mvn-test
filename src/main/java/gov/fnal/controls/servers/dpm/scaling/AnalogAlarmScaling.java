@@ -1,9 +1,8 @@
-// $Id: AnalogAlarmScaling.java,v 1.9 2024/01/05 21:31:06 kingc Exp $
+// $Id: AnalogAlarmScaling.java,v 1.10 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
 import java.nio.ByteBuffer;
 
-//import gov.fnal.controls.service.proto.Lookup_v2;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.drf3.Property;
@@ -20,7 +19,6 @@ class AnalogAlarmScaling extends ReadSetScaling
 	int triesNeeded = 0;
 	int triesNow = 0;
 
-	//AnalogAlarmScaling(int di, int pi, Lookup_v2.ReadSetScaling scaling)
 	AnalogAlarmScaling(int di, int pi, DeviceInfo.ReadSetScaling scaling)
 	{
 		super(scaling);

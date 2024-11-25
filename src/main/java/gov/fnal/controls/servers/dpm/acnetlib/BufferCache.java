@@ -1,4 +1,4 @@
-// $Id: BufferCache.java,v 1.4 2024/04/11 20:41:13 kingc Exp $
+// $Id: BufferCache.java,v 1.6 2024/11/21 22:02:19 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.io.IOException;
@@ -11,6 +11,8 @@ import java.nio.ByteOrder;
 import java.util.LinkedList;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.SocketChannel;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 abstract class Buffer
 {
@@ -182,10 +184,8 @@ final class BufferCache
 
 					if (bufferAfterUse)
 						freeList.add(this);
-
-					//logger.log(Level.FINER, () -> "BufferCache.free[allocated:" + allocatedCount + " free:" + freeList.size() + "]");
 				} else {
-					AcnetInterface.logger.log(Level.WARNING, () -> "BufferCache.free[bufNo:" + bufNo + " inUse:" + inUse + "]");
+					logger.log(Level.WARNING, () -> "BufferCache.free[bufNo:" + bufNo + " inUse:" + inUse + "]");
 					Thread.dumpStack();
 				}		
 			}
@@ -200,30 +200,13 @@ final class BufferCache
 	{
 		if (freeList.isEmpty()) {
 			allocatedCount++;
-			//logger.log(Level.FINER, () -> "BufferCache.alloc(new)[allocated:" + allocatedCount + " free:" + freeList.size() + "]");
+			logger.log(Level.FINEST, () -> "BufferCache.alloc(new)[allocated:" + allocatedCount + " free:" + freeList.size() + "]");
 
 			return new CachedBuffer(ByteBuffer.allocate(BufferSize).order(ByteOrder.LITTLE_ENDIAN));
 		} else {
 			final CachedBuffer buf = freeList.remove();
 
-			//logger.log(Level.FINER, () -> "BufferCache.alloc(free)[allocated:" + allocatedCount + " free:" + freeList.size() + "]");
-
-			buf.inUse = true;
-			return buf;
-		}
-	}
-
-	static final synchronized Buffer allocDirect()
-	{
-		if (freeList.isEmpty()) {
-			allocatedCount++;
-			AcnetInterface.logger.log(Level.FINER, () -> "BufferCache.alloc(new)[allocated:" + allocatedCount + " free:" + freeList.size() + "]");
-
-			return new CachedBuffer(ByteBuffer.allocateDirect(BufferSize).order(ByteOrder.LITTLE_ENDIAN));
-		} else {
-			final CachedBuffer buf = freeList.remove();
-
-			AcnetInterface.logger.log(Level.FINER, () -> "BufferCache.alloc(free)[allocated:" + allocatedCount + " free:" + freeList.size() + "]");
+			logger.log(Level.FINEST, () -> "BufferCache.alloc(free)[allocated:" + allocatedCount + " free:" + freeList.size() + "]");
 
 			buf.inUse = true;
 			return buf;

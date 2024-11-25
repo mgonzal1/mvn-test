@@ -1,4 +1,4 @@
-// $Id: DaqDefinitions.java,v 1.8 2024/03/27 21:00:26 kingc Exp $
+// $Id: DaqDefinitions.java,v 1.9 2024/06/24 19:53:02 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
@@ -7,6 +7,7 @@ import gov.fnal.controls.servers.dpm.acnetlib.NodeFlags;
 abstract class DaqDefinitions implements NodeFlags
 {
 	static final int MaxAcnetMessageSize = (8 * 1024) + 256 + 2;
+	static final int SegmentSize = (4 * 1024);
 	final int RequestOverhead;
 	final int ReplyOverhead;
 	final int DeviceOverhead;
@@ -40,6 +41,11 @@ abstract class DaqDefinitions implements NodeFlags
 	static int MaxReplyDataLength()
 	{	
 		return MaxAcnetMessageSize - 34 - 20;
+	}
+
+	static int SegmentSize()
+	{
+		return SegmentSize;
 	}
 }
 

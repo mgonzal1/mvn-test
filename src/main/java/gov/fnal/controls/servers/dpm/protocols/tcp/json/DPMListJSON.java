@@ -1,4 +1,4 @@
-// $Id: DPMListJSON.java,v 1.19 2023/11/02 16:36:15 kingc Exp $
+// $Id: DPMListJSON.java,v 1.21 2024/10/10 16:31:34 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.tcp.json;
  
 import java.util.Collection;
@@ -201,6 +201,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 		sendReply(m);
 
 		this.owner.listCreated(this);
+		this.thread.start();
 	}
 
 	private final void addJsonElement(JsonElement je, long refId)
@@ -291,11 +292,11 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
     {
         final Reply.DeviceInfo m = new Reply.DeviceInfo();
 
-        m.refId = whatDaq.refId;
-        m.di = whatDaq.dInfo.di;
-        m.name = whatDaq.dInfo.name;
-        m.description = whatDaq.dInfo.description;
-        m.units = whatDaq.getUnits();
+        m.refId = whatDaq.refId();
+        m.di = whatDaq.di();
+        m.name = whatDaq.name();
+        m.description = whatDaq.description();
+        m.units = whatDaq.units();
 
 		sendReply(m);
     }
@@ -305,7 +306,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	{
 		final Reply.Raw m = new Reply.Raw();
 
-		m.refId = whatDaq.refId;
+		m.refId = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.data = data;
@@ -324,7 +325,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	{
 		final Reply.Scalar m = new Reply.Scalar();
 
-		m.refId = whatDaq.refId;
+		m.refId = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.data = data;
@@ -337,7 +338,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	{
 		final Reply.ScalarArray m = new Reply.ScalarArray();	
 
-		m.refId = whatDaq.refId;
+		m.refId = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.data = data;
@@ -350,7 +351,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	{
 		final Reply.TimedScalarArray m = new Reply.TimedScalarArray();  
 
-		m.refId = whatDaq.refId;
+		m.refId = whatDaq.refId();
 		m.cycle = seqNo;
 		m.timestamp = System.currentTimeMillis();
 
@@ -367,7 +368,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	{
 		final Reply.Text m = new Reply.Text();
 
-		m.refId = whatDaq.refId;
+		m.refId = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.data = data;
@@ -380,7 +381,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	{
 		final Reply.TextArray m = new Reply.TextArray();	
 
-		m.refId = whatDaq.refId;
+		m.refId = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.data = data;
@@ -393,7 +394,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	{
 		final Reply.AnalogAlarm m = new Reply.AnalogAlarm();
 
-		m.refId = whatDaq.refId;
+		m.refId = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 
@@ -414,7 +415,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	{
 		final Reply.DigitalAlarm m = new Reply.DigitalAlarm();
 
-		m.refId = whatDaq.refId;
+		m.refId = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 
@@ -435,7 +436,7 @@ public class DPMListJSON extends DPMListTCP implements AcnetErrors, DPMProtocolR
 	{
 		final Reply.BasicStatus m = new Reply.BasicStatus();
 
-		m.refId = whatDaq.refId;
+		m.refId = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 

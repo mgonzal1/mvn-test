@@ -1,4 +1,4 @@
-// $Id: OneShotDaqPool.java,v 1.12 2024/03/27 20:58:32 kingc Exp $
+// $Id: OneShotDaqPool.java,v 1.15 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Iterator;
@@ -10,8 +10,8 @@ import java.util.logging.Level;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
 
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.events.OnceImmediateEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
+import gov.fnal.controls.servers.dpm.drf3.ImmediateEvent;
 
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.pools.PoolUser;
@@ -20,7 +20,7 @@ import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 {
-    private static final DataEvent event = new OnceImmediateEvent();
+    private static final Event event = new ImmediateEvent();
 
 	int lastCompletedStatus = 0;
 	long updateTime = 0;
@@ -40,7 +40,7 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
     synchronized public void insert(WhatDaq whatDaq)
 	{
         if (whatDaq.length() > DaqDefinitions.MaxReplyDataLength()) {
-            PoolSegmentAssembly.insert(whatDaq, this, 2048, false);
+            PoolSegmentAssembly.insert(whatDaq, this, DaqDefinitions.SegmentSize(), false);
             return;
         }
 
@@ -61,7 +61,7 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 		while (iter.hasNext()) {
 			final WhatDaq whatDaq = iter.next();
 
-			if (user == null || whatDaq.getUser() == user) {
+			if (user == null || whatDaq.user() == user) {
 				whatDaq.getReceiveData().receiveStatus(error);
 				iter.remove();
 			}
@@ -72,7 +72,7 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 		while (iter.hasNext()) {
 			final WhatDaq whatDaq = (WhatDaq) iter.next();
 
-			if (user == null || whatDaq.getUser() == user) {
+			if (user == null || whatDaq.user() == user) {
 				whatDaq.getReceiveData().receiveStatus(error);
 			}
         }
@@ -96,7 +96,7 @@ class OneShotDaqPool extends DaqPool implements Completable, AcnetErrors
 				}
 			}
 
-			xtrans = DaqSendFactory.getDaqSendInterface(node, event, isSetting(), this, event.defaultTimeout());
+			xtrans = DaqSendFactory.getDaqSendInterface(node, event, isSetting(), this);
 			xtrans.begin();
 		} catch (Exception e) {
 			logger.log(Level.FINE, "OneShotDaqPool: exception", e);

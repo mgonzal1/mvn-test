@@ -1,4 +1,4 @@
-// $Id: RepetitiveDaqPool.java,v 1.17 2024/04/11 19:20:07 kingc Exp $
+// $Id: RepetitiveDaqPool.java,v 1.21 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Iterator;
@@ -13,7 +13,7 @@ import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
 import gov.fnal.controls.servers.dpm.acnetlib.NodeFlags;
 
-import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.pools.PoolUser;
 import gov.fnal.controls.servers.dpm.pools.ReceiveData;
@@ -24,105 +24,6 @@ import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 class RepetitiveDaqPool extends DaqPool implements NodeFlags, Completable, AcnetErrors
 {
     private static Recovery recovery = new Recovery();
-
-	class SharedWhatDaq extends WhatDaq implements ReceiveData
-	{
-		private final LinkedList<WhatDaq> users = new LinkedList<>();
-
-		SharedWhatDaq(WhatDaq whatDaq)
-		{
-			super(whatDaq, 0);
-
-			setReceiveData(this);
-			users.add(whatDaq);
-			//addUser(whatDaq);
-		}
-
-		synchronized boolean addUser(WhatDaq whatDaq)
-		{
-			if (whatDaq == null)
-				throw new NullPointerException();
-
-			boolean replace = false;
-
-			for (WhatDaq tmp : users) {
-				if (tmp.list.equals(whatDaq.list)) 
-					replace = true;
-			}
-
-			users.add(whatDaq);
-
-			return replace;
-		}
-
-		synchronized int removeDeletedUsers()
-		{
-			int totalDeleted = 0;
-			final Iterator<WhatDaq> iter = users.iterator();
-
-			while (iter.hasNext()) {
-				if (iter.next().isMarkedForDelete()) {
-					iter.remove();
-					totalDeleted++;
-				}
-			}
-
-			return totalDeleted;
-		}
-
-		synchronized boolean isEmpty()
-		{
-			return users.isEmpty();
-		}
-
-		@Override
-		synchronized public void receiveData(byte[] data, int offset, long timestamp, long cycle)
-		{
-			for (final WhatDaq user : users) {
-				try {
-					user.getReceiveData().receiveData(data, offset, timestamp, cycle);
-				} catch (Exception e) {
-					user.setMarkedForDelete();
-				}
-			}
-		}
-
-		@Override
-		synchronized public void receiveData(ByteBuffer data, long timestamp, long cycle)
-		{
-			data.mark();
-
-			for (final WhatDaq user : users) {
-				try {
-					user.getReceiveData().receiveData(data, timestamp, cycle);
-				} catch (Exception e) {
-					user.setMarkedForDelete();
-				}
-				data.reset();
-			}
-		}
-
-		@Override
-		synchronized public void receiveStatus(int status, long timestamp, long cycle)
-		{
-			for (final WhatDaq user : users) {
-				try {
-					user.getReceiveData().receiveStatus(status, timestamp, cycle);
-				} catch (Exception e) {
-					user.setMarkedForDelete();
-				}
-			}
-		}
-
-		@Override
-		public String toString()
-		{
-			return String.format("%-14s %-8s %-8d %-16s L:%-6d O:%-6d U:%-6d %02x%02x/%02x%02x/%02x%02x/%02x%02x %s",
-									name, node.name(), di, property, length, offset, users.size(),
-									ssdn[1], ssdn[0], ssdn[3], ssdn[2], ssdn[5], ssdn[4], ssdn[7], ssdn[6],
-									setting != null ? "SettingReady" : "");
-		}
-	}
 
 	int totalProcs = 0;
 	int numInserts = 0;
@@ -135,7 +36,7 @@ class RepetitiveDaqPool extends DaqPool implements NodeFlags, Completable, Acnet
 	final LinkedList<WhatDaq> requests = new LinkedList<>();
 	DaqSendInterface xtrans = DaqSendFactory.init();
 
-    RepetitiveDaqPool(Node node, DataEvent event)
+    RepetitiveDaqPool(Node node, Event event)
 	{
         super(node, event);
     }
@@ -163,7 +64,7 @@ class RepetitiveDaqPool extends DaqPool implements NodeFlags, Completable, Acnet
         ++totalInserts;
 
         if (whatDaq.length() > DaqDefinitions.MaxReplyDataLength()) {
-            PoolSegmentAssembly.insert(whatDaq, this, DaqDefinitions.MaxReplyDataLength(), true);
+            PoolSegmentAssembly.insert(whatDaq, this, DaqDefinitions.SegmentSize(), true);
             return;
         }
 
@@ -178,8 +79,6 @@ class RepetitiveDaqPool extends DaqPool implements NodeFlags, Completable, Acnet
                     synchronized (shared) {
                         if (!shared.addUser(whatDaq)) {
 							AcceleratorPool.consolidationHit();
-
-							//System.out.println("consolidation hit for " + this);
 						}
                     }
                     return;
@@ -197,18 +96,18 @@ class RepetitiveDaqPool extends DaqPool implements NodeFlags, Completable, Acnet
         final long now = System.currentTimeMillis();
 
         synchronized (requests) {
-            Iterator<WhatDaq> url = requests.iterator();
+            final Iterator<WhatDaq> url = requests.iterator();
 
             while (url.hasNext()) {
                 final SharedWhatDaq shared = (SharedWhatDaq) url.next();
 
                 synchronized (shared) {
-                    Iterator<WhatDaq> whatDaqs = shared.users.iterator();
+                    final Iterator<WhatDaq> whatDaqs = shared.iterator();
 
                     for (WhatDaq whatDaq; whatDaqs.hasNext();) {
                         whatDaq = whatDaqs.next();
 
-                        if (user == null || whatDaq.getUser() == user) {
+                        if (user == null || whatDaq.user() == user) {
                             if (error != 0)
 								whatDaq.getReceiveData().receiveStatus(error, now, 0);
 
@@ -277,7 +176,7 @@ class RepetitiveDaqPool extends DaqPool implements NodeFlags, Completable, Acnet
 			xtrans.cancel();
 			lastCompletedStatus = 0;
 
-			xtrans = DaqSendFactory.getDaqSendInterface(node, event, false, this, event.defaultTimeout());
+			xtrans = DaqSendFactory.getDaqSendInterface(node, event, false, this);
 			procTime = now;
 			xtrans.send(requests);
 			recovery.add(this);
@@ -337,16 +236,13 @@ class RepetitiveDaqPool extends DaqPool implements NodeFlags, Completable, Acnet
 		@Override
         synchronized public void run()
 		{
-			//logger.log(Level.FINE, () -> String.format("Repetitive pool recovery has %d entries", pools.size()));
-
 			final long now = System.currentTimeMillis();
 
 			for (RepetitiveDaqPool pool : pools.values()) {
 				final boolean resent = pool.recovery(now);
 
-				//logger.log(Level.FINE, () -> String.format("Repetitive pool %6d recovery for %-10s event:%-16s entries:%5d action:[%6s]", 
-				//											pool.id, pool.node.name(), pool.event, pool.requests.size(), resent ? "RESENT" : "")); 
-
+				logger.log(Level.FINER, () -> String.format("Repetitive pool %6d recovery for %-10s event:%-16s entries:%5d action:[%6s]", 
+															pool.id, pool.node.name(), pool.event, pool.requests.size(), resent ? "RESENT" : "")); 
 			}
         }
     }

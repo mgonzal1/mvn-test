@@ -1,4 +1,4 @@
-// $Id: DPMProtocolReplierPC.java,v 1.8 2023/11/02 16:36:15 kingc Exp $
+// $Id: DPMProtocolReplierPC.java,v 1.9 2024/10/10 16:31:34 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.acnet.pc;
  
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
@@ -52,11 +52,11 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
     {
         final DPM.Reply.DeviceInfo reply = new DPM.Reply.DeviceInfo();
 
-        reply.ref_id = whatDaq.refId;
-        reply.di = whatDaq.dInfo.di;
-        reply.name = whatDaq.dInfo.name;
-        reply.description = whatDaq.dInfo.description;
-        reply.units = whatDaq.getUnits();
+        reply.ref_id = whatDaq.refId();
+        reply.di = whatDaq.di();
+        reply.name = whatDaq.name();
+        reply.description = whatDaq.description();
+        reply.units = whatDaq.units();
 
 		sendReply(reply);
     }
@@ -79,7 +79,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.Raw m = new DPM.Reply.Raw();
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.data = data;
@@ -92,7 +92,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.Raw m = new DPM.Reply.Raw();
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.data = new byte[whatDaq.length()];
@@ -112,7 +112,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.Scalar m = new DPM.Reply.Scalar();
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.data = data;
@@ -125,7 +125,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.ScalarArray m = new DPM.Reply.ScalarArray();	
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.status = 0;
@@ -139,7 +139,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.TimedScalarArray m = new DPM.Reply.TimedScalarArray();  
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.cycle = seqNo;
 		m.status = 0;
 		m.timestamp = System.currentTimeMillis();
@@ -157,7 +157,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.Text m = new DPM.Reply.Text();
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.status = 0;
@@ -171,7 +171,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.TextArray m = new DPM.Reply.TextArray();	
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 		m.status = 0;
@@ -185,7 +185,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.AnalogAlarm m = new DPM.Reply.AnalogAlarm();
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 
@@ -206,7 +206,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.DigitalAlarm m = new DPM.Reply.DigitalAlarm();
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 
@@ -227,7 +227,7 @@ abstract public class DPMProtocolReplierPC implements DPMProtocolReplier
 	{
 		final DPM.Reply.BasicStatus m = new DPM.Reply.BasicStatus();
 
-		m.ref_id = whatDaq.refId;
+		m.ref_id = whatDaq.refId();
 		m.timestamp = timestamp;
 		m.cycle = cycle;
 

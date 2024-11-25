@@ -1,4 +1,4 @@
-// $Id: SettingStatus.java,v 1.8 2023/11/02 16:36:15 kingc Exp $
+// $Id: SettingStatus.java,v 1.9 2024/10/10 16:31:34 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
@@ -24,7 +24,7 @@ public class SettingStatus
 	SettingStatus(WhatDaq whatDaq)
 	{
 		this.whatDaq = whatDaq;
-		this.refId = whatDaq.refId;
+		this.refId = whatDaq.refId();
 		this.status = AcnetErrors.ACNET_UTIME;
 		this.completed = false;
 	}

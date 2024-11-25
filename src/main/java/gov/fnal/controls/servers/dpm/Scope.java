@@ -1,4 +1,4 @@
-// $Id: Scope.java,v 1.63 2024/04/17 14:34:40 kingc Exp $
+// $Id: Scope.java,v 1.70 2024/11/21 22:07:18 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import java.util.Set;
@@ -45,33 +45,37 @@ class RefreshTask extends TimerTask
 {
 	private static volatile Timer timer = null;
 	private static final Map<String, RefreshTask> activeTasks = new HashMap<>();
-	private static final String packageName = RefreshTask.class.getPackage().getName();
 
-	final String className;
-	final Method method;
+	final String name;
 	final int delay;
 
-	private RefreshTask(String className) throws Exception
+
+	private RefreshTask(String name) throws Exception
 	{
-		this.className = className;
-		this.method = Class.forName(packageName + "." + className).getDeclaredMethod("refresh");
+		this.name = name;
 		this.delay = randomDelay(5, 60);
 
-		logger.log(Level.INFO, className + ": refresh scheduled in " + delay + " seconds"); 
+		logger.log(Level.INFO, name + ": refresh scheduled in " + delay + " seconds"); 
 	}
 
 	@Override
 	public void run()
 	{
 		try {
-			method.invoke(null);
-			logger.log(Level.INFO, className + ": refresh complete");
+			if (name.equals("Console Users"))
+				ConsoleUserManager.refresh();
+			else if (name.equals("Logger Config"))
+				gov.fnal.controls.servers.dpm.pools.acnet.LoggerConfigCache.refresh();
+			else if (name.equals("Exception Stack"))
+				Scope.exceptionStack = false;
+
+			logger.log(Level.INFO, name + " : refresh complete");
 		} catch (Exception e) {
-			logger.log(Level.INFO, className + ": refresh failed", e);
+			logger.log(Level.INFO, name + " : refresh failed", e);
 		}
 
 		synchronized (activeTasks) {
-			activeTasks.remove(className);
+			activeTasks.remove(name);
 			if (activeTasks.size() == 0) {
 				timer.cancel();
 				timer = null;
@@ -91,16 +95,16 @@ class RefreshTask extends TimerTask
 		}
 	}
 
-	synchronized static boolean schedule(String className) throws Exception
+	synchronized static boolean schedule(String name) throws Exception
 	{
 		synchronized (activeTasks) {
 			if (timer == null)
 				timer = new Timer("Scope refresh timer", true);
 
-			if (!activeTasks.containsKey(className)) {
-				final RefreshTask task = new RefreshTask(className);
+			if (!activeTasks.containsKey(name)) {
+				final RefreshTask task = new RefreshTask(name);
 
-				activeTasks.put(className, task);
+				activeTasks.put(name, task);
 				timer.schedule(task, task.delay * 1000);
 
 				return true;
@@ -113,46 +117,19 @@ class RefreshTask extends TimerTask
 
 public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope.Request.Receiver, AcnetErrors
 {
-/*
-	class ScopeServer extends Thread
-	{
-		private final InetSocketAddress address = new InetSocketAddress(0);
-		private final ServerSocketChannel serverChannel;
+	static final int TCP_SERVER_PORT = 50000;
 
-		ScopeServer() throws IOException
-		{
-			this.serverChannel = ServerSocketChannel.open();
-			this.serverChannel.bind(address);
-			this.setName("Scope accept");
-			this.start();
-		}
+	static AcnetConnection connection;
+	static ConcurrentLinkedQueue<HandlerThread> handlers = new ConcurrentLinkedQueue<>();
 
-		public void run()
-		{
-			try {
-				while (true)
-					new HandlerThread(serverChannel.accept());
-			} catch (Exception ignore) { }
-		}
+	final ByteBuffer rpyBuf = ByteBuffer.allocate(8 * 1024);
+	final DPMScope.Reply.ServiceDiscovery discoveryReply = new DPMScope.Reply.ServiceDiscovery(); 
 
-		void close() throws IOException
-		{
-			serverChannel.close();
-		}
-	}
-	*/
+	int repliesPerSecondMax;
+	AcnetRequest request;
 
-	private static AcnetConnection connection;
-	//private static ScopeServer scopeServer;
-	private static ConcurrentLinkedQueue<HandlerThread> handlers = new ConcurrentLinkedQueue<>();
-
-	private final ByteBuffer rpyBuf = ByteBuffer.allocate(8 * 1024);
-	private final DPMScope.Reply.ServiceDiscovery discoveryReply = new DPMScope.Reply.ServiceDiscovery(); 
-
-	private int repliesPerSecondMax;
-	private AcnetRequest request;
-
-	private static volatile int listOpenedCount;
+	static volatile int listOpenedCount;
+	static boolean exceptionStack;
 
 	static void init() throws AcnetStatusException
 	{
@@ -175,9 +152,8 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 		this.connection.handleMessages(this);
 		
 		try {
-			this.discoveryReply.hostName = DPMServer.localHostName();
-			//this.scopeServer = new ScopeServer();
 			this.discoveryReply.codeVersion = DPMServer.codeVersion();
+			this.discoveryReply.hostName = AcnetInterface.vNode().address().getAddress().getHostName();
 		} catch (Exception ignore) {
 			this.discoveryReply.hostName = "-";
 		}
@@ -193,7 +169,7 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 		try {
 			DPMScope.Request.unmarshal(r.data()).deliverTo(this);
 		} catch (Exception e) {
-			request.sendLastStatusNoEx(ACNET_SYS);
+			request.sendLastStatusNoEx(DPM_INTERNAL_ERROR);
 			logger.log(Level.WARNING, "exception delivering request", e);
 		}
 	}
@@ -233,10 +209,10 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 			discoveryReply.activeRefresh = RefreshTask.activeCount() > 0;
 			discoveryReply.restartScheduled = DPMServer.restartScheduled();
 			discoveryReply.inDebugMode = DPMServer.debug();
-			discoveryReply.scopePort = DPMServer.scopeChannel.socket().getLocalPort();
+			discoveryReply.scopePort = TCP_SERVER_PORT;
+			discoveryReply.exceptionStack = exceptionStack;
 
 			for (DPMList list : lists) {
-				//discoveryReply.requestCount += list.requestCount();
 				discoveryReply.requestCount += list.whatDaqCount();
 				discoveryReply.repliesPerSecond += list.repliesPerSecond;
 				discoveryReply.repliesPerSecondMax += list.repliesPerSecondMax;
@@ -264,11 +240,10 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 	public void handle(DPMScope.Request.Refresh m)
 	{
 		try {
-			if (request != null) {
-				RefreshTask.schedule(m.name);
+			RefreshTask.schedule(m.name);
+
+			if (request != null)
 				request.sendLastStatus(0);
-			} else
-				RefreshTask.schedule(m.name);
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "exception handling refresh", e);
 			request.sendLastStatusNoEx(0);
@@ -278,25 +253,25 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 	@Override
 	public void handle(DPMScope.Request.DumpPools m)
 	{
-		request.sendLastStatusNoEx(ACNET_SYS);
+		request.sendLastStatusNoEx(DPM_INTERNAL_ERROR);
 	}
 
 	@Override
 	public void handle(DPMScope.Request.SetLogLevel m)
 	{
-		request.sendLastStatusNoEx(ACNET_SYS);
+		request.sendLastStatusNoEx(DPM_INTERNAL_ERROR);
 	}
 
 	@Override
 	public void handle(DPMScope.Request.DisposeList m)
 	{
-		request.sendLastStatusNoEx(ACNET_SYS);
+		request.sendLastStatusNoEx(DPM_INTERNAL_ERROR);
 	}
 
 	@Override
 	public void handle(DPMScope.Request.List m)
 	{
-		request.sendLastStatusNoEx(ACNET_SYS);
+		request.sendLastStatusNoEx(DPM_INTERNAL_ERROR);
 	}
 
 	static String userName(DPMList list)
@@ -306,6 +281,11 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 		} catch (Exception e) { 
 			return "";
 		}
+	}
+
+	public static void exceptionStack()
+	{
+		exceptionStack = true;
 	}
 
 	public static void listOpened(DPMList list)
@@ -506,14 +486,14 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 		{
 			final DPMScope.DrfRequest r = new DPMScope.DrfRequest();
 
-			r.refId = whatDaq.refId;
-			r.name = whatDaq.getDeviceName();
-			r.property = whatDaq.property.toString();
-			r.foreignName = whatDaq.pInfo.foreignName;
-			r.foreignType = whatDaq.dInfo.type.toString();
-			r.length = whatDaq.getLength();
-			r.offset = whatDaq.getOffset();
-			r.event = whatDaq.getEvent().toString();
+			r.refId = whatDaq.refId();
+			r.name = whatDaq.name();
+			r.property = whatDaq.property().toString();
+			r.foreignName = whatDaq.foreignName();
+			r.foreignType = whatDaq.foreignType();
+			r.length = whatDaq.length();
+			r.offset = whatDaq.offset();
+			r.event = whatDaq.event().toString();
 
 			return r;
 		}
@@ -533,7 +513,7 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 			final int RequestsPerMessage = 100;
 			final ArrayList<DPMScope.DrfRequest> reqArr = new ArrayList<DPMScope.DrfRequest>(RequestsPerMessage);
 
-			for (Map.Entry<Model, JobInfo> entry : list.jobs.entrySet()) {
+			for (Map.Entry<DataSource, JobInfo> entry : list.jobs.entrySet()) {
 				for (WhatDaq whatDaq : entry.getValue().whatDaqs()) {
 					if (reqArr.size() == RequestsPerMessage) {
 						queueRequests(list, reqArr);
@@ -566,27 +546,6 @@ public class Scope implements AcnetMessageHandler, AcnetRequestHandler, DPMScope
 		{
 			final int RequestsPerMessage = 100;
 			final ArrayList<DPMScope.DrfRequest> reqArr = new ArrayList<DPMScope.DrfRequest>(RequestsPerMessage);
-
-			//if (list.settingsHandler != null) {
-				//for (SettingStats stats : list.settingsHandler.settingStats()) {
-
-				/*
-				for (SettingStats stats : list.settingStats()) {
-					if (reqArr.size() == RequestsPerMessage) {
-						queueSettingRequests(list, reqArr);
-						reqArr.clear();
-					}
-
-					final DPMScope.DrfRequest r = to(stats.whatDaq);
-					
-					r.setCount = stats.count;
-					r.model = "";
-
-					reqArr.add(r);
-				}
-				*/
-
-			//}
 
 			if (reqArr.size() > 0)
 				queueSettingRequests(list, reqArr);

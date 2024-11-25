@@ -1,7 +1,8 @@
-// $Id: LoggerConfigCache.java,v 1.11 2024/03/21 15:57:56 kingc Exp $
+// $Id: LoggerConfigCache.java,v 1.21 2024/11/21 22:07:18 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,10 +24,9 @@ import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.pools.DeviceCache;
 import gov.fnal.controls.servers.dpm.pools.LoggedDevice;
 import gov.fnal.controls.servers.dpm.drf3.AcnetRequest;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.events.NeverEvent;
-import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
-import gov.fnal.controls.servers.dpm.events.DataEventFactory;
+import gov.fnal.controls.servers.dpm.drf3.NeverEvent;
+import gov.fnal.controls.servers.dpm.drf3.PeriodicEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
 
 import static gov.fnal.controls.db.DbServer.getDbServer;
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
@@ -108,7 +108,7 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 
 		LoggedDeviceEntry(String loggerNodeName, WhatDaq whatDaq) throws AcnetStatusException
 		{
-			this(LoggerConfigCache.loggerNode(loggerNodeName), whatDaq.loggedName);
+			this(LoggerConfigCache.loggerNode(loggerNodeName), whatDaq.loggedName());
 		}
 
 		@Override
@@ -139,6 +139,12 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 		public int id()
 		{
 			return listId;
+		}
+
+		@Override
+		public boolean clientLogged()
+		{
+			return event.toLowerCase().startsWith("client");
 		}
 	}
 
@@ -208,7 +214,7 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 		final HashMap<Integer, String> newLoggerNodeMap = new HashMap<>();
 
 		try {
-			Map<LoggerList, String[]> listEventMap = new HashMap<>();
+			final Map<LoggerList, String[]> listEventMap = new HashMap<>();
 
 		   	{
 				final String sqlcmd = "SELECT logger_node, listid, logger_rate, data_events_1, data_events_2, data_events_3, data_events_4, data_events_5, data_events_6  FROM wangjy.lj_data_events_table WHERE logger_rate=1";
@@ -225,10 +231,6 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 					final String e6 = rs.getString("data_events_6").trim();
 
 					listEventMap.put(new LoggerList(node, listId), new String[] { e1, e2, e3, e4, e5, e6 }); 
-
-					//if (node == 0xcb7) {
-					//	System.out.printf("%d %s %s %s %s %s %s %s\n", listId, rs.getString("logger_rate"), e1, e2, e3, e4, e5, e6);
-					//}
 				}
 		    }
 
@@ -249,11 +251,6 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 					final String loggerName = rs.getString("node_name").trim();
 					final int displayIndex = rs.getInt("dsp_index");
 					final int listId = rs.getInt("listid");
-
-					//if (loggedDrf.equals("I:IB")) {
-						//System.out.println("'" + loggedDrf + "' '" + event + "' '" +  button + "' rate=" + rate);
-					//}
-
 					final String loggerNameUC = loggerName.toUpperCase();
 					final String badEntryKey = loggerName + ":" + listId + ":" + displayIndex;
 
@@ -274,7 +271,7 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 
 						try {
 							final AcnetRequest r = new AcnetRequest(new DPMRequest(loggedDrf));
-							final Device key = new Device(r.getDevice(), r.getProperty().indexValue);
+							final Device key = new Device(r.getDevice(), r.getProperty().pi);
 
 							List<LoggedDeviceEntry> loggedNames = newLoggerDeviceMap.get(key);
 
@@ -284,11 +281,10 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 							}
 
 							loggedNames.add(new LoggedDeviceEntry(node, loggerNameUC, loggedDrf, deviceEvent != null ? deviceEvent : event, listId));
-							//loggedNames.add(new LoggedDeviceEntry(node, loggerNameUC, loggedDrf, event, listId));
 							badEntries.remove(badEntryKey);
 
 							if (logger.isLoggable(Level.FINEST)) {
-								System.out.printf("%-10s %-3d %-20s %-20s %s\n", loggerNameUC, listId, loggedDrf, event, deviceEvent);
+								logger.log(Level.INFO, String.format("%-10s %-10s %-3d %-20s %-20s %s\n", loggerNameUC, Node.get(node), listId, loggedDrf, event, deviceEvent));
 							}
 						} catch (Exception e) {
 							if (!badEntries.contains(badEntryKey) && !button.equals("Client")) {
@@ -305,7 +301,8 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 				loggerNameMap = newLoggerNameMap;
 				loggerNodeMap = newLoggerNodeMap;
 				loggerDeviceMap = newLoggerDeviceMap;
-				logger.log(logLevel, String.format("LoggerDeviceCache.update: %d entries in %d ms", loggerDeviceMap.size(), System.currentTimeMillis() - start));
+				logger.log(logLevel, String.format("LoggerDeviceCache.update: read %d entries in %d loggers in %d ms",
+							loggerDeviceMap.size(), loggerNameMap.size(), System.currentTimeMillis() - start));
 			}
 		} catch (SQLException e) {
 			logger.log(Level.WARNING, "LoggerDeviceCache.update: failed", e);
@@ -329,15 +326,10 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 
 	static final List<LoggedDeviceEntry> search(WhatDaq whatDaq)
 	{
-		return search(new Device(whatDaq.getDeviceName(), whatDaq.getPropertyIndex()));		
+		return search(new Device(whatDaq.name(), whatDaq.pi()));		
 	}
 
-	//static final List<LoggedDeviceEntry> search(DeviceRequest deviceRequest)
-	//{
-	//	return search(new Device(deviceRequest.getDeviceName(), deviceRequest.getProperty()));
-	//}
-
-	static final void refresh()
+	public static final void refresh()
 	{
 		update(Level.CONFIG);
 	}
@@ -373,10 +365,10 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 		return name;
 	}
 
-	static private final DataEvent toEvent(String event)
+	static private final Event toEvent(String eventString)
 	{
 		try {
-			return DataEventFactory.stringToEvent(event);
+			return Event.parse(eventString);
 		} catch (Exception e) {
 			return new NeverEvent();
 		}
@@ -387,29 +379,22 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 		if (loggerName != null) {
 			final Node node = loggerNode(loggerName);
 			final List<LoggedDeviceEntry> list = search(whatDaq);	
-			final ArrayList<LoggedDevice> nodeMatch = new ArrayList<>();
 			final ArrayList<LoggedDevice> exactMatch = new ArrayList<>();
 			final int listSize = list.size();
 
 			for (final LoggedDeviceEntry d : list) {
-				final DataEvent logEv = toEvent(d.event);
+				final Event logEv = toEvent(d.event());
 
 				if (node.value() == d.node.value()) {
-					if (logEv.equals(loggerEventKludge(whatDaq.getEvent())))
+					if (logEv.equals(loggerEventKludge(whatDaq.event())))
 						exactMatch.add(d);	
-					else
-						nodeMatch.add(d);
 				}
 			}
 
-			try {
-				if (nodeMatch.size() == 0 && exactMatch.size() == 0)
-					nodeMatch.add(new LoggedDeviceEntry(node, whatDaq.loggedName));
-			} catch (Exception e) {
-				logger.log(Level.FINE, "exception using node " + node, e);
-			}
+			if (exactMatch.isEmpty())
+				throw new AcnetStatusException(LJ_NO_SUCH);
 
-			return exactMatch.isEmpty() ? nodeMatch : exactMatch;
+			return exactMatch;
 		}
 
 		final List<LoggedDevice> list = bestLoggers(whatDaq);
@@ -425,27 +410,30 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 		final List<LoggedDeviceEntry> list = search(whatDaq);	
 		final ArrayList<LoggedDeviceEntry> fastest = new ArrayList<>();
 		final ArrayList<LoggedDeviceEntry> exactMatch = new ArrayList<>();
+		final ArrayList<LoggedDeviceEntry> clientMatch = new ArrayList<>();
 
-		DeltaTimeEvent fastestEvent = null;
+		PeriodicEvent fastestEvent = null;
 
 		for (final LoggedDeviceEntry d : list) {
 			try {
-				final WhatDaq loggerWhatDaq = new WhatDaq(null, d.loggedDrf); 
+				final WhatDaq loggerWhatDaq = WhatDaq.create(d.loggedDrf); 
 
 				if (loggerWhatDaq.contains(whatDaq)) {
-					final DataEvent logEv = DataEventFactory.stringToEvent(d.event);
+					final Event logEv = Event.parse(d.event());
 
-					if (logEv instanceof DeltaTimeEvent) {
-						DeltaTimeEvent e = (DeltaTimeEvent) logEv;
+					if (logEv instanceof PeriodicEvent) {
+						final PeriodicEvent e = (PeriodicEvent) logEv;
 
-						if (fastestEvent == null || e.getRepeatRate() < fastestEvent.getRepeatRate()) {
+						if (fastestEvent == null || e.getPeriod() < fastestEvent.getPeriod()) {
 							fastestEvent = e;
 							fastest.add(0, d);
 						} else
 							fastest.add(d);
 					}
 
-					if (logEv.equals(loggerEventKludge(whatDaq.getEvent())))
+					if (d.clientLogged())
+						clientMatch.add(d);
+					else if (logEv.equals(loggerEventKludge(whatDaq.event())))
 						exactMatch.add(d);
 				}
 			} catch (Exception e) {
@@ -454,7 +442,7 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 			}
 		}
 		
-		if (whatDaq.defaultEvent) {
+		if (whatDaq.defaultEvent()) {
 			List<LoggedDeviceEntry> bestList;
 
 			if (exactMatch.isEmpty()) {
@@ -484,6 +472,8 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 
 				addSpecialLogger(bestList, "Backup", whatDaq);
 				addSpecialLogger(bestList, "ArkIv", whatDaq);
+
+				bestList.addAll(clientMatch);
 			}
 
 			return new ArrayList<LoggedDevice>(bestList);
@@ -501,44 +491,12 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 		}
 	}
 
-	public static void main(String[] args) throws Exception
-	{
-		Node.init();
-		DeviceCache.init();
-		DPMServer.setLogLevel(Level.FINEST);
-
-		final LoggerConfigCache cache = new LoggerConfigCache();
-
-		//System.out.println(loggerNameMap.toString());
-		//System.out.println(loggerNodeMap.toString());
-		//System.out.println(loggerDeviceMap.toString());
-
-		//for (Map.Entry<String, Integer> e : loggerNameMap.entrySet())
-			//System.out.printf("%10s - %s\n", e.getKey(), Node.get(e.getValue()));
-
-		// Show all logged types for arg
-		if (args.length > 0) {
-			DeviceCache.add(args[0]);
-			final WhatDaq whatDaq = new WhatDaq(null, args[0]);
-
-			for (LoggedDevice d : search(whatDaq))
-				System.out.printf("%-20s %-10s %-10s %4d %s\n", d.loggedDrf(), d.loggerName(), d.node(), d.id(), d.event());
-
-			logger.log(Level.INFO, "Best loggers for " + args[0]);
-
-			for (LoggedDevice d : bestLoggers(whatDaq))
-				System.out.printf("\tlogger:%s list:%d event:%s\n", d.loggerName(), d.id(), d.event());
-		}
-
-		System.exit(0);
-	}
-
 	// Kludge methods to force 15Hz to 66ms for logger retrieval
 
-	static DataEvent loggerEventKludge(DataEvent event)
+	static Event loggerEventKludge(Event event)
 	{
 		try {
-			return DataEventFactory.stringToEvent(loggerEventKludge(event.toString()));
+			return Event.parse(loggerEventKludge(event.toString()));
 		} catch (Exception ignore) { }
 
 		return event;
@@ -552,5 +510,81 @@ public class LoggerConfigCache extends TimerTask implements AcnetErrors
 			return eventString.replace('7', '6');
 
 		return eventString;
+	}
+
+	static List<String> drfListForLogger(String loggerName)
+	{
+		final ArrayList<String> drfList = new ArrayList<>();
+
+		for (List<LoggedDeviceEntry> list : loggerDeviceMap.values()) {
+			for (LoggedDeviceEntry entry : list) {
+				if (loggerName.equals(entry.loggerName))
+					drfList.add(entry.loggedDrf + "@" + entry.event);
+			}
+		}
+
+		return drfList;
+	}
+
+	static Set<String> loggerNames()
+	{
+		return loggerNameMap.keySet();
+	}
+
+	public static void main(String[] args) throws Exception
+	{
+		Node.init();
+		DeviceCache.init();
+		DPMServer.setLogLevel(Level.FINEST);
+
+		final LoggerConfigCache cache = new LoggerConfigCache();
+
+		// Show all logged types for arg
+
+		if (args.length > 0) {
+			DeviceCache.add(args[0]);
+			final WhatDaq whatDaq = WhatDaq.create(args[0]);
+
+			for (LoggedDevice d : search(whatDaq))
+				logger.log(Level.INFO, String.format("%-20s %-10s %-10s %4d %s\n", d.loggedDrf(), d.loggerName(), d.node(), d.id(), d.event()));
+
+			logger.log(Level.INFO, "Best loggers for " + args[0]);
+
+			for (LoggedDevice d : bestLoggers(whatDaq))
+				logger.log(Level.INFO, String.format("\tlogger:%s list:%d event:%s\n", d.loggerName(), d.id(), d.event()));
+		}
+
+		System.exit(0);
+	}
+}
+
+class DrfListForLogger
+{
+	static void drfList(String loggerName)
+	{
+		final List<String> drfList = LoggerConfigCache.drfListForLogger(loggerName.toUpperCase());
+
+		for (String drf : drfList) {
+			logger.log(Level.INFO, drf);
+		}
+	}
+
+	public static void main(String[] args)
+	{
+		Node.init();
+		DeviceCache.init();
+		LoggerConfigCache.init();
+		DPMServer.setLogLevel(Level.FINEST);
+
+		if (args.length > 0)
+			drfList(args[0]);
+		else {
+			for (String loggerName : LoggerConfigCache.loggerNames()) {
+				logger.log(Level.INFO, "[" + loggerName + "]");
+				drfList(loggerName);
+			}
+		}
+
+		System.exit(0);
 	}
 }

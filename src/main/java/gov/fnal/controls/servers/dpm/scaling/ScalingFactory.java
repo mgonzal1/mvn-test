@@ -1,7 +1,6 @@
-// $Id: ScalingFactory.java,v 1.5 2024/01/05 21:31:06 kingc Exp $
+// $Id: ScalingFactory.java,v 1.7 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
-//import gov.fnal.controls.service.proto.Lookup_v2;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 
@@ -11,8 +10,7 @@ public class ScalingFactory
 
 	public static Scaling get(WhatDaq whatDaq)
 	{
-		//final Lookup_v2.DeviceInfo dInfo = whatDaq.dInfo;
-		final DeviceInfo dInfo = whatDaq.dInfo;
+		final DeviceInfo dInfo = whatDaq.deviceInfo();
 
         switch (whatDaq.property()) {
          case STATUS:
@@ -22,12 +20,12 @@ public class ScalingFactory
 		 	return DPMBasicControlScaling.get(whatDaq);
 
          case READING:
-			if (dInfo.reading != null && dInfo.reading.scaling != null)
+			if (dInfo.reading != null && dInfo.reading.validScaling())
 		 		return DPMReadSetScaling.get(whatDaq, dInfo.reading.scaling);
 			break;
 
          case SETTING:
-			if (dInfo.setting != null)
+			if (dInfo.setting != null && dInfo.setting.validScaling())
 		 		return DPMReadSetScaling.get(whatDaq, dInfo.setting.scaling);
 			break;
 

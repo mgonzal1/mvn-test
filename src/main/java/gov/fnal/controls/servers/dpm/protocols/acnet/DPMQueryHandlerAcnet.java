@@ -1,4 +1,4 @@
-// $Id: DPMQueryHandlerAcnet.java,v 1.11 2023/11/02 16:36:15 kingc Exp $
+// $Id: DPMQueryHandlerAcnet.java,v 1.14 2024/11/06 21:52:07 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.acnet;
 
 import java.util.Collection;
@@ -186,7 +186,7 @@ public class DPMQueryHandlerAcnet extends DPMProtocolHandlerAcnet implements Acn
 								Collection<WhatDaq> c = jInfo.whatDaqs();
 
 								for (WhatDaq whatDaq : c) {
-									replyBuf.putShort((short) whatDaq.getReceiveDataId());
+									replyBuf.putShort((short) whatDaq.refId());
 									replyBuf.putInt(whatDaq.dipi());
 									count++;
 								}
@@ -214,12 +214,12 @@ public class DPMQueryHandlerAcnet extends DPMProtocolHandlerAcnet implements Acn
 									replyBuf.putShort(id);
 									replyBuf.putInt(listId);
 									replyBuf.putInt(whatDaq.dipi());
-									replyBuf.put(whatDaq.getSSDN());
-									replyBuf.putShort((short) whatDaq.getFTD());
-									replyBuf.putShort((short) whatDaq.getLength());
-									replyBuf.putShort((short) whatDaq.getOffset());
+									replyBuf.put(whatDaq.ssdn());
+									replyBuf.putShort((short) whatDaq.ftd());
+									replyBuf.putShort((short) whatDaq.length());
+									replyBuf.putShort((short) whatDaq.offset());
 									replyBuf.putShort((short) whatDaq.node().value());
-									replyBuf.putShort((short) whatDaq.getError());
+									replyBuf.putShort((short) whatDaq.error());
 									replyBuf.put((byte) 0);
 									replyBuf.put((byte) 0);
 									replyBuf.put((byte) 0);
@@ -245,7 +245,7 @@ public class DPMQueryHandlerAcnet extends DPMProtocolHandlerAcnet implements Acn
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "exception handling dpm query request", e);
 			try {
-				r.sendStatus(ACNET_SYS);
+				r.sendStatus(DPM_INTERNAL_ERROR);
 			} catch (Exception ignore) { }
 		}
 	}

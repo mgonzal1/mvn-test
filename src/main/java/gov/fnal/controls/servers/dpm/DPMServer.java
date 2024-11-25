@@ -1,4 +1,4 @@
-// $Id: DPMServer.java,v 1.87 2024/04/01 15:32:04 kingc Exp $
+// $Id: DPMServer.java,v 1.93 2024/11/25 17:03:22 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import java.util.Timer;
@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.LogRecord;
 import java.util.logging.Handler;
 import java.util.logging.ConsoleHandler;
 import java.io.ByteArrayOutputStream;
@@ -32,6 +33,27 @@ import gov.fnal.controls.servers.dpm.protocols.DPMProtocolHandler;
 
 public class DPMServer implements AcnetErrors
 {
+	static class ServerHandler extends ConsoleHandler
+	{
+		ServerHandler()
+		{
+			super();
+		}
+
+		@Override
+		public void publish(LogRecord record)
+		{
+			final String name = record.getLoggerName();
+			final Level level = record.getLevel();
+
+			if (name.isEmpty())
+				super.publish(record);
+
+			if (level == Level.WARNING && record.getThrown() != null)
+				Scope.exceptionStack();
+		}
+	}
+
 	public static final Logger logger;
 
 	static final Level initLogLevel;
@@ -40,6 +62,7 @@ public class DPMServer implements AcnetErrors
 	static final OperatingSystemMXBean os;
 	static final double cpuCount;
 	static final Timer timer;
+	static final String localHostAddress;
 	static final String localHostName;
 	static final MemoryUsageDisplay memoryUsageDisplay;
 	static final String codeVersion;
@@ -51,15 +74,25 @@ public class DPMServer implements AcnetErrors
 	static {
 		System.setProperty("java.util.logging.SimpleFormatter.format", "[%4$-8s %1$tF %1$tT %1$tL] %5$s %6$s%n");
 
-		codeVersion = System.getProperty("dae.version", System.getProperty("version", ""));
-		logger = Logger.getLogger(DPMServer.class.getName());
-		logger.setUseParentHandlers(false);
-		logger.addHandler(new ConsoleHandler());
+		final Logger root = Logger.getLogger("");
+
+		//logger = root; //Logger.getLogger(DPMServer.class.getName());
+		//logger.setUseParentHandlers(false);
+
+		for (Handler h : root.getHandlers())
+			root.removeHandler(h);
+		
+		root.addHandler(new ServerHandler());
+		logger = root;
+		//logger.addHandler(new ConsoleHandler());
+
+		codeVersion = System.getProperty("dae.version", System.getProperty("version", "--"));
 		initLogLevel = Level.parse(System.getProperty("initLogLevel", "CONFIG"));
 
 		pid = getPid();
 
 		try {
+			localHostAddress = InetAddress.getLocalHost().getHostAddress();
 			localHostName = InetAddress.getLocalHost().getHostName();
 			scopeChannel = ServerSocketChannel.open();
 		} catch (Exception e) {
@@ -142,7 +175,8 @@ public class DPMServer implements AcnetErrors
 		public void run()
 		{
 			final MemoryUsage heap = memory.getHeapMemoryUsage();
-			final int freePct = 100 - ((int) (((double) heap.getUsed() / (double) heap.getCommitted()) * 100));
+			//final int freePct = 100 - ((int) (((double) heap.getUsed() / (double) heap.getCommitted()) * 100));
+			final int freePct = 100 - ((int) (((double) heap.getUsed() / (double) heap.getMax()) * 100));
 
 			if (freePct != lastValues[0]) {
 				lastValues[0] = freePct;
@@ -188,12 +222,12 @@ public class DPMServer implements AcnetErrors
 
   	public static void setLogLevel(Level level)
 	{
+		logger.log(Level.INFO, "Logging level set to " + level);
+
 		logger.setLevel(level);
 
 		for (Handler handler : logger.getHandlers())
 			handler.setLevel(level);
-
-		logger.log(Level.INFO, "Logging level set to " + level);
 	}
 
 	public static Collection<DPMList> activeLists()
@@ -235,6 +269,11 @@ public class DPMServer implements AcnetErrors
 	public static String localHostName()
 	{
 		return localHostName;
+	}
+
+	public static String localHostAddress()
+	{
+		return localHostAddress;
 	}
 
 	public static int pid()
@@ -281,7 +320,9 @@ public class DPMServer implements AcnetErrors
 
 		Runtime.getRuntime().addShutdownHook(new ShutdownHook());
 	
-		logCodeVersion();
+		try {
+			logCodeVersion();
+		} catch (Exception ignore) { }
 
 		AcceleratorPool.init();
 		Errors.init();
@@ -294,11 +335,10 @@ public class DPMServer implements AcnetErrors
 			setLogLevel(Level.parse(System.getProperty("loglevel")));
 		} catch (Exception e) {
 			final Level logLevel = debug ? Level.FINE : Level.INFO;
-			logger.log(Level.CONFIG, "Logging level defaulted to " + logLevel);
 			setLogLevel(logLevel);
 		}
 
-		final InetSocketAddress address = new InetSocketAddress(0);
+		final InetSocketAddress address = new InetSocketAddress(Scope.TCP_SERVER_PORT);
 
 		scopeChannel.bind(address);
 		Thread.currentThread().setName("Scope accept");

@@ -1,8 +1,7 @@
-// $Id: BasicControlScaling.java,v 1.7 2024/01/05 21:31:06 kingc Exp $
+// $Id: BasicControlScaling.java,v 1.10 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-//import gov.fnal.controls.service.proto.Lookup_v2;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 
 class BasicControlScaling implements Scaling
@@ -20,6 +19,7 @@ class BasicControlScaling implements Scaling
 
 	static final int MAX = 256;
 
+	final int length;
 	final int controlCount;
 	final boolean defined[] = new boolean[MAX]; 
 	final int order[] = new int[MAX];
@@ -27,13 +27,13 @@ class BasicControlScaling implements Scaling
 	final String[] shortText = new String[MAX];
 	final int data[] = new int[MAX];
 
-	//BasicControlScaling(Lookup_v2.DeviceInfo dInfo) throws AcnetStatusException
 	BasicControlScaling(DeviceInfo dInfo) throws AcnetStatusException
 	{
 		if (dInfo.control != null) {
+			this.length = dInfo.control.prop.size;
+
 			int count = 0;
 
-			//for (Lookup_v2.ControlAttribute attr : dInfo.control.attributes) {
 			for (DeviceInfo.Control.Attribute attr : dInfo.control.attributes) {
 				final int order = attr.order;
 
@@ -54,7 +54,7 @@ class BasicControlScaling implements Scaling
 	@Override
 	public double scale(byte[] data, int offset) throws AcnetStatusException
 	{
-		throw new AcnetStatusException(DIO_NOSCALE);
+		return rawNoSignExt(data, offset, length);
 	}
 
 	@Override
@@ -80,7 +80,7 @@ class BasicControlScaling implements Scaling
 
 	int getControlData(int attr) throws AcnetStatusException
 	{
-		if (defined[attr])
+		if (attr < defined.length && defined[attr])
 			return data[attr];	
 
 		throw new AcnetStatusException(DIO_SCALEFAIL, "Control operation not defined.");
@@ -88,7 +88,7 @@ class BasicControlScaling implements Scaling
 
 	String getLongText(int attr) throws AcnetStatusException
 	{
-		if (defined[attr])
+		if (attr < defined.length && defined[attr])
 			return longText[attr];
 		
 		throw new AcnetStatusException(DIO_SCALEFAIL, "Control operation not defined.");
@@ -96,7 +96,7 @@ class BasicControlScaling implements Scaling
 
     String getShortText(int attr) throws AcnetStatusException
 	{
-        if (defined[attr])
+        if (attr < defined.length && defined[attr])
         	return shortText[attr];
  
         throw new AcnetStatusException(DIO_SCALEFAIL, "Control operation not defined.");

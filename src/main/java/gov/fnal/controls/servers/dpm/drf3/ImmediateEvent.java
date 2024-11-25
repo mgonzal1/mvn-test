@@ -1,4 +1,4 @@
-//  $Id: ImmediateEvent.java,v 1.1 2023/10/04 19:13:42 kingc Exp $
+//  $Id: ImmediateEvent.java,v 1.2 2024/09/23 18:56:04 kingc Exp $
 package gov.fnal.controls.servers.dpm.drf3;
 
 public class ImmediateEvent extends Event
@@ -12,6 +12,18 @@ public class ImmediateEvent extends Event
     }
 
     public ImmediateEvent() {}
+
+	@Override
+	public boolean isRepetitive()
+	{
+		return false;
+	}
+
+	@Override
+	public long defaultTimeout()
+	{
+		return 5000;
+	}
 
     @Override
     public int hashCode()
@@ -30,5 +42,4 @@ public class ImmediateEvent extends Event
 	{
         return "I";
     }
-
 }

@@ -1,4 +1,4 @@
-// $Id: ScalingProtocolHandlerPC.java,v 1.16 2024/04/01 15:33:47 kingc Exp $
+// $Id: ScalingProtocolHandlerPC.java,v 1.18 2024/11/19 22:41:34 kingc Exp $
 
 package gov.fnal.controls.servers.dpm.protocols.acnet.pc;
 
@@ -156,8 +156,8 @@ public class ScalingProtocolHandlerPC extends DPMProtocolHandlerAcnet implements
 
 			DeviceCache.add(m.drf_request);
 
-			final WhatDaq whatDaq = new WhatDaq(null, m.drf_request);
-			final DataReplier replier = DataReplier.get(whatDaq, this);
+			final WhatDaq whatDaq = WhatDaq.create(m.drf_request);
+			final DataReplier replier = whatDaq.dataReplier(this);
 
 			this.request = request;
 

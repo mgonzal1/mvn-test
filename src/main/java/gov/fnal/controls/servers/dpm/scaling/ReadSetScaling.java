@@ -1,4 +1,4 @@
-// $Id: ReadSetScaling.java,v 1.7 2024/01/05 21:26:06 kingc Exp $
+// $Id: ReadSetScaling.java,v 1.8 2024/11/19 22:34:44 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
@@ -10,7 +10,7 @@ class ReadSetScaling implements Scaling
 	final Primary primary;
 	final Common common;
 
-	ReadSetScaling(DeviceInfo.ReadSetScaling scaling)// throws AcnetStatusException
+	ReadSetScaling(DeviceInfo.ReadSetScaling scaling)
 	{
 		this.scaling = scaling;
 		this.primary = new Primary(scaling);

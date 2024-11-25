@@ -1,6 +1,6 @@
-// $Id: DPMListGRPC.java,v 1.13 2024/03/06 16:02:16 kingc Exp $
+// $Id: DPMListGRPC.java,v 1.16 2024/11/19 22:34:44 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.grpc;
-
+ 
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.HashMap;
@@ -83,7 +83,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	@Override
 	public void sendReply(WhatDaq whatDaq, byte[] data, long timestamp, long cycle)
 	{
-		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId).setTimestamp(timestamp);
+		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId()).setTimestamp(timestamp);
 		
 		sendReply(whatDaq, reply.setData(Data.newBuilder().setRaw(ByteString.copyFrom(data))));
 	}
@@ -91,7 +91,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	@Override
 	public void sendReply(WhatDaq whatDaq, boolean value, long timestamp, long cycle)
 	{
-		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId).setTimestamp(timestamp);
+		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId()).setTimestamp(timestamp);
 
 		sendReply(whatDaq, reply.setData(Data.newBuilder().setScalar(value ? 1.0 : 0.0)));
 	}
@@ -99,7 +99,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	@Override
 	public void sendReply(WhatDaq whatDaq, double value, long timestamp, long cycle)
 	{
-		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId).setTimestamp(timestamp);
+		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId()).setTimestamp(timestamp);
 
 		sendReply(whatDaq, reply.setData(Data.newBuilder().setScalar(value)));
 	}
@@ -107,7 +107,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	@Override
 	public void sendReply(WhatDaq whatDaq, double[] values, long timestamp, long cycle)
 	{
-		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId).setTimestamp(timestamp);
+		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId()).setTimestamp(timestamp);
 
 		final Data.ScalarArray.Builder arr = Data.ScalarArray.newBuilder();
 		
@@ -120,7 +120,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	@Override
 	public void sendReply(WhatDaq whatDaq, double[] values, long[] micros, long seqNo)
 	{
-		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId);
+		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId());
 		final Data.Builder data = Data.newBuilder();
 
 		for (int ii = 0; ii < values.length; ii++) {
@@ -141,7 +141,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	@Override
 	public void sendReply(WhatDaq whatDaq, String value, long timestamp, long cycle)
 	{
-		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId).setTimestamp(timestamp);
+		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId()).setTimestamp(timestamp);
 
 		sendReply(whatDaq, reply.setData(Data.newBuilder().setText(value)));
 	}
@@ -149,7 +149,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	@Override
 	public void sendReply(WhatDaq whatDaq, String[] values, long timestamp, long cycle)
 	{
-		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId).setTimestamp(timestamp);
+		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId()).setTimestamp(timestamp);
 		final Data.TextArray.Builder arr = Data.TextArray.newBuilder();
 		
 		for (final String value : values)
@@ -198,14 +198,14 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 			notify();
 		}
 
-		synchronized void sendReply(WhatDaq whatDaq, Reading.Builder reply) 
+		void sendReply(WhatDaq whatDaq, Reading.Builder reply) 
 		{
-			//System.out.println("gRPC - sendReply() " + (new Date()));
-
 			if (!replier.isReady()) {
 				if (whatDaq.getOption(WhatDaq.Option.FLOW_CONTROL)) {
 					try {
-						wait();
+						synchronized (this) {
+							wait();
+						}
 					} catch (InterruptedException e) {
 						dispose();
 					}
@@ -217,8 +217,6 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 			}
 			replyCounter.incrementAndGet();
 			replier.onNext(reply.build());	
-
-			//System.out.println("gRPC - after sendReply() " + (new Date()));
 		}
 	}
 
@@ -235,7 +233,6 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 		@Override
 		void sendReply(WhatDaq whatDaq, Reading.Builder reply) 
 		{
-			//System.out.println("gRPC - sendReply() " + (new Date()));
 			replier.onNext(reply.build());	
 			replier.onCompleted();
 			dispose(0);

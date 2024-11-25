@@ -1,4 +1,4 @@
-// $Id: DPMDigitalAlarmScaling.java,v 1.9 2024/01/24 21:15:41 kingc Exp $
+// $Id: DPMDigitalAlarmScaling.java,v 1.11 2024/10/10 16:31:34 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
 import java.nio.ByteBuffer;
@@ -110,10 +110,10 @@ class DPMDigitalAlarmScalingImpl extends DigitalAlarmScaling implements DPMDigit
 
 	DPMDigitalAlarmScalingImpl(WhatDaq whatDaq) throws AcnetStatusException
 	{
-		super(whatDaq.dInfo);
+		super(whatDaq.deviceInfo());
 
-		this.ftd = whatDaq.pInfo.ftd;
-		this.length = whatDaq.getLength();
+		this.ftd = whatDaq.propertyInfo().ftd;
+		this.length = whatDaq.length();
 	}
 
 /*

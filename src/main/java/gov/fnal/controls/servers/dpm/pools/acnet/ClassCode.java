@@ -1,4 +1,4 @@
-// $Id: ClassCode.java,v 1.5 2024/02/22 16:32:14 kingc Exp $
+// $Id: ClassCode.java,v 1.6 2024/06/06 14:52:22 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 class ClassCode
@@ -39,6 +39,11 @@ class ClassCode
 	private final boolean isTriggerDevice;
 	private final int retrievalMax;
 	private final boolean isFixedNumberPoints;
+
+	ClassCode(int error)
+	{
+		this(0, 0, error);
+	}
 
 	ClassCode(int ftp, int snap, int error)
 	{
@@ -482,6 +487,6 @@ class ClassCode
 	@Override
 	public String toString()
 	{
-		return "ClassCode: ftp=" + ftp + " snap=" + snap + " error=" + error;
+		return "ClassCode: ftp:" + ftp + " snap:" + snap + " error:" + error;
 	}
 }

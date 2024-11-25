@@ -1,4 +1,4 @@
-// $Id: SnapRequest.java,v 1.6 2024/02/22 16:32:14 kingc Exp $
+// $Id: SnapRequest.java,v 1.8 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.List;
@@ -9,15 +9,15 @@ import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 
 class SnapRequest
 {
-	protected WhatDaq device;
-	protected String name;
-	protected ClassCode plotClass;
-	protected Trigger trigger;
-	protected SnapScope scope;
-	protected ReArm reArm;
-	protected boolean delete;
-	protected int error;
-	private transient int completionParameterId;
+	WhatDaq device;
+	String name;
+	ClassCode plotClass;
+	Trigger trigger;
+	SnapScope scope;
+	ReArm reArm;
+	boolean delete;
+	int error;
+	transient int completionParameterId;
 
 	ReceiveData callback;
 
@@ -33,7 +33,7 @@ class SnapRequest
         this.delete = false;
 
         if (this.device != null)
-			this.name = device.getDeviceName();
+			this.name = device.name();
     }
 
 	@Override
@@ -116,12 +116,12 @@ class SnapRequest
 			return null;
     }
 
-    void setDelete()
+    void delete()
     {
         delete = true;
     }
 
-    boolean getDelete()
+    boolean isDeleted()
     {
         return delete;
     }

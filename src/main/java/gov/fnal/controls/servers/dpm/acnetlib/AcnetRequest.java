@@ -1,8 +1,12 @@
-// $Id: AcnetRequest.java,v 1.3 2024/02/22 16:29:45 kingc Exp $
+// $Id: AcnetRequest.java,v 1.5 2024/11/21 22:02:19 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.nio.ByteBuffer;
 import java.util.logging.Level;
+
+import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public class AcnetRequest extends AcnetPacket implements AcnetConstants
 {
@@ -160,8 +164,6 @@ public class AcnetRequest extends AcnetPacket implements AcnetConstants
 	{
 		final ReplyId replyId = replyId();
 
-		//System.out.println("RECEIVED A REQUEST " + connection.connectedName() + " replyId:" + replyId);
-
 		try {	
 			connection.requestAck(replyId);
 
@@ -176,10 +178,11 @@ public class AcnetRequest extends AcnetPacket implements AcnetConstants
 				this.connection = connection;
 				connection.requestHandler.handle(this);
 			} catch (Exception e) {
-				AcnetInterface.logger.log(Level.WARNING, "ACNET request callback exception for connection '" + connection.connectedName() + "'", e);
+				logger.log(Level.WARNING, "ACNET request callback exception for connection '" + connection.connectedName() + "'", e);
 			}
+		} catch (AcnetStatusException e) {
 		} catch (Exception e) {
-			//logger.log(Level.FINER, "ACNET request ack exception for connection '" + connection.connectedName() + "'", e);
+			logger.log(Level.WARNING, "ACNET request ack exception for connection '" + connection.connectedName() + "'", e);
 		} finally {
 			data = null;
 			buf.free();

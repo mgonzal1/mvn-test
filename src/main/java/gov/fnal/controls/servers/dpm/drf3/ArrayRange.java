@@ -1,9 +1,9 @@
-//  $Id: ArrayRange.java,v 1.1 2023/10/04 19:38:05 kingc Exp $
+//  $Id: ArrayRange.java,v 1.2 2024/07/12 20:15:00 kingc Exp $
 package gov.fnal.controls.servers.dpm.drf3;
 
 public class ArrayRange extends Range {
     
-    private static final int MAX_INDEX = 32767;
+    private static final int MAX_INDEX = Integer.MAX_VALUE; //32767;
 
     private final int startIndex, endIndex;
     private transient String text;

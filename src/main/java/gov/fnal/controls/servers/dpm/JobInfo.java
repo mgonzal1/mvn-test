@@ -1,4 +1,4 @@
-// $Id: JobInfo.java,v 1.18 2024/03/22 19:21:40 kingc Exp $
+// $Id: JobInfo.java,v 1.21 2024/11/19 22:34:43 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import java.util.Map;
@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.sql.SQLException;
+import java.util.logging.Level;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 
@@ -19,16 +20,16 @@ public class JobInfo
 	final Map<Long, DPMRequest> requests = new ConcurrentHashMap<>();
 	Job job = NullJob.instance;
 
-	private JobModel model = LiveDataModel.instance;
+	private DataSource dataSource = LiveDataSource.instance;
 	private boolean needsStart = true;
 
 	protected JobInfo()
 	{
 	}
 
-	protected JobInfo(JobModel model)
+	protected JobInfo(DataSource dataSource)
 	{
-		this.model = model;
+		this.dataSource = dataSource;
 	}
 
 	boolean addRequest(long refId, DPMRequest req)
@@ -45,17 +46,22 @@ public class JobInfo
 		return false;
 	}
 
-	void setModel(JobModel newModel)
+	boolean restartable()
 	{
-		if (!newModel.equals(model)) {
-			model = newModel;
+		return dataSource.restartable() || job.completed();
+	}
+
+	void setDataSource(DataSource newDataSource)
+	{
+		if (!newDataSource.equals(dataSource)) {
+			dataSource = newDataSource;
 			needsStart = true;
 		}
 	}
 
-	void setModel(String newModelStr)
+	void setDataSource(String newDataSourceStr)
 	{
-		setModel(JobModel.parse(newModelStr));
+		setDataSource(DataSource.parse(newDataSourceStr));
 	}
 
 	void removeRequest(long refId)
@@ -74,12 +80,15 @@ public class JobInfo
 
 	void start(DPMList list) throws InterruptedException, IOException, AcnetStatusException, SQLException
 	{
-		if (needsStart) {
+		if (needsStart && (job == NullJob.instance || dataSource.restartable())) {
 			DeviceCache.add(requests.values());
 
 			needsStart = false;
 
-			final Job newJob = model.createJob(list);
+			final Job newJob = dataSource.createJob(list);
+
+	    	logger.log(Level.FINE, String.format("%s StartJob source:%s requests:%d", 
+										list.id(), dataSource, requests.size()));
 
 			newJob.start(requests);
 			job.stop();

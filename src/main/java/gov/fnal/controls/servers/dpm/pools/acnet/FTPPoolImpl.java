@@ -1,4 +1,4 @@
-// $Id: FTPPoolImpl.java,v 1.17 2024/03/27 20:59:23 kingc Exp $
+// $Id: FTPPoolImpl.java,v 1.21 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Set;
@@ -16,13 +16,10 @@ import java.nio.ByteBuffer;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
 import gov.fnal.controls.servers.dpm.SettingData;
 import gov.fnal.controls.servers.dpm.scaling.Scaling;
 import gov.fnal.controls.servers.dpm.scaling.ScalingFactory;
-
 import gov.fnal.controls.servers.dpm.pools.PoolUser;
 import gov.fnal.controls.servers.dpm.pools.PoolType;
 import gov.fnal.controls.servers.dpm.pools.PoolInterface;
@@ -33,21 +30,11 @@ import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErrors
 {
-	private final Vector<WhatDaq> whatDaqCC = new Vector<>(1);
 	private final ArrayList<WhatDaq> requests = new ArrayList<>();
 	private final Set<FTPPool> ftpPools = new HashSet<>();
 	private final AcnetPoolImpl pool = new AcnetPoolImpl();
 	private final PoolUser user = new PoolUser() { };
 	
-	private ClassCode getClassCode(WhatDaq whatDaq)
-	{
-		whatDaqCC.clear();
-		whatDaqCC.add(whatDaq);
-		List<ClassCode> c = PlotClassCode.getPlotClassCode(whatDaqCC);
-
-		return c.get(0);		
-	}
-
 	public static void init()
 	{
 	}
@@ -66,15 +53,15 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 	public void addRequest(WhatDaq whatDaq)
 	{
 		try {
-			final ClassCode classCode = getClassCode(whatDaq);
+			final ClassCode classCode = PlotClassCode.get(whatDaq);
 			final FTPScope scope = new FTPScope(whatDaq.getEventFrequency());
 			final ReceiveData callback = whatDaq.getReceiveData();
 
-			logger.fine(" CLASSCODE: " + classCode + " scope: " + scope);
+			logger.log(Level.FINE, " CLASSCODE: " + classCode + " scope: " + scope);
 
 			if (classCode.ftpFromPool()) {
-				whatDaq.setEvent(scope.ftpCollectionEvent(classCode.maxContinuousRate()));
-				whatDaq.setReceiveData(new ReceivePoolPlotData(callback, whatDaq));
+				//whatDaq.setEvent(scope.ftpCollectionEvent(classCode.maxContinuousRate()));
+				whatDaq.event(scope.ftpCollectionEvent(classCode.maxContinuousRate()));
 				pool.addRequest(whatDaq);
 			} else {
 				final FTPRequest ftpReq = new FTPRequest(whatDaq, classCode, scope, callback);
@@ -86,6 +73,7 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 			}
 		} catch (Exception e) {
 			whatDaq.getReceiveData().receiveStatus(ACNET_NXE, System.currentTimeMillis(), 0);
+			logger.log(Level.WARNING, "exception while adding request", e);
 		}
 
 		requests.add(whatDaq);
@@ -107,6 +95,7 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		} catch (Exception e) {
 			whatDaq.getReceiveData().receiveStatus(ACNET_NXE, System.currentTimeMillis(), 0);
+			logger.log(Level.WARNING, "exception in setting handler", e);
 		}
 	}
 
@@ -114,13 +103,13 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 	public void handle(WhatDaq whatDaq, double setting)
 	{
 		try {
-			//whatDaq.setSetting(setting);
 			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
 			requests.add(whatDaq);
 		} catch (AcnetStatusException e) {
 			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		} catch (Exception e) {
 			whatDaq.getReceiveData().receiveStatus(DIO_SCALEFAIL, System.currentTimeMillis(), 0);
+			logger.log(Level.WARNING, "exception in setting handler", e);
 		}
 	}
 
@@ -128,13 +117,13 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 	public void handle(WhatDaq whatDaq, double[] setting)
 	{
 		try {
-			//whatDaq.setSettingData(setting);
 			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
 			requests.add(whatDaq);
 		} catch (AcnetStatusException e) {
 			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		} catch (Exception e) {
 			whatDaq.getReceiveData().receiveStatus(DIO_SCALEFAIL, System.currentTimeMillis(), 0);
+			logger.log(Level.WARNING, "exception in setting handler", e);
 		}
 	}
 
@@ -142,13 +131,13 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 	public void handle(WhatDaq whatDaq, String setting)
 	{
 		try {
-			//whatDaq.setSettingData(setting);
 			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
 			requests.add(whatDaq);
 		} catch (AcnetStatusException e) {
 			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		} catch (Exception e) {
 			whatDaq.getReceiveData().receiveStatus(DIO_SCALEFAIL, System.currentTimeMillis(), 0);
+			logger.log(Level.WARNING, "exception in setting handler", e);
 		}
 	}
 
@@ -156,13 +145,13 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 	public void handle(WhatDaq whatDaq, String[] setting)
 	{
 		try {
-			//whatDaq.setSettingData(setting);
 			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
 			requests.add(whatDaq);
 		} catch (AcnetStatusException e) {
 			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		} catch (Exception e) {
 			whatDaq.getReceiveData().receiveStatus(DIO_SCALEFAIL, System.currentTimeMillis(), 0);
+			logger.log(Level.WARNING, "exception in setting handler", e);
 		}
 	}
 
@@ -206,7 +195,6 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 		final long micros[] = new long[128];
 		final double values[] = new double[128];
 		final Scaling scaling;
-		//final DPMReadSetScaling scaling;
 
 		int pointCount = 0;
 		long lastSend = System.currentTimeMillis();
@@ -215,7 +203,6 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 		{
 			this.callback = callback;
 			this.whatDaq = whatDaq;
-			//this.scaling = DPMReadSetScaling.get(whatDaq);
 			this.scaling = ScalingFactory.get(whatDaq);
 		}
 
@@ -226,24 +213,16 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 
 			try {
 				micros[pointCount] = timestamp * 1000;
-				//values[pointCount] = whatDaq.getScaled(data, offset); 
-				//values[pointCount] = scaling.rawToCommon(data, offset); 
-				//byte[] data = new byte[whatDaq.length()];
-
 				values[pointCount] = scaling.scale(buf); 
 
 				pointCount++;
 
 				if (pointCount == micros.length || (now - lastSend) >= 335) {
-					//callback.plotData(whatDaq, micros[0] / 1000, context, error, 
-					//					pointCount, Arrays.copyOf(micros, pointCount), null, 
-					//					Arrays.copyOf(values, pointCount));
 					callback.plotData(micros[0] / 1000, 0, pointCount, Arrays.copyOf(micros, pointCount), null, Arrays.copyOf(values, pointCount));
 					lastSend = now;
 					pointCount = 0;
 				}
 			} catch (AcnetStatusException e) {
-				//callback.plotData(null, System.currentTimeMillis(), null, e.status, 0, null, null, null);
 				callback.plotData(now, e.status, 0, null, null, null);
 			} catch (Exception e) {
 				callback.plotData(now, ACNET_NXE, 0, null, null, null);
@@ -258,31 +237,22 @@ public class FTPPoolImpl implements PoolInterface, SettingData.Handler, AcnetErr
 		}
 
 		@Override
-		//public void receiveData(WhatDaq whatDaq, int error, int offset, byte[] data, 
-		//							long timestamp, CollectionContext context)
-		//public void receiveData(int error, int offset, byte[] data, long timestamp)
 		public void receiveData(byte[] data, int offset, long timestamp, long cycle)
 		{
 			final long now = System.currentTimeMillis();
 
 			try {
 				micros[pointCount] = timestamp * 1000;
-				//values[pointCount] = whatDaq.getScaled(data, offset); 
-				//values[pointCount] = scaling.rawToCommon(data, offset); 
 				values[pointCount] = scaling.scale(data, offset); 
 
 				pointCount++;
 
 				if (pointCount == micros.length || (now - lastSend) >= 335) {
-					//callback.plotData(whatDaq, micros[0] / 1000, context, error, 
-					//					pointCount, Arrays.copyOf(micros, pointCount), null, 
-					//					Arrays.copyOf(values, pointCount));
 					callback.plotData(micros[0] / 1000, 0, pointCount, Arrays.copyOf(micros, pointCount), null, Arrays.copyOf(values, pointCount));
 					lastSend = now;
 					pointCount = 0;
 				}
 			} catch (AcnetStatusException e) {
-				//callback.plotData(null, System.currentTimeMillis(), null, e.status, 0, null, null, null);
 				callback.plotData(now, e.status, 0, null, null, null);
 			} catch (Exception e) {
 				callback.plotData(now, ACNET_NXE, 0, null, null, null);

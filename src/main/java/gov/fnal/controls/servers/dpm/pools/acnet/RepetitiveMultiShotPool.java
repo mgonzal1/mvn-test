@@ -1,4 +1,4 @@
-// $Id: RepetitiveMultiShotPool.java,v 1.7 2024/02/22 16:32:14 kingc Exp $
+// $Id: RepetitiveMultiShotPool.java,v 1.9 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Timer;
@@ -13,7 +13,7 @@ import gov.fnal.controls.servers.dpm.pools.PoolUser;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
-public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Completable, AcnetErrors
+class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Completable, AcnetErrors
 {
 	static final Timer sharedTimer = new Timer("RepetitiveMultiShotPoolTimer", true);
 
@@ -30,8 +30,8 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
     final OneShotDaqPool pool;
 	final long delayTime;
 	final long repeatRate;
-
-    public RepetitiveMultiShotPool(Node node, long delayTime, long repeatRate)
+    
+    RepetitiveMultiShotPool(Node node, long delayTime, long repeatRate)
 	{
         super(node, null);
 
@@ -40,12 +40,6 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
 		this.delayTime = delayTime;
 		this.repeatRate = repeatRate;
     }
-
-	//@Override
-    //public void update(DataEvent userEvent, DataEvent currentEvent)
-	//{
-	//	process();
-	//}
 
 	private void doShot()
 	{
@@ -56,25 +50,11 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
 
 		final int remaining = removeDeletedRequests();
 
-		//if (remaining == 0)
-		//	event.deleteObserver(this);
-		//else
-		//	event.addObserver(this);
-
 		synchronized (requests) {
 			pool.insert(requests);
 			pool.process(true);
-			//updateTime = System.currentTimeMillis();
 			++totalTransactions;
-
-			//if (!event.isRepetitive()) {
-			//	requests.clear();
-			//	event.deleteObserver(this);
-			//}
-
 		}
-
-		//return true;
 	}
 
 	@Override
@@ -103,17 +83,7 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
         if (status != ACNET_PEND) {
 			lastCompletedStatus = status;
 
-			//if (status == ACNET_UTIME) //{
-			//	doShot();
-
 			updateTime = System.currentTimeMillis();
-
-			//++totalTransactions;
-
-			//if (!event.isRepetitive())
-			//	process();
-
-			//multiShotPool.process(false);
 		}
     }
 
@@ -121,7 +91,7 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
 	public String toString()
 	{
 		final String header =  String.format("RepetitiveMultiShotPool %-4d %-10s event:%-16s status:%04x procd:%tc",
-												id, node.name(), event, lastCompletedStatus & 0xffff, procTime);
+												id, node.name(), event, lastCompletedStatus & 0xffff, procTime); 
 
 		final StringBuilder buf = new StringBuilder(header);
 
@@ -133,7 +103,7 @@ public class RepetitiveMultiShotPool extends RepetitiveDaqPool implements Comple
 
 		buf.append('\n');
 		buf.append(xtrans);
-
+	
         buf.append("\ninserts: ").append(totalInserts);
         buf.append(", procs: ").append(totalProcs);
         buf.append(", packets: ").append(totalTransactions);

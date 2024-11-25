@@ -1,4 +1,4 @@
-// $Id: DaqSendTransaction.java,v 1.17 2024/04/11 19:18:44 kingc Exp $
+// $Id: DaqSendTransaction.java,v 1.20 2024/11/19 22:34:44 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.ArrayList;
@@ -136,17 +136,9 @@ abstract class DaqSendTransaction implements NodeFlags, AcnetReplyHandler, Acnet
 
 		final ByteBuffer data = r.data().order(ByteOrder.LITTLE_ENDIAN);
 
-		//System.out.println("status: " + r.status() + " len: " + r.length() + " ev: " + reqList.event + " ftd: " + reqList.event.ftd());
-		//System.out.println("rem: " + data.remaining() + " ryqsz: " + reqList.replySize());
-
 		if (data.remaining() == reqList.replySize())
 			handleReply(data);
 		else {
-			//while (data.remaining() > 0)
-			//	System.out.printf("%02x ", data.get());
-
-			//System.out.println();
-
 			completeWithStatus(ACNET_TRUNC_REPLY);
 			context.cancelNoEx();
 		}
@@ -206,7 +198,8 @@ class DaqSendTransaction16 extends DaqSendTransaction
 		} else {
 			buf.putShort((short) reqList.replySize()); 
 			buf.putShort((short) reqList.requests.size());
-			buf.putShort((short) reqList.event.ftd());
+			//buf.putShort((short) reqList.event.ftd());
+			buf.putShort((short) FTD.forEvent(reqList.event));
 		}
 
 		for (WhatDaq whatDaq : reqList.requests) {
@@ -253,7 +246,7 @@ class DaqSendTransaction16 extends DaqSendTransaction
 				else
 					whatDaq.getReceiveData().receiveStatus(status, now, 0);
 
-				data.position(pos + whatDaq.getLength());
+				data.position(pos + whatDaq.length());
 
 				if (whatDaq.lengthIsOdd())
 					data.get();
@@ -271,9 +264,9 @@ class DaqSendTransaction16 extends DaqSendTransaction
 
 class DaqSendTransaction32 extends DaqSendTransaction //implements NodeFlags, AcnetReplyHandler, AcnetErrors//, Daq32Defs
 {
-	static final AcnetConnection connectionR = AcnetInterface.open("GETSR").setQueueReplies();
-	static final AcnetConnection connection1 = AcnetInterface.open("GETS1").setQueueReplies();
-	static final AcnetConnection connectionS = AcnetInterface.open("GETSS").setQueueReplies();
+	static final AcnetConnection connectionR = AcnetInterface.open("GETSR").setQueueReplies(128);
+	static final AcnetConnection connection1 = AcnetInterface.open("GETS1").setQueueReplies(64);
+	static final AcnetConnection connectionS = AcnetInterface.open("GETSS").setQueueReplies(64);
 
 	//int returnCount = 0;
 
@@ -315,7 +308,8 @@ class DaqSendTransaction32 extends DaqSendTransaction //implements NodeFlags, Ac
 		buf.put((byte) (reqList.event.isRepetitive() ? 1 : 0));
 		buf.putInt(reqList.replySize());
 		buf.putShort((short) reqList.requests.size());
-		buf.putShort((short) reqList.event.ftd());
+		//buf.putShort((short) reqList.event.ftd());
+		buf.putShort((short) FTD.forEvent(reqList.event));
 
 		final byte[] eventBytes = reqList.event.toString().getBytes();
 		final int lsb = eventBytes.length & 1;
@@ -395,7 +389,7 @@ class DaqSendTransaction32 extends DaqSendTransaction //implements NodeFlags, Ac
 					else
 						whatDaq.getReceiveData().receiveData(data, collectTS, cycleTS);
 
-					data.position(pos + whatDaq.getLength());
+					data.position(pos + whatDaq.length());
 
 					if (whatDaq.lengthIsOdd())
 						data.get();

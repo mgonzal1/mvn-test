@@ -1,4 +1,4 @@
-// $Id: EpicsPoolImpl.java,v 1.11 2024/03/27 21:16:40 kingc Exp $
+// $Id: EpicsPoolImpl.java,v 1.16 2024/10/24 18:37:38 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
 import java.util.HashMap;
@@ -21,7 +21,10 @@ import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 import gov.fnal.controls.servers.dpm.pools.PoolType;
 import gov.fnal.controls.servers.dpm.pools.PoolInterface;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+
+import gov.fnal.controls.servers.dpm.scaling.Scaling;
 import gov.fnal.controls.servers.dpm.scaling.ScalingFactory;
+import gov.fnal.controls.servers.dpm.scaling.DPMReadSetScaling;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
@@ -77,7 +80,7 @@ public class EpicsPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 
 		private void receiveAcnetDevice(ReceiveData r, PVAStructure data)
 		{
-			switch (whatDaq.property) {
+			switch (whatDaq.property()) {
 			 case READING:
 			 	{
 					final PVAStructure reading = data.get("Reading");	
@@ -210,7 +213,7 @@ public class EpicsPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	public void addRequest(WhatDaq whatDaq)
 	{
 		try {
-			requests.add(new EpicsRequest(whatDaq.daqName, new PVListener(whatDaq)));
+			requests.add(new EpicsRequest(whatDaq.daqName(), new PVListener(whatDaq)));
 		} catch (AcnetStatusException e) {
 			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
 		}
@@ -229,65 +232,52 @@ public class EpicsPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	}
 
 	@Override
-	public void handle(WhatDaq whatDaq, byte[] setting)
+	public void handle(WhatDaq whatDaq, byte[] setting) throws AcnetStatusException
 	{
-		try {
-			//final Object newValue = whatDaq.getScaling().scale(setting, 0, setting.length);
-			final Object newValue = ScalingFactory.get(whatDaq).scale(setting, 0);
-			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), newValue);
-			
-			requests.add(eReq);
-		} catch (AcnetStatusException e) {
-			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		}
-	}
+		final Object newValue;
+		final Scaling scaling = ScalingFactory.get(whatDaq);
 
-	@Override
-	public void handle(WhatDaq whatDaq, double setting)
-	{
-		try {
-			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), Double.valueOf(setting));
+		if (scaling instanceof DPMReadSetScaling)
+			newValue = new Double(((DPMReadSetScaling) scaling).rawToPrimary(setting, 0));
+		else
+			newValue = scaling.scale(setting, 0);
+			//throw new AcnetStatusException(DIO_NOSCALE);
+
+		final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName(), new PutListener(whatDaq), newValue);
 		
-			requests.add(eReq);
-		} catch (AcnetStatusException e) {
-			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		}
+		requests.add(eReq);
 	}
 
 	@Override
-	public void handle(WhatDaq whatDaq, double[] setting)
+	public void handle(WhatDaq whatDaq, double setting) throws AcnetStatusException
 	{
-		try {
-			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), Double.valueOf(setting[0]));
-		
-			requests.add(eReq);
-		} catch (AcnetStatusException e) {
-			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		}
+		final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName(), new PutListener(whatDaq), new Double(setting));
+	
+		requests.add(eReq);
 	}
 
 	@Override
-	public void handle(WhatDaq whatDaq, String setting)
+	public void handle(WhatDaq whatDaq, double[] setting) throws AcnetStatusException
 	{
-		try {
-			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), setting);
-
-			requests.add(eReq);
-		} catch (AcnetStatusException e) {
-			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		}
+		final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName(), new PutListener(whatDaq), new Double(setting[0]));
+	
+		requests.add(eReq);
 	}
 
 	@Override
-	public void handle(WhatDaq whatDaq, String[] setting)
+	public void handle(WhatDaq whatDaq, String setting) throws AcnetStatusException
 	{
-		try {
-			final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName, new PutListener(whatDaq), setting[0]);
+		final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName(), new PutListener(whatDaq), setting);
 
-			requests.add(eReq);
-		} catch (AcnetStatusException e) {
-			whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		}
+		requests.add(eReq);
+	}
+
+	@Override
+	public void handle(WhatDaq whatDaq, String[] setting) throws AcnetStatusException
+	{
+		final EpicsRequest eReq = new EpicsRequest(whatDaq.daqName(), new PutListener(whatDaq), setting[0]);
+
+		requests.add(eReq);
 	}
 
 	@Override

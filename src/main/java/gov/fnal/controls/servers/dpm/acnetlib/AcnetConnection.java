@@ -1,4 +1,4 @@
-// $Id: AcnetConnection.java,v 1.4 2024/04/01 15:30:49 kingc Exp $
+// $Id: AcnetConnection.java,v 1.9 2024/11/21 22:02:19 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.util.HashMap;
@@ -9,6 +9,8 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, AcnetMessageHandler, AcnetRequestHandler
 {
@@ -23,6 +25,7 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 	AcnetMessageHandler messageHandler = this;
 	AcnetRequestHandler requestHandler = this;
 	volatile ReplyThread replyThread = null;
+	int droppedReplyCount = 0;
 
     AcnetConnection(String name, Node vNode)
 	{
@@ -51,9 +54,14 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 
 	final public AcnetConnection setQueueReplies()
 	{
-		if (replyThread == null)
-			replyThread = new ReplyThread();
+		return setQueueReplies(Integer.MAX_VALUE);
+	}
 
+	final public AcnetConnection setQueueReplies(int capacity)
+	{
+		assert replyThread == null;
+
+		replyThread = new ReplyThread(capacity);
 		return this;
 	}
 
@@ -111,8 +119,6 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 
 	final public InetAddress remoteTaskAddress(int node, int taskId) throws AcnetStatusException
 	{
-		//System.out.println("remoteTaskAddres: " + Node.get(node) + " " + taskId);
-
 		final RPCint rpc = new RPCint();
 		final ByteBuffer buf = ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN);
 
@@ -127,7 +133,6 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 		}
 	}
 
-
 	final void handleReply(AcnetReply reply)
 	{
 		final RequestId requestId = reply.requestId();
@@ -141,7 +146,7 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 			try {
 				context.replyHandler.handle(reply);
 			} catch (Exception e) {
-				AcnetInterface.logger.log(Level.WARNING, "ACNET reply callback exception for connection '" + connectedName() + "'", e);
+				logger.log(Level.WARNING, "ACNET reply callback exception for connection '" + connectedName() + "'", e);
 			}
 
 			if (reply.last()) {
@@ -161,9 +166,16 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 	abstract void sendCancel(AcnetReply reply) throws AcnetStatusException;
     abstract void sendReply(AcnetRequest request, int flags, ByteBuffer dataBuf, int status) throws AcnetStatusException;
 	abstract boolean inDataHandler();
+	abstract Thread dataThread();
     abstract void disconnect();
 
     void requestAck(ReplyId replyId) throws AcnetStatusException { }
+
+	final void droppedReply(AcnetReply reply)
+	{
+		if (droppedReplyCount++ == 0)
+			logger.log(Level.WARNING, "Dropped replies on " + connectedName());
+	}
 
 	final void sendCancelNoEx(AcnetRequestContext context)
 	{
@@ -200,9 +212,9 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 		final Thread thread;
 		final LinkedBlockingQueue<AcnetReply> queue;
 
-		ReplyThread()
+		ReplyThread(int capacity)
 		{
-			this.queue = new LinkedBlockingQueue<>();
+			this.queue = new LinkedBlockingQueue<>(capacity);
 			this.thread = new Thread(this);
 			this.thread.setName("ACNET " + connectedName() + " reply");
 			this.thread.start();
@@ -217,7 +229,7 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 		@Override
 		public void run()
 		{
-			AcnetInterface.logger.log(Level.INFO, "ACNET - " + connectedName() + " reply queue thread start");
+			logger.log(Level.INFO, "ACNET - " + connectedName() + " reply queue thread start");
 
 			AcnetReply reply;
 
@@ -229,10 +241,10 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 				}
 
 			} catch (Exception e) {
-				AcnetInterface.logger.log(Level.WARNING, "ACNET reply queue thread exception", e);
+				logger.log(Level.WARNING, "ACNET reply queue thread exception", e);
 			}
 
-			AcnetInterface.logger.log(Level.INFO, "ACNET - " + connectedName() + " reply queue thread stop");
+			logger.log(Level.INFO, "ACNET - " + connectedName() + " reply queue thread stop");
 		}
 	}
 
@@ -251,9 +263,6 @@ abstract public class AcnetConnection implements AcnetErrors, AcnetConstants, Ac
 
 		final synchronized void execute(int node, String task, ByteBuffer buf, int timeout) throws AcnetStatusException
 		{
-			if (inDataHandler())
-				throw new IllegalStateException("ACNET RPC calls are invalid during ACNET handler execution.");
-
 			sendRequest(node, task, false, buf, timeout, this);
 
 			try {

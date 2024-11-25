@@ -1,4 +1,4 @@
-// $Id: MaxReplySizeOverride.java,v 1.3 2024/01/10 20:53:50 kingc Exp $
+// $Id: MaxReplySizeOverride.java,v 1.4 2024/11/19 22:34:44 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.HashMap;
@@ -77,7 +77,7 @@ class MaxReplySizeOverride extends TimerTask
 
 		while (true) {
 			for (String node : nodes)
-				System.out.printf("%-8s = %d\n", node, get(node, 1234));
+				logger.log(Level.INFO, String.format("%-8s = %d\n", node, get(node, 1234)));
 			Thread.sleep(2000);
 		}
 	}

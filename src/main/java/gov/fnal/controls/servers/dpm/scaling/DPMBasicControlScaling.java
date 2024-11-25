@@ -1,4 +1,4 @@
-// $Id: DPMBasicControlScaling.java,v 1.5 2023/11/02 16:36:16 kingc Exp $
+// $Id: DPMBasicControlScaling.java,v 1.7 2024/10/10 16:31:34 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
@@ -122,11 +122,11 @@ class DPMBasicControlScalingImpl extends BasicControlScaling implements DPMBasic
 
 	DPMBasicControlScalingImpl(WhatDaq whatDaq) throws AcnetStatusException
 	{
-		super(whatDaq.dInfo);
+		super(whatDaq.deviceInfo());
 
-		this.di = whatDaq.getDeviceIndex();
-		this.pi = whatDaq.getPropertyIndex();
-		this.length = whatDaq.getLength();
+		this.di = whatDaq.di();
+		this.pi = whatDaq.pi();
+		this.length = whatDaq.length();
 	}
 
 	@Override

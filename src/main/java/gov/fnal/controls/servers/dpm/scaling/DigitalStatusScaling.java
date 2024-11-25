@@ -1,65 +1,58 @@
-// $Id: DigitalStatusScaling.java,v 1.4 2023/11/02 16:36:16 kingc Exp $
+// $Id: DigitalStatusScaling.java,v 1.5 2024/07/03 16:39:30 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
+import java.util.List;
 import java.util.ArrayList;
-import java.sql.ResultSet;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-
-import static gov.fnal.controls.db.DbServer.getDbServer;
+import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 
 class DigitalStatusScaling implements AcnetErrors
 {
-	class StatusBit
+	final ArrayList<DeviceInfo.Status.BitTextAttribute> bits;
+	final ArrayList<String> bitNames;
+
+	DigitalStatusScaling(DeviceInfo dInfo)
 	{
-		int number;
-		String text0;
-		String text1;
-		String label;
-		int mask;
+		if (dInfo.status == null) {
+			this.bits = new ArrayList<>();
+			this.bitNames = new ArrayList<>();
+		} else {
+			this.bits = new ArrayList<>(dInfo.status.bitText);
+			this.bitNames = new ArrayList<>(dInfo.status.bitNames);
+		}
 	}
 
-	final ArrayList<StatusBit> bits;
-
-	DigitalStatusScaling(int di) throws AcnetStatusException
+	private final String value(int data, DeviceInfo.Status.BitTextAttribute bit)
 	{
-		this.bits = new ArrayList<>();
+		return (data & bit.mask) == 0 ? bit.text0 : bit.text1;
+	}
 
-		final String query = "SELECT DDS.bit_no, DS.short_name_0, " + "DS.short_name_1, DS.bit_description "
-								+ "FROM " + "accdb.digital_status DS, " + "accdb.device_digital_status DDS "
-								+ "WHERE DDS.di = " + di + " AND DDS.digital_status_id = DS.digital_status_id";
+	List<String> bitValues(int data)
+	{
+		final ArrayList<String> values = new ArrayList<>();
 
-		ResultSet rs = null;
+		for (DeviceInfo.Status.BitTextAttribute bit : bits) {
+			if (bit.bitNo >= values.size()) {
+				final int emptyCount = bit.bitNo - values.size();
 
-		try {
-			rs = getDbServer("adbs").executeQuery(query);
+				for (int ii = 0; ii < emptyCount; ii++)
+					values.add("");
 
-			while (rs.next()) {
-				final StatusBit bit = new StatusBit();
-
-				bit.number = rs.getInt("bit_no");
-				bit.text0 = rs.getString("short_name_0").trim();
-				bit.text1 = rs.getString("short_name_1").trim();
-				bit.label = rs.getString("bit_description").trim();
-				bit.mask = (1 << bit.number);
-
-				bits.add(bit);
-			}
-		} catch (Exception e) {
-			throw new AcnetStatusException(DIO_NOSCALE, "Retrieval or reformating of extended status failed.", e);
-		} finally {
-			try {
-				rs.close();
-			} catch (Exception ignore) { }
+				values.add(value(data, bit));
+			} else
+				values.set(bit.bitNo, value(data, bit));
 		}
+
+		return values;
 	}
 
 	String[] scale(int data)
 	{
 		final ArrayList<String> state = new ArrayList<>();
 
-		for (StatusBit bit : bits)
+		for (DeviceInfo.Status.BitTextAttribute bit : bits)
 			state.add((data & bit.mask) == 0 ? bit.text0 : bit.text1);
 
 		return state.toArray(new String[state.size()]);
@@ -70,27 +63,10 @@ class DigitalStatusScaling implements AcnetErrors
 		final String[] labels = new String[bits.size()];
 
 		int ii = 0;
-		for (StatusBit bit : bits)
+
+		for (DeviceInfo.Status.BitTextAttribute bit : bits)
 			labels[ii++] = bit.label;
 
 		return labels;
-	}
-
-	public static void main(String[] args) throws Exception
-	{
-		final DigitalStatusScaling s = new DigitalStatusScaling(253488);
-
-		for (String label : s.getLabels())
-			System.out.println(label);
-
-		System.out.println();
-
-		for (String str : s.scale(0xffffffff))
-			System.out.println(str);
-
-		System.out.println();
-
-		for (String str : s.scale(0))
-			System.out.println(str);
 	}
 }

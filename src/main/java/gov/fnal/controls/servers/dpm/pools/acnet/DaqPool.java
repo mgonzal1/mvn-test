@@ -1,4 +1,4 @@
-// $Id: DaqPool.java,v 1.9 2024/02/22 16:32:14 kingc Exp $
+// $Id: DaqPool.java,v 1.11 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.HashMap;
@@ -6,9 +6,7 @@ import java.util.TreeMap;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 abstract class DaqPool implements DaqPoolUserRequests<WhatDaq>
@@ -19,9 +17,9 @@ abstract class DaqPool implements DaqPoolUserRequests<WhatDaq>
 	final int id;	
 	final Node node;
 
-	final DataEvent event;
+	final Event event;
 
-	DaqPool(Node node, DataEvent event)
+	DaqPool(Node node, Event event)
 	{
 		this.id = nextId++;
 		this.node = node;
@@ -38,30 +36,14 @@ abstract class DaqPool implements DaqPoolUserRequests<WhatDaq>
 		}
 	}
 
-	static DaqPool get(Node node, DataEvent event)
+	static DaqPool get(Node node, Event event)
 	{
-		final String key = node.name() + "," + event.toString().toUpperCase() +
-								(event.isRepetitive() ? "T" : "F");
+		final String key = node.name() + "-" + event + "-" + (event.isRepetitive() ? "R" : "O");
 
 		synchronized (pools) {
 			DaqPool pool = pools.get(key);
 
 			if (pool == null) {
-/*
-				if (event instanceof DeltaTimeEvent) {
-					//final DeltaTimeEvent dtEvent = (DeltaTimeEvent) event;
-					final long repeatRate = ((DeltaTimeEvent) event).getRepeatRate();
-
-					if (repeatRate >= 20000) {
-						final long delayTime = ((DeltaTimeEvent) event).immediate() ? 0 : repeatRate;
-
-						pool = new RepetitiveMultiShotPool(node, delayTime, repeatRate);
-						pools.put(key, pool);
-						return pool;
-					}
-				}
-*/
-
 				pool = new RepetitiveDaqPool(node, event);
 				pools.put(key, pool);
 			}

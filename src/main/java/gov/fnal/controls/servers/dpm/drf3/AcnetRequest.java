@@ -1,4 +1,4 @@
-// $Id: AcnetRequest.java,v 1.2 2023/10/04 19:38:05 kingc Exp $
+// $Id: AcnetRequest.java,v 1.6 2024/11/19 22:34:43 kingc Exp $
 package gov.fnal.controls.servers.dpm.drf3;
 
 import java.util.Map;
@@ -11,27 +11,31 @@ import java.util.Collection;
 import java.util.Collections;
 import static java.util.Arrays.asList;
 
+import gov.fnal.controls.servers.dpm.DPMRequest;
 import static gov.fnal.controls.servers.dpm.drf3.Property.*;
 import static gov.fnal.controls.servers.dpm.drf3.Field.*;
 
 public class AcnetRequest
 {
-    protected static final Pattern RE = Pattern.compile(
-        "(?i)[A-Z0#][:?_|&@$~][A-Z0-9_:-]{1,62}"
+    static final Pattern RE = Pattern.compile(
+        "(?i)[A-Z0#][:?_|&@$~^#!][A-Z0-9_:-]{1,62}"
     );
     
-    protected static final Map<Property,Character> QUALIFIERS = Collections.unmodifiableMap( 
+    static final Map<Property,Character> QUALIFIERS = Collections.unmodifiableMap( 
             new EnumMap<Property,Character>( Property.class ) {{
-                put( READING,     ':' );
-                put( SETTING,     '_' );
-                put( STATUS,      '|' );
-                put( CONTROL,     '&' );
-                put( ANALOG,      '@' );
-                put( DIGITAL,     '$' );
-                put( DESCRIPTION, '~' );
+                put(READING,     	 ':');
+                put(SETTING,     	 '_');
+                put(STATUS,      	 '|');
+                put(CONTROL,     	 '&');
+                put(ANALOG,      	 '@');
+                put(DIGITAL,     	 '$');
+                put(DESCRIPTION, 	 '~');
+				put(INDEX, 	 	 	 '^');
+				put(LONG_NAME, 	 	 '#');
+				put(ALARM_LIST_NAME, '!');
         }});
 
-    protected static final Map<Character, Property> DEFAULT_PROPS = Collections.unmodifiableMap(new HashMap<Character, Property>() {
+    static final Map<Character, Property> DEFAULT_PROPS = Collections.unmodifiableMap(new HashMap<Character, Property>() {
         {
             put(':', READING);
             put('?', READING);
@@ -47,30 +51,33 @@ public class AcnetRequest
         }
     });
 
-    protected static final Map<Property, Collection<Field>> PROP_FIELDS = Collections.unmodifiableMap(new EnumMap<Property, Collection<Field>>(
-            Property.class) {
+    static final Map<Property, Collection<Field>> PROP_FIELDS = Collections.unmodifiableMap(new EnumMap<Property, Collection<Field>>(Property.class) {
         {
-            put(READING, asList(RAW, PRIMARY, SCALED));
-            put(SETTING, asList(RAW, PRIMARY, SCALED));
-            put(STATUS,
-                    asList(RAW, ALL, TEXT, EXTENDED_TEXT, ON, READY, REMOTE,
-                            POSITIVE, RAMP, BIT_VALUE));
+            put(READING, asList(RAW, PRIMARY, SCALED, MIN, MAX, UNITS));
+            put(SETTING, asList(RAW, PRIMARY, SCALED, MIN, MAX, UNITS));
+            put(STATUS, asList(RAW, ALL, TEXT, EXTENDED_TEXT, ON, READY, REMOTE, POSITIVE, RAMP, BIT_VALUE, BIT_NAMES, BIT_VALUES));
             put(CONTROL, asList(RAW, SCALED));
-            put(ANALOG,
-                    asList(RAW, ALL, TEXT, MIN, MAX, NOM, TOL, RAW_MIN,
-                            RAW_MAX, RAW_NOM, RAW_TOL, ALARM_ENABLE,
-                            ALARM_STATUS, TRIES_NEEDED, TRIES_NOW, ALARM_FTD,
-                            ABORT, ABORT_INHIBIT, FLAGS));
-            put(DIGITAL,
-                    asList(RAW, ALL, TEXT, NOM, MASK, ALARM_ENABLE,
-                            ALARM_STATUS, TRIES_NEEDED, TRIES_NOW, ALARM_FTD,
-                            ABORT, ABORT_INHIBIT, FLAGS));
+            put(ANALOG, asList(RAW, ALL, TEXT, MIN, MAX, NOM, TOL, RAW_MIN, RAW_MAX, RAW_NOM, RAW_TOL, ALARM_ENABLE,
+                            	ALARM_STATUS, TRIES_NEEDED, TRIES_NOW, ALARM_FTD, ABORT, ABORT_INHIBIT, FLAGS));
+            put(DIGITAL, asList(RAW, ALL, TEXT, NOM, MASK, ALARM_ENABLE, ALARM_STATUS, TRIES_NEEDED, TRIES_NOW, ALARM_FTD,
+                            	ABORT, ABORT_INHIBIT, FLAGS));
             put(DESCRIPTION, asList(SCALED));
             put(INDEX, asList(SCALED));
             put(LONG_NAME, asList(SCALED));
             put(ALARM_LIST_NAME, asList(SCALED));
         }
     });
+
+	static final Map<Property, Collection<Field>> DB_FIELDS = Collections.unmodifiableMap(new EnumMap<Property, Collection<Field>>(Property.class) {
+		{
+			put(READING, asList(MIN, MAX, UNITS));
+			put(SETTING, asList(MIN, MAX, UNITS));
+			put(DESCRIPTION, asList(SCALED));
+            put(INDEX, asList(SCALED));
+            put(LONG_NAME, asList(SCALED));
+            put(ALARM_LIST_NAME, asList(SCALED));
+		}
+	});
 
     /**
      * Validates the <i>device</i> attribute of a data request and converts it
@@ -80,7 +87,7 @@ public class AcnetRequest
      * @return A canonical form of the device.
      * @throws DeviceFormatException if the device format is incorrect.
      */
-    protected String parse(String s) throws DeviceFormatException
+    String parse(String s) throws DeviceFormatException
 	{
         final Matcher m = RE.matcher(s);
         if (!m.matches())
@@ -99,7 +106,7 @@ public class AcnetRequest
         return new String(cc);
     }
 
-    protected static Property getDefaultProperty(String device)
+    static Property getDefaultProperty(String device)
 	{
         if (device.length() > 2) {
             Property prop = DEFAULT_PROPS.get(device.charAt(1));
@@ -121,8 +128,7 @@ public class AcnetRequest
 
     protected transient String text = null;
 
-
-	public AcnetRequest(DiscreteRequest dReq) throws DeviceFormatException
+	public AcnetRequest(DPMRequest dReq) throws DeviceFormatException
 	{
 		this.device = parse(dReq.getDevice()).toUpperCase();
 
@@ -133,8 +139,7 @@ public class AcnetRequest
 		Property prop;
         if (propAttr.isEmpty()) {
             prop = getDefaultProperty(deviceAttr);
-        } else if (dReq.hasRange() || !fieldAttr.isEmpty()
-                		|| Property.isProperty(propAttr)) {
+        } else if (dReq.hasRange() || !fieldAttr.isEmpty() || Property.isProperty(propAttr)) {
             prop = Property.parse(propAttr);
         } else {
             prop = getDefaultProperty(deviceAttr);
@@ -214,6 +219,13 @@ public class AcnetRequest
 	{
         return event;
     }
+
+	public boolean fromDatabase()
+	{
+		final Collection<Field> fields = DB_FIELDS.get(property);
+
+		return fields == null ? false : fields.contains(field);
+	}
 
 	@Override
 	public int hashCode()

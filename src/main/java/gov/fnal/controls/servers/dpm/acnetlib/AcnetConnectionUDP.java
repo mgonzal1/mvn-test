@@ -1,4 +1,4 @@
-// $Id: AcnetConnectionUDP.java,v 1.6 2024/04/01 15:30:49 kingc Exp $
+// $Id: AcnetConnectionUDP.java,v 1.8 2024/11/21 22:02:19 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.util.Iterator;
@@ -15,6 +15,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.DatagramChannel;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class WeakAcnetConnection extends AcnetConnectionUDP
 {
@@ -66,7 +68,7 @@ class AcnetConnectionUDP extends AcnetConnectionDaemon
 		@Override
 		public void run()
 		{
-			AcnetInterface.logger.info("ACNET data thread start");
+			logger.info("ACNET data thread start");
 
 			try {
 				while (true) {
@@ -84,11 +86,11 @@ class AcnetConnectionUDP extends AcnetConnectionDaemon
 									//c.read(buf);
 									c.read(BufferCache.alloc());
 								} catch (AcnetStatusException e) {
-									AcnetInterface.logger.log(Level.FINE, "ACNET handler exception ", e);
+									logger.log(Level.FINE, "ACNET handler exception ", e);
 								} catch (IllegalStateException e) {
-									AcnetInterface.logger.log(Level.SEVERE, "ACNET handler failure", e);
+									logger.log(Level.SEVERE, "ACNET handler failure", e);
 								} catch (Exception e) {
-									AcnetInterface.logger.log(Level.WARNING, "AcnetConnection.UDP callback exception for connection '" + c.connectedName(), e);
+									logger.log(Level.WARNING, "AcnetConnection.UDP callback exception for connection '" + c.connectedName(), e);
 								} finally {
 									c.inHandler = false;
 								}
@@ -152,6 +154,12 @@ class AcnetConnectionUDP extends AcnetConnectionDaemon
 	}
 
 	@Override
+	Thread dataThread()
+	{
+		return dataThread;
+	}
+
+	@Override
 	boolean inDataHandler()
 	{
 		return inHandler;
@@ -211,7 +219,7 @@ class AcnetConnectionUDP extends AcnetConnectionDaemon
 				if (wasInterrupted)
 					Thread.currentThread().interrupt();
 			} catch (IOException e) {
-				AcnetInterface.logger.log(Level.FINE, "AcnetConnection.sendCommand exception: ", e);
+				logger.log(Level.FINE, "AcnetConnection.sendCommand exception: ", e);
 				throw new AcnetUnavailableException();	
 			} finally {
 				sendCommandLock.unlock();
@@ -253,7 +261,7 @@ class AcnetConnectionUDP extends AcnetConnectionDaemon
 			dataChan.configureBlocking(false);
 			dataChan.setOption(StandardSocketOptions.SO_RCVBUF, 2048 * 1024);
 		} catch (IOException e) {
-			AcnetInterface.logger.log(Level.SEVERE, "Unable to open ACNET sockets", e);
+			logger.log(Level.SEVERE, "Unable to open ACNET sockets", e);
 			throw new IllegalStateException("Unable to open ACNET sockets", e);
 		}
 	}
@@ -264,7 +272,7 @@ class AcnetConnectionUDP extends AcnetConnectionDaemon
 		try {
 			return (short) (((InetSocketAddress) dataChan.getLocalAddress()).getPort() & 0xffff);
 		} catch (Exception e) {
-			AcnetInterface.logger.log(Level.SEVERE, "unable to get local port", e);
+			logger.log(Level.SEVERE, "unable to get local port", e);
 		}
 
 		return 0;

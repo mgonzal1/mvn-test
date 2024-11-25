@@ -1,4 +1,4 @@
-// $Id: DPMListTCP.java,v 1.10 2023/11/02 16:36:15 kingc Exp $
+// $Id: DPMListTCP.java,v 1.11 2024/06/27 18:50:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.tcp;
 
 import java.util.Set;
@@ -20,7 +20,6 @@ import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 abstract public class DPMListTCP extends DPMList implements Runnable
 {
-	final Thread thread;
 	final RemoteClientTCP client;
 	final SocketChannel channel;
 
@@ -29,6 +28,7 @@ abstract public class DPMListTCP extends DPMList implements Runnable
 	final ByteBuffer obufs[] = { ByteBuffer.allocate(4), ByteBuffer.allocate(128 * 1024) };
 	final SelectionKey selectKey;
 
+	protected final Thread thread;
 	protected abstract void handleRequest(final ByteBuffer buf) throws IOException;
 	protected abstract boolean getReply(final ByteBuffer buf) throws IOException;
 
@@ -51,7 +51,7 @@ abstract public class DPMListTCP extends DPMList implements Runnable
 
 		this.thread = new Thread(this);
 		this.thread.setName("DPMListTCP(" + client.hostName() + ")"); 
-		this.thread.start();
+		//this.thread.start();
 
 		try {
 			if (client.hasHeader("upgrade"))

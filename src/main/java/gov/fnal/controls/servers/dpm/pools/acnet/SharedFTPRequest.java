@@ -1,53 +1,53 @@
-// $Id: SharedFTPRequest.java,v 1.6 2024/02/22 16:32:14 kingc Exp $
+// $Id: SharedFTPRequest.java,v 1.8 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import java.util.Enumeration;
-import java.util.Vector;
-
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.events.DataEventObserver;
-import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.logging.Level;
 
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 
-class SharedFTPRequest extends FTPRequest implements ReceiveData, DataEventObserver
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+
+class SharedFTPRequest extends FTPRequest implements ReceiveData
 {
 	final static int QUEUE_LEN = 100;
 
-	private Vector<FTPRequest> ftpUsers;
+	final ArrayList<FTPRequest> users;
+	final long[] queuedMicroSecs = new long[QUEUE_LEN];
+	final int[] queuedNanoSecs = new int[QUEUE_LEN];
+	final double[] queuedValues = new double[QUEUE_LEN];
 
-	private long[] queuedMicroSecs = new long[QUEUE_LEN];
-	private int[] queuedNanoSecs = new int[QUEUE_LEN];
-	private double[] queuedValues = new double[QUEUE_LEN];
-	//private int queuedError = 0;
-	private int numQueued = 0;
-
-
-	//private DataEvent sendPlotDataEvent = new DeltaTimeEvent(67 * FTPPool.FTP_RETURN_PERIOD, false);
+	int numQueued = 0;
 
 	SharedFTPRequest(WhatDaq sharedDevice, ClassCode classCode, FTPScope sharedScope)
 	{
-		//super((WhatDaq) sharedDevice.clone(), (ClassCode) classCode, (FTPScope) sharedScope.clone(), null);
 		super(sharedDevice, classCode, sharedScope, null);
 
 		this.callback = this;
-		this.ftpUsers = new Vector<FTPRequest>(5);
+		this.users = new ArrayList<>();
 	}
 	
-	void addUser(FTPRequest user)
+	synchronized void addUser(FTPRequest user)
 	{
-		ftpUsers.add(user);
+		users.add(user);
 	}
 
-	Vector<FTPRequest> getUsers() 
+	Collection<FTPRequest> users() 
 	{ 
-		return ftpUsers;
+		return users;
 	}
 
 	@Override
-	public void plotData(long timestamp, int error, int numberPoints, long[] microSecs, int[] nanoSecs, double[] values)
+	public synchronized void plotData(long timestamp, int error, int count, long[] ms, int[] ns, double[] values)
 	{
+		for (FTPRequest req : users) {
+			if (!req.delete && req.callback != null)
+				req.callback.plotData(timestamp, error, count, ms, ns, values);
+		}
+
+/*
 		for (int ii = 0; ii < ftpUsers.size(); ii++) {
 			if (ii < ftpUsers.size()) {
 				final FTPRequest userFTPRequest = ftpUsers.elementAt(ii);
@@ -60,27 +60,12 @@ class SharedFTPRequest extends FTPRequest implements ReceiveData, DataEventObser
 				}
 			}
 		}
+		*/
 	}
 
 	void deliverError(int error)
 	{
-	/*
-		Enumeration<FTPRequest> users;
-		FTPRequest user;
-
-		users = ftpUsers.elements();
-
-		while (users.hasMoreElements()) {
-			user = users.nextElement();
-
-			if (user.delete)
-				continue;
-
-			user.callback.plotData(System.currentTimeMillis(), error, 0, null, null, null);
-		}
-		*/
-
-		for (FTPRequest user : ftpUsers) {
+		for (FTPRequest user : users) {
 			if (!user.delete)
 				user.callback.plotData(System.currentTimeMillis(), error, 0, null, null, null);
 		}
@@ -92,67 +77,41 @@ class SharedFTPRequest extends FTPRequest implements ReceiveData, DataEventObser
 		return "SharedFTPRequest: " + super.toString();
 	}
 
-/*
-	public void stopCollection()
-	{
-	}
-	*/
-
 	synchronized void sendPlotData()
 	{
-		long[] microSecs = null;
-		int[] nanoSecs = null;
-		double[] values = null;
-		int numToSend = 0;
-		int error;
+		if (numQueued != 0) {
+			long[] microSecs = null;
+			int[] nanoSecs = null;
+			double[] values = null;
 
-		if (numQueued != 0) { // || queuedError != 0) {
-			//synchronized (sendPlotDataEvent) {
-				try {
-					if (numQueued == 0) {
-						microSecs = null;
-						nanoSecs = null;
-						values = null;
-					} else {
-						microSecs = new long[numQueued];
-						nanoSecs = new int[numQueued];
-						values = new double[numQueued];
-						for (int ii = 0; ii < numQueued; ii++) {
-							microSecs[ii] = queuedMicroSecs[ii];
-							nanoSecs[ii] = queuedNanoSecs[ii];
-							values[ii] = queuedValues[ii];
-						}
+			int numToSend = 0;
+			int error;
+
+			try {
+				if (numQueued == 0) {
+					microSecs = null;
+					nanoSecs = null;
+					values = null;
+				} else {
+					microSecs = new long[numQueued];
+					nanoSecs = new int[numQueued];
+					values = new double[numQueued];
+
+					for (int ii = 0; ii < numQueued; ii++) {
+						microSecs[ii] = queuedMicroSecs[ii];
+						nanoSecs[ii] = queuedNanoSecs[ii];
+						values[ii] = queuedValues[ii];
 					}
-					numToSend = numQueued;
-					numQueued = 0;
-					//error = queuedError;
-					//queuedError = 0;
-				} catch (Exception e) {
-				/*
-					StringBuffer complaint = new StringBuffer();
-					complaint.append("SharedFTPRequest, " + e);
-					complaint.append("\r\nnumQueued: " + numQueued);
-					if (microSecs != null)
-						complaint.append(", microSecs len: " + microSecs.length);
-					System.out.println(complaint.toString());
-				*/	e.printStackTrace();
-					numQueued = 0;
-					return;
 				}
-
-			//}
+				numToSend = numQueued;
+				numQueued = 0;
+			} catch (Exception e) {
+				logger.log(Level.WARNING, "exception in sendPlotData()", e);
+				numQueued = 0;
+				return;
+			}
 			
 			plotData(System.currentTimeMillis(), 0, numToSend, microSecs, nanoSecs, values);
 		}
 	}
-
-/*
-	public void update(DataEvent userEvent, DataEvent currentEvent)
-	{
-		if (userEvent == sendPlotDataEvent) {
-			sendPlotData();
-			return;
-		}
-	}
-	*/
 }

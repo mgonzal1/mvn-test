@@ -1,6 +1,6 @@
-// $Id: DPMList.java,v 1.84 2024/04/11 20:23:30 kingc Exp $
+// $Id: DPMList.java,v 1.90 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm;
-
+ 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +57,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		private int freeCount;
 		final private BitSet inUse;
 
-		IdPool(int firstIndex, int size)
+		IdPool(final int firstIndex, final int size)
 		{
 			this.firstId = firstIndex;
 			this.size = size;
@@ -91,7 +91,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 			throw new AcnetStatusException(DPM_OUTOMEM);
 		}
 
-		synchronized void free(Id id)
+		synchronized void free(final Id id)
 		{
 			final int index = id.value() - firstId;
 
@@ -127,8 +127,8 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 					dispose(ACNET_DISCONNECTED);
 					logger.log(Level.FINE, String.format("%s list - exception: %s", id, e.getMessage()), e);
 				} catch (Exception e) {
-					dispose(ACNET_SYS);
-					logger.log(Level.FINE, String.format("%s list - exception: %s", id, e.getMessage()), e);
+					dispose(DPM_INTERNAL_ERROR);
+					logger.log(Level.WARNING, String.format("%s list - exception: %s in run()", id, e.getMessage()), e);
 				}
 			}
 
@@ -155,10 +155,10 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 	private volatile GSSContext gss = null;
 	protected volatile GSSName gssName = null;
 
-	protected final Map<Long, DPMRequest> requests = new ConcurrentHashMap<>(); 
+	protected final Map<Long, DPMRequest> requests = new ConcurrentHashMap<>();
 	protected final AtomicReference<List<SettingData>> settings = new AtomicReference<>();
 
-	protected final Map<Model, JobInfo> jobs = new ConcurrentHashMap<>();
+	protected final Map<DataSource, JobInfo> jobs = new ConcurrentHashMap<>();
 	protected DPMProtocolReplier protocolReplier;
 	volatile long disposedTime = 0;
 	protected volatile int disposedStatus = 0;
@@ -167,7 +167,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 
 	final StatsTimer statsTimer = new StatsTimer();
 
-	public DPMList(DPMProtocolHandler owner) throws AcnetStatusException
+	public DPMList(final DPMProtocolHandler owner) throws AcnetStatusException
 	{
 		this.owner = owner;
 		this.id = idPool.alloc();
@@ -176,7 +176,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 
 		this.protocolReplier = new DPMProtocolReplier() { };
 
-		timer.schedule(this.statsTimer, StatsRateSeconds * 1000, StatsRateSeconds * 1000); 
+		timer.schedule(this.statsTimer, StatsRateSeconds * 1000, StatsRateSeconds * 1000);
 	}
 
 	final public ListId id()
@@ -189,43 +189,38 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		replyCounter.incrementAndGet();
 	}
 
-	public final DataReplier getDataReplier(WhatDaq whatDaq)
-	{
-		return DataReplier.get(whatDaq, protocolReplier);
-	}
-
-	public final void sendStatus(long refId, int status, long timestamp) throws InterruptedException, IOException, AcnetStatusException
+	public final void sendStatus(final long refId, final int status, final long timestamp) throws InterruptedException, IOException, AcnetStatusException
 	{
 		protocolReplier.sendReply(refId, status, timestamp, 0L);
 		replyCounter.incrementAndGet();
 	}
 
-	public final void sendStatus(long refId, int status, long timestamp, long cycle) throws InterruptedException, IOException, AcnetStatusException
+	public final void sendStatus(final long refId, final int status, final long timestamp, final long cycle) throws InterruptedException, IOException, AcnetStatusException
 	{
 		protocolReplier.sendReply(refId, status, timestamp, cycle);
 		replyCounter.incrementAndGet();
 	}
 
-	public final void sendStatus(WhatDaq whatDaq, int status, long timestamp, long cycle) throws InterruptedException, IOException, AcnetStatusException
+	public final void sendStatus(final WhatDaq whatDaq, final int status, final long timestamp, final long cycle) throws InterruptedException, IOException, AcnetStatusException
 	{
-		sendStatus(whatDaq.refId, status, timestamp, cycle);
+		sendStatus(whatDaq.refId(), status, timestamp, cycle);
 	}
 
-	public final void sendStatusNoEx(long refId, int status, long timestamp)
+	public final void sendStatusNoEx(final long refId, final int status, final long timestamp)
 	{	
 		try {
 			sendStatus(refId, status, timestamp);
 		} catch (Exception ignore) { }
 	}
 
-	public final void sendStatusNoEx(WhatDaq whatDaq, int status, long timestamp, long cycle)
+	public final void sendStatusNoEx(final WhatDaq whatDaq, final int status, final long timestamp, final long cycle)
 	{
 		try {
-			protocolReplier.sendReply(whatDaq, status, timestamp, cycle);
+			sendStatus(whatDaq, status, timestamp, cycle);
 		} catch (Exception ignore) { }
 	}
 
-	public final void sendStatus(int status) throws InterruptedException, IOException, AcnetStatusException
+	public final void sendStatus(final int status) throws InterruptedException, IOException, AcnetStatusException
 	{
 		final long now = now();
 
@@ -235,14 +230,14 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		}
 	}
 
-	public final void sendStatusNoEx(int status)
+	public final void sendStatusNoEx(final int status)
 	{
 		try {
 			sendStatus(status);
 		} catch (Exception ignore) { }
 	}
 
-	public final void sendDeviceInfo(WhatDaq whatDaq) throws InterruptedException, IOException, AcnetStatusException
+	public final void sendDeviceInfo(final WhatDaq whatDaq) throws InterruptedException, IOException, AcnetStatusException
 	{
 		protocolReplier.sendReply(whatDaq);
 		replyCounter.incrementAndGet();
@@ -253,7 +248,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		return jobs.values();
 	}
 
-	public final String property(String name)
+	public final String property(final String name)
 	{
 		return properties.get(name);
 	}
@@ -263,7 +258,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		if (gssName == null)
 			throw new GSSException(GSSException.NO_CRED);
 
-		return gssName; 
+		return gssName;
 	}
 
 	String[] properties()
@@ -276,17 +271,16 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		return p.toArray(new String[p.size()]);
 	}
 
-	public  boolean disposed()
+	public boolean disposed()
 	{
 		return disposedTime != 0;
 	}
 
 	public boolean restartable()
 	{
-		for (Map.Entry<Model, JobInfo> entry : jobs.entrySet()) {
-			if (!entry.getKey().restartable() && !entry.getValue().completed())
+		for (JobInfo jobInfo : jobs.values())
+			if (!jobInfo.restartable())
 				return false;
-		}
 
 		return true;
 	}
@@ -296,7 +290,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		return jobs.size();
 	}
 
-	void jobCompleted(Job job)
+	void jobCompleted(final Job job)
 	{
 		setRestartableProperty();
 		Scope.listProperties(this);
@@ -307,7 +301,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		properties.put("RESTARTABLE", restartable() ? "Y" : "N");
 	}
 
-	synchronized private boolean disposeImpl(int status)
+	private boolean disposeImpl(final int status)
 	{
 		if (!disposed()) {
 			if (gss != null) {
@@ -323,6 +317,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 				statsTimer.cancel();
 				logger.log(Level.FINE, String.format("%s Purged %d timer(s)", id, timer.purge()));
 			} catch (Exception ignore) { }
+
 			logger.log(Level.FINE, id + " Disposed");
 
 			owner.listDisposed(this);
@@ -335,7 +330,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		return false;
 	}
 
-	public boolean dispose(int status)
+	synchronized public boolean dispose(final int status)
 	{
 		if (disposeImpl(status)) {
 			stop();
@@ -350,33 +345,33 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		return dispose(ACNET_CANCELLED);
 	}
 
-	private void addToJob(long refId, DPMRequest req)
+	private void addToJob(final long refId, final DPMRequest req)
 	{
-		final Model model = req.model();
-		JobInfo jInfo = jobs.get(model);
+		final DataSource dataSource = req.dataSource();
+		JobInfo jInfo = jobs.get(dataSource);
 		
 		if (jInfo == null) {
 			jInfo = new JobInfo();
 			
-			if (model instanceof JobModel)
-				jInfo.setModel((JobModel) model);
+			if (dataSource != DefaultDataSource.instance)
+				jInfo.setDataSource(dataSource);
 
-			jobs.put(req.model(), jInfo);
+			jobs.put(dataSource, jInfo);
 		}
 
 		if (jInfo.addRequest(refId, req))
 			totalRequestCount++;
 	}
 
-	private void removeFromJob(long refId, DPMRequest req)
+	private void removeFromJob(final long refId, final DPMRequest req)
 	{
-		JobInfo jInfo = jobs.get(req.model());
+		JobInfo jInfo = jobs.get(req.dataSource());
 
 		if (jInfo != null)
 			jInfo.removeRequest(refId);
 	}
 
-	DPMRequest getRequest(long refId) throws AcnetStatusException
+	DPMRequest getRequest(final long refId) throws AcnetStatusException
 	{
 		final DPMRequest req = requests.get(refId);	
 
@@ -386,12 +381,12 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		return req;
 	}
 
-	public void authenticate(byte[] token)
+	public void authenticate(final byte[] token)
 	{
 		authenticate(token, protocolReplier);
 	}
 
-	public void authenticate(byte[] token, DPMProtocolReplier protocolReplier)
+	public void authenticate(byte[] token, final DPMProtocolReplier protocolReplier)
 	{
         logger.log(Level.FINER, String.format("%s Authenticate from:%-6s token[%d]", id, clientHostName(), token.length));
 
@@ -413,12 +408,13 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 				} catch (AcnetStatusException e) {
 					authenticationFailed(e.status, e, protocolReplier);
         		} catch (Exception e) {
-					authenticationFailed(ACNET_SYS, e, protocolReplier);
+					authenticationFailed(DPM_INTERNAL_ERROR, e, protocolReplier);
+					logger.log(Level.WARNING, "exception in authenticate()", e);
         		}
 			} catch (GSSException e) {
 				authenticationFailed(DPM_PRIV, e, protocolReplier);
 			}
-		} else { 
+		} else {
 			try {
 				if (gss == null)
 					gss = DPMCredentials.createContext();
@@ -429,7 +425,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 
 			if (gss != null && gss.isEstablished()) {
 				try {
-					logger.log(Level.INFO, String.format("%s User %s authenticated from %s for service %s", 
+					logger.log(Level.INFO, String.format("%s User %s authenticated from %s for service %s",
 															id, gss.getSrcName(), clientHostName(), gss.getTargName()));
 					protocolReplier.sendReply(new AuthenticateReply(DPMCredentials.serviceName()));
 				} catch (GSSException e) {
@@ -437,7 +433,8 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 				} catch (AcnetStatusException e) {
 					authenticationFailed(e.status, e, protocolReplier);
 				} catch (Exception e) {
-					authenticationFailed(ACNET_SYS, e, protocolReplier);
+					authenticationFailed(DPM_INTERNAL_ERROR, e, protocolReplier);
+					logger.log(Level.WARNING, "exception in authenticate()", e);
 				}
 			} else if (token != null) {
 				try {
@@ -445,13 +442,14 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 				} catch (AcnetStatusException e) {
 					authenticationFailed(e.status, e, protocolReplier);
 				} catch (Exception e) {
-					authenticationFailed(ACNET_SYS, e, protocolReplier);
+					authenticationFailed(DPM_INTERNAL_ERROR, e, protocolReplier);
+					logger.log(Level.WARNING, "exception in authenticate()", e);
 				}
 			}
 		}
 	}
 
-	private final void authenticationFailed(int status, Exception e, DPMProtocolReplier protocolReplier)
+	private final void authenticationFailed(final int status, final Exception e, final DPMProtocolReplier protocolReplier)
 	{
 		logger.log(Level.FINE, String.format("%s Authentication failed - %s", id, e), e);
 
@@ -463,12 +461,12 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		protocolReplier.sendStatusNoEx(status);
 	}
 
-	public void enableSettings(byte[] MIC, byte[] message)// throws AcnetStatusException
+	public void enableSettings(final byte[] MIC, final byte[] message)// throws AcnetStatusException
 	{
 		enableSettings(MIC, message, protocolReplier);
 	}
 
-	public void enableSettings(byte[] MIC, byte[] message, DPMProtocolReplier protocolReplier)// throws AcnetStatusException
+	public void enableSettings(final byte[] MIC, final byte[] message, final DPMProtocolReplier protocolReplier)// throws AcnetStatusException
 	{
 	    logger.log(Level.FINER, String.format("%s EnableSettings from:%-6s", id, clientHostName()));
 
@@ -478,7 +476,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 			if (gss != null) {
 				gss.verifyMIC(MIC, 0, MIC.length, message, 0, message.length, new MessageProp(true));
 				gssName = gss.getSrcName();
-				logger.log(Level.INFO, String.format("%s Settings enabled for user %s from %s", 
+				logger.log(Level.INFO, String.format("%s Settings enabled for user %s from %s",
 														id, gssName, clientHostName()));		
 			}
 
@@ -488,13 +486,13 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		}
 	}
 
-	public void addToProperties(String key, String value)
+	public void addToProperties(final String key, final String value)
 	{
 		properties.put(key, value);
 		Scope.listProperties(this);
 	}
 
-	public void addRequest(String drf, long refId)
+	public void addRequest(final String drf, final long refId)
 	{
 		try {
 			// Check for list property format.  This will eventually be removed
@@ -521,7 +519,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 			if (logger.isLoggable(Level.FINE))
 	    		logger.log(Level.FINE, String.format("%s AddRequest %6d '%s'", id, refId, drf));
 
-			final DPMRequest req = new DPMRequest(drf);
+			final DPMRequest req = new DPMRequest(drf, refId);
 			
 			requests.put(refId, req);
 			addToJob(refId, req);
@@ -532,7 +530,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		}
 	}
 
-	public void removeRequest(long refId)
+	public void removeRequest(final long refId)
 	{
         logger.log(Level.FINE, String.format("%s RemoveFromList %6d", id, refId));
 
@@ -567,15 +565,15 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		return count;
 	}
 
-	public void start(String newDefaultModel)
+	synchronized public final void start(final String newDefaultDataSource)
 	{
-	    logger.log(Level.FINE, String.format("%s StartList from:%-6s model:%s jobs:%d", 
-									id, clientHostName(), newDefaultModel, jobCount()));
+	    logger.log(Level.FINE, String.format("%s StartList from:%-6s source:%s jobs:%d",
+									id, clientHostName(), newDefaultDataSource, jobCount()));
 
-		final JobInfo jobInfo = jobs.get(DefaultModel.instance);
+		final JobInfo jobInfo = jobs.get(DefaultDataSource.instance);
 
 		if (jobInfo != null)
-			jobInfo.setModel(newDefaultModel);
+			jobInfo.setDataSource(newDefaultDataSource);
 
 		// Start all the jobs associated with this list
 
@@ -587,9 +585,9 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 				protocolReplier.sendStatusNoEx(e.status);
 			} catch (Exception e) {
 				jInfo.stop();
-				protocolReplier.sendStatusNoEx(ACNET_SYS);
-				logger.log(Level.WARNING, "exception starting jobs", e);
-				dispose(ACNET_SYS);
+				protocolReplier.sendStatusNoEx(DPM_INTERNAL_ERROR);
+				logger.log(Level.WARNING, "exception in start()", e);
+				dispose(DPM_INTERNAL_ERROR);
 			}
 		}
 
@@ -602,7 +600,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		Scope.listUser(this);
 	}
 
-	public void stop()
+	synchronized public void stop()
 	{
 		logger.log(Level.FINE, String.format("%s StopList from:%-6s", id, clientHostName()));
 
@@ -612,7 +610,7 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 
     private boolean isFromPrivilegedHost()
     {
-        try {                                                                                                                                                        
+        try {
             final byte[] addrBytes = fromHostAddress().getAddress();
 
             if ((addrBytes[0] & 0xff) == 131 && (addrBytes[1] & 0xff) == 225) {
@@ -620,7 +618,9 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 
                 return subnet == 120 || subnet == 121;
             }
-        } catch (Exception ignore) { }
+        } catch (Exception e) {
+			logger.log(Level.WARNING, "unable to get host address for privilege check", e);
+		}
 
         return false;
     }
@@ -643,10 +643,10 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 	public ConsoleUser getAuthenticatedUser() throws AcnetStatusException
 	{
 		if (gssName == null) {
-			if (allowPrivilegedSettings())
+			if (allowPrivilegedSettings()) {
 				try {
 					gssName = GSSManager.getInstance().createName(property("USER"), GSSName.NT_USER_NAME);
-				} catch (Exception e) { 
+				} catch (Exception e) {
 					logger.log(Level.FINE, "Unable to create GSSName from '" + property("USER") + "'");
 					throw new AcnetStatusException(DPM_PRIV);
 
@@ -657,8 +657,9 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 					//	throw new AcnetStatusException(DPM_PRIV);
 					//}
 				}
-			else
+			} else {
 				throw new AcnetStatusException(DPM_PRIV);
+			}
 		}
 		
 		final ConsoleUser consoleUser = ConsoleUserManager.get(gssName);
@@ -696,8 +697,8 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 		final List<SettingData> settings = this.settings.getAndSet(new ArrayList<SettingData>());
 
 		try {
-			final SettingModel model = new SettingModel(settings, getAuthenticatedUser());
-			final JobInfo jobInfo = new JobInfo(model);
+			final SettingDataSource dataSource = new SettingDataSource(settings, getAuthenticatedUser());
+			final JobInfo jobInfo = new JobInfo(dataSource);
 
 			for (SettingData setting : settings) {
 				final DPMRequest tmp = requests.get(setting.refId);
@@ -707,12 +708,12 @@ public abstract class DPMList implements AcnetErrors, TimeNow
 			}
 
 			jobInfo.start(this);
-			jobs.put(model, jobInfo);
+			jobs.put(dataSource, jobInfo);
 		} catch (AcnetStatusException e) {
 			sendStatusNoEx(settings, e.status);
 		} catch (Exception e) {
-			logger.log(Level.FINE, "", e);
-			sendStatusNoEx(settings, ACNET_SYS);
+			logger.log(Level.WARNING, "exception in applySettings()", e);
+			sendStatusNoEx(settings, DPM_INTERNAL_ERROR);
 		}
 	}
 

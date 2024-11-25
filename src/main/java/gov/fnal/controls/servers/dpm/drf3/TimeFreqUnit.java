@@ -1,4 +1,4 @@
-//  $Id: TimeFreqUnit.java,v 1.1 2023/10/04 19:13:42 kingc Exp $
+//  $Id: TimeFreqUnit.java,v 1.2 2024/09/23 18:56:04 kingc Exp $
 package gov.fnal.controls.servers.dpm.drf3;
 
 public enum TimeFreqUnit
@@ -11,9 +11,9 @@ public enum TimeFreqUnit
     
     public static TimeFreqUnit parse(String str) throws RequestFormatException
 	{
-        if (str == null) {
+        if (str == null)
             throw new NullPointerException();
-        }
+        
         for (TimeFreqUnit u : TimeFreqUnit.values()) {
             if (u.text.equalsIgnoreCase(str)) {
                 return u;

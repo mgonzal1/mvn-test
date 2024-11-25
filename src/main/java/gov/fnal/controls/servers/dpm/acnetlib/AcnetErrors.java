@@ -2922,6 +2922,8 @@ public interface AcnetErrors {
      */
     public final static int DPM_REPLY_OVERFLOW = FACILITY_DPM + (-44*256);
 
+	public final static int DPM_INTERNAL_ERROR = FACILITY_DPM + (-45*256);
+
     /**
      * CAMAC_FE facility
      */
@@ -7510,7 +7512,7 @@ public interface AcnetErrors {
     public final static int OAFP_OPCOAC = FACILITY_OAFP + (-21*256);
 
     /**
-     * The Open Access Model LJOAC is not connected to its server. LJOAC is a
+     * The Open Access LJOAC is not connected to its server. LJOAC is a
      * process that should be continuously running on node DCE28. Contact the
      * keeper of the OAC or the Central Services Group.
      */

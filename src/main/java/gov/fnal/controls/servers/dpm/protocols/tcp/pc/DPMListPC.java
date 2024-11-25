@@ -1,6 +1,6 @@
-// $Id: DPMListPC.java,v 1.19 2023/11/02 16:36:15 kingc Exp $
+// $Id: DPMListPC.java,v 1.20 2024/06/27 18:50:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.tcp.pc;
-
+ 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.logging.Level;
@@ -44,6 +44,7 @@ public class DPMListPC extends DPMListTCP implements AcnetErrors, DPM.Request.Re
 		sendReply(m);
 
 		this.owner.listCreated(this);
+		this.thread.start();
 	}
 
 	@Override

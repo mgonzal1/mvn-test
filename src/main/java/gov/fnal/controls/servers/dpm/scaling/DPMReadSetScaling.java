@@ -1,10 +1,9 @@
-// $Id: DPMReadSetScaling.java,v 1.10 2024/01/23 23:37:18 kingc Exp $
+// $Id: DPMReadSetScaling.java,v 1.15 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
 import java.nio.ByteBuffer;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-//import gov.fnal.controls.service.proto.Lookup_v2;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 
 import gov.fnal.controls.servers.dpm.drf3.Property;
@@ -24,16 +23,11 @@ public interface DPMReadSetScaling extends Scaling
 		throw new AcnetStatusException(DIO_NOSCALE);
 	}
 
-	//default double[] rawToCommon(ByteBuffer data, double[] values) throws AcnetStatusException
-	//{
-	//	throw new AcnetStatusException(DIO_NOSCALE);
-	//}
+	default double primaryToCommon(double value) throws AcnetStatusException
+	{
+		throw new AcnetStatusException(DIO_NOSCALE);
+	}
 
-	//default double[] rawToCommon(byte[] data, int offset, double[] values) throws AcnetStatusException
-	//{
-	//	throw new AcnetStatusException(DIO_NOSCALE);
-	//}
-	
 	default double[] rawToCommon(byte[] data, int offset, double[] values) throws AcnetStatusException
 	{
 		for (int ii = 0; ii < values.length; ii++, offset += L())
@@ -82,16 +76,28 @@ public interface DPMReadSetScaling extends Scaling
 		return values;
 	}
 
-	//default double[] rawToPrimary(ByteBuffer data, double[] values) throws AcnetStatusException
-	//{
-	//	throw new AcnetStatusException(DIO_NOSCALE);
-	//}
+	default byte[] primaryToRaw(double value) throws AcnetStatusException
+	{
+		throw new AcnetStatusException(DIO_NOSCALE);
+	}
 
+	default void primaryToRaw(double value, byte[] data, int offset) throws AcnetStatusException
+	{
+		throw new AcnetStatusException(DIO_NOSCALE);
+	}
 
-	////default double[] rawToPrimary(byte[] data, int offset, double[] values) throws AcnetStatusException
-	//{
-	//	throw new AcnetStatusException(DIO_NOSCALE);
-	//}
+	default byte[] primaryToRaw(double[] values) throws AcnetStatusException
+	{
+		final byte[] data = new byte[L() * values.length];
+		int offset = 0;
+
+		for (final double value : values) {
+			primaryToRaw(value, data, offset);
+			offset += L();
+		}
+
+		return data;
+	}
 
 	default byte[] commonToRaw(double value) throws AcnetStatusException
 	{
@@ -102,11 +108,6 @@ public interface DPMReadSetScaling extends Scaling
 	{
 		throw new AcnetStatusException(DIO_NOSCALE);
 	}
-
-	//default byte[] commonToRaw(double[] values) throws AcnetStatusException
-	//{
-	//	throw new AcnetStatusException(DIO_NOSCALE);
-	//}
 
 	default byte[] commonToRaw(double[] values) throws AcnetStatusException
 	{
@@ -134,11 +135,6 @@ public interface DPMReadSetScaling extends Scaling
 		return newValues;
 	}
 
-	//default double[] commonToPrimary(double[] value, double[] newValues) throws AcnetStatusException
-	//{
-	//	throw new AcnetStatusException(DIO_NOSCALE);
-	//}
-
 	default byte[] stringToRaw(String value) throws AcnetStatusException
 	{
 		throw new AcnetStatusException(DIO_NOSCALE);
@@ -154,20 +150,10 @@ public interface DPMReadSetScaling extends Scaling
 		throw new AcnetStatusException(DIO_NOSCALE);
 	}
 
-	//default String[] rawToString(ByteBuffer data, int length, String[] values) throws AcnetStatusException
-	//{
-	//	throw new AcnetStatusException(DIO_NOSCALE);
-	//}
-
 	default String rawToString(byte[] data, int offset, int length) throws AcnetStatusException
 	{
 		throw new AcnetStatusException(DIO_NOSCALE);
 	}
-	
-	//default String[] rawToString(byte[] data, int offset, int length, String[] values) throws AcnetStatusException
-	//{
-	//	throw new AcnetStatusException(DIO_NOSCALE);
-	//}
 	
 	default String[] rawToString(byte[] data, int offset, int length, String[] values) throws AcnetStatusException
 	{
@@ -183,18 +169,6 @@ public interface DPMReadSetScaling extends Scaling
 			values[ii] = rawToString(data, length);
 
 		return values;
-	}
-
-	static int getInputLength(WhatDaq whatDaq)// throws AcnetStatusException
-	{
-		if (whatDaq.property == Property.READING) {
-			if (whatDaq.dInfo.reading != null)
-				return whatDaq.dInfo.reading.scaling.primary.inputLen;
-		} else if (whatDaq.dInfo.setting != null)
-			return whatDaq.dInfo.setting.scaling.primary.inputLen;
-
-		return 0;
-		//throw new AcnetStatusException(DIO_SCALEFAIL);
 	}
 
 	class NoScaling implements DPMReadSetScaling
@@ -226,12 +200,12 @@ public interface DPMReadSetScaling extends Scaling
 
 	public static DPMReadSetScaling get(WhatDaq whatDaq)
 	{
-		final DeviceInfo dInfo = whatDaq.dInfo;
+		final DeviceInfo dInfo = whatDaq.deviceInfo();
 		final DeviceInfo.ReadSetScaling scaling;
 
-		if (whatDaq.property == Property.READING && dInfo.reading != null)
+		if (whatDaq.property() == Property.READING && dInfo.reading != null)
 			return (DPMReadSetScaling) get(whatDaq, dInfo.reading.scaling); 
-		else if (whatDaq.property == Property.SETTING && dInfo.setting != null)
+		else if (whatDaq.property() == Property.SETTING && dInfo.setting != null)
 			return (DPMReadSetScaling) get(whatDaq, dInfo.setting.scaling); 
 
 		return noScaling;
@@ -239,7 +213,7 @@ public interface DPMReadSetScaling extends Scaling
 
 	public static Scaling get(WhatDaq whatDaq, DeviceInfo.ReadSetScaling scaling)
 	{
-		final int len = getInputLength(whatDaq);
+		final int len = whatDaq.rawInputLength();
 
 		if (len == 4)
 			return new DPMReadSetScalingImpl.L4(whatDaq, scaling);
@@ -252,81 +226,77 @@ public interface DPMReadSetScaling extends Scaling
 	}
 
 	int L();	
-
-	//public static boolean usesStringScaling(WhatDaq whatDaq)
-	//{
-	//	return ReadSetScaling.usesStringScaling(whatDaq.dInfo, whatDaq.property);
-	//}
 }
 
 abstract class DPMReadSetScalingImpl extends ReadSetScalingExt implements DPMReadSetScaling
 {
-	//abstract int L();
 	abstract byte[] raw(int value);
 	abstract void raw(int value, byte[] data, int offset);
 	abstract int raw(final byte[] data, int offset);
 	abstract int raw(ByteBuffer data);
 
-	//private DPMReadSetScalingImpl(WhatDaq whatDaq, Lookup_v2.ReadSetScaling scaling)
 	private DPMReadSetScalingImpl(WhatDaq whatDaq, DeviceInfo.ReadSetScaling scaling)
 	{
-		//super(whatDaq.dInfo, whatDaq.property);
-		//super(whatDaq.di(), whatDaq.pi(), scaling);
 		super(scaling);
 	}
 
 	@Override
 	public double rawToCommon(ByteBuffer data) throws AcnetStatusException
 	{
-		//return primaryToCommon(rawToPrimary(raw(data)));
 		return common.scale(primary.scale(raw(data)));
 	}
 
 	@Override
 	public double rawToCommon(byte[] data, int offset) throws AcnetStatusException
 	{
-		//return primaryToCommon(rawToPrimary(raw(data, offset)));
 		return common.scale(primary.scale(raw(data, offset)));
 	}
-
-	//@Override
-	//public double rawToCommon(int data) throws AcnetStatusException
-	//{
-	//	return pdpucu(pdudpu(data));
-	//}
 
 	@Override
 	public double rawToPrimary(ByteBuffer data) throws AcnetStatusException
 	{
-		//return primaryToCommon(rawToPrimary(raw(data)));
 		return primary.scale(raw(data));
 	}
 
 	@Override
 	public double rawToPrimary(byte[] data, int offset) throws AcnetStatusException
 	{
-		//return rawToPrimary(raw(data, offset));
 		return primary.unscale(raw(data, offset));
+	}
+
+	@Override
+	public double primaryToCommon(double value) throws AcnetStatusException
+	{
+		return common.scale(value);	
+	}
+
+	@Override
+	public byte[] primaryToRaw(double value) throws AcnetStatusException
+	{
+		return raw(primary.unscale(value));
+	}
+
+	@Override
+	public void primaryToRaw(double value, byte[] data, int offset) throws AcnetStatusException
+	{
+		raw(primary.unscale(value), data, offset);
 	}
 
 	@Override
 	public byte[] commonToRaw(double value) throws AcnetStatusException
 	{
-		//return raw(primaryToRaw(commonToPrimary(value)));
 		return raw(primary.unscale(common.unscale(value)));
 	}
 
 	@Override
 	public void commonToRaw(double value, byte[] data, int offset) throws AcnetStatusException
 	{
-		//raw(primaryToRaw(commonToPrimary(value)), data, offset);
 		raw(primary.unscale(common.unscale(value)), data, offset);
 	}
 
 	@Override
 	public double commonToPrimary(double value) throws AcnetStatusException
 	{
-		//return super.commonToPrimary(value);
 		return common.unscale(value);
 	}
 
@@ -356,7 +326,6 @@ abstract class DPMReadSetScalingImpl extends ReadSetScalingExt implements DPMRea
 
 	static class L1 extends DPMReadSetScalingImpl
 	{
-		//L1(WhatDaq whatDaq, Lookup_v2.ReadSetScaling scaling)
 		L1(WhatDaq whatDaq, DeviceInfo.ReadSetScaling scaling)
 		{
 			super(whatDaq, scaling);
@@ -395,7 +364,6 @@ abstract class DPMReadSetScalingImpl extends ReadSetScalingExt implements DPMRea
 
 	static class L2 extends DPMReadSetScalingImpl
 	{
-		//L2(WhatDaq whatDaq, Lookup_v2.ReadSetScaling scaling)// throws AcnetStatusException
 		L2(WhatDaq whatDaq, DeviceInfo.ReadSetScaling scaling)// throws AcnetStatusException
 		{
 			super(whatDaq, scaling);
@@ -435,8 +403,7 @@ abstract class DPMReadSetScalingImpl extends ReadSetScalingExt implements DPMRea
 
 	static class L4 extends DPMReadSetScalingImpl
 	{
-		//L4(WhatDaq whatDaq, Lookup_v2.ReadSetScaling scaling)// throws AcnetStatusException
-		L4(WhatDaq whatDaq, DeviceInfo.ReadSetScaling scaling)// throws AcnetStatusException
+		L4(WhatDaq whatDaq, DeviceInfo.ReadSetScaling scaling)
 		{
 			super(whatDaq, scaling);
 		}

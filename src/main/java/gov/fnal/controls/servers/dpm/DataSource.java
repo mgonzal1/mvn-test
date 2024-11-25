@@ -1,4 +1,4 @@
-// $Id: Model.java,v 1.34 2024/03/05 17:49:05 kingc Exp $
+// $Id: DataSource.java,v 1.2 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm;
  
 import java.util.Map;
@@ -14,104 +14,126 @@ import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
 
+import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
-abstract class Model implements AcnetErrors, Comparable<Model>
+
+public abstract class DataSource implements AcnetErrors, Comparable<DataSource>
 {
-	boolean restartable()
+	public enum DataType { Raw, Primary, Scaled }
+
+	protected DataSource() { }
+
+	abstract public Job createJob(DPMList list) throws AcnetStatusException;
+
+	public DataType dataType(WhatDaq whatDaq)
+	{
+		return DataType.Raw;
+	}
+
+	public boolean restartable()
 	{
 		return true;
 	}
 
-	public static void main(String[] args) throws Exception
+	public int compareTo(DataSource dataSource)
 	{
-		HashSet<Model> s = new HashSet<>();
-
-		s.add(LiveDataModel.instance);
-		s.add(new SavefileModel(300));
-		s.add(new RedirectModel("*", "MIRROR"));
-
-		logger.info("contains: " + s.contains(LiveDataModel.instance));
-		logger.info("contains: " + s.contains(new SavefileModel(300)));
-		logger.info("contains: " + s.contains(new RedirectModel("XMLRPC", "DCE46")));
-		logger.info("contains: " + s.contains(new RedirectModel("XMLRPC", "DCE46")));
-		logger.info("contains: " + s.contains(new SavefileModel(301)));
+		return toString().compareTo(dataSource.toString());
 	}
 
-	@Override
-	public int compareTo(Model model)
-	{
-		return toString().compareTo(model.toString());
-	}
-}
-
-abstract class JobModel extends Model 
-{
-	abstract Job createJob(DPMList list) throws AcnetStatusException;
-
-	static JobModel parse(String model)
+	static DataSource parse(String dataSource)
 	{
 		try {
-			if (model == null || model.isEmpty())
-				return LiveDataModel.instance;
-			else if (model.equals("LIVEDATA"))
-				return LiveDataModel.instance;
-			else if (model.equals("FTP"))
-				return LiveDataModel.instance;
+			if (dataSource == null || dataSource.isEmpty())
+				return LiveDataSource.instance;
+			else if (dataSource.equals("LIVEDATA"))
+				return LiveDataSource.instance;
+			else if (dataSource.equals("FTP"))
+				return LiveDataSource.instance;
 			else {
-				String[] s = model.split(":");
+				String[] s = dataSource.split(":");
 				String name = s[0].trim().toUpperCase();
 
 				if (name.equals("SRFILE"))
-					return new SavefileModel(Integer.parseInt(s[1]));
+					return new SavefileDataSource(Integer.parseInt(s[1]));
 				else if (name.equals("LOGGERSINGLE"))
-					//return new LoggerSingleModel(Integer.parseInt(s[1]), Long.parseLong(s[2]) * 1000,
-					//								Integer.parseInt(s[3]) * 1000);
-					return new LoggerSingleModel(s[1], Long.parseLong(s[2]) * 1000, Integer.parseInt(s[3]) * 1000);
+					return new LoggerSingleDataSource(s[1], Long.parseLong(s[2]) * 1000, Integer.parseInt(s[3]) * 1000);
 				else if (name.equals("LOGGER")) {
-					//final AcnetNodeInfo nodeInfo = (s.length > 3 ? LoggerConfigCache.loggerNode(s[3]) : null);
-
-					//return new LoggerModel(Long.parseLong(s[1]), Long.parseLong(s[2]), nodeInfo); 
-					return new LoggerModel(Long.parseLong(s[1]), Long.parseLong(s[2]), s.length > 3 ? s[3] : null); 
+					return new LoggerDataSource(Long.parseLong(s[1]), Long.parseLong(s[2]), s.length > 3 ? s[3] : null); 
 				} else if (name.equals("LOGGERDURATION")) {
-					//final AcnetNodeInfo nodeInfo = (s.length > 2 ? LoggerConfigCache.loggerNode(s[2]) : null);
-
-					//return new LoggerDurationModel(Long.parseLong(s[1]), nodeInfo); 
-					return new LoggerDurationModel(Long.parseLong(s[1]), s.length > 2 ? s[2] : null); 
+					return new LoggerDurationDataSource(Long.parseLong(s[1]), s.length > 2 ? s[2] : null); 
 				} else if (name.equals("SDAFILE"))
-					return new SDAModel(Integer.parseInt(s[1]), Integer.parseInt(s[2]), 
+					return new SDADataSource(Integer.parseInt(s[1]), Integer.parseInt(s[2]), 
 											Integer.parseInt(s[3]), Integer.parseInt(s[4]));
 				else if (name.equals("REDIR")) {
 					final String[] nodes = s[1].split("->");
 
-					return new RedirectModel(nodes[0].trim(), nodes[1].trim());
-				} else if (DPMServer.debug() && name.equals("SPEEDTEST")) {
-					return new SpeedTestModel(Integer.parseInt(s[1]), Integer.parseInt(s[2]));
+					return new RedirectDataSource(nodes[0].trim(), nodes[1].trim());
+				}
+
+				if (DPMServer.debug()) {
+					if (name.equals("SPEEDTEST")) {
+						return new SpeedTestDataSource(Integer.parseInt(s[1]), Integer.parseInt(s[2]));
+					} else if (name.equals("MIRROR")) {
+						return new RedirectDataSource("*", "MIRROR");
+					}
 				}
 			}
 		} catch (AcnetStatusException e) {
-			logger.log(Level.FINE, "exception parsing model", e);
-			return new AcnetStatusModel(e.status);
+			logger.log(Level.FINE, "exception parsing data source", e);
+			return new AcnetStatusDataSource(e.status);
 		} catch (Exception e) {
-			logger.log(Level.FINE, "exception parsing model", e);
-			return new AcnetStatusModel(DPM_BAD_DATASOURCE_FORMAT);
+			logger.log(Level.FINE, "exception parsing data source", e);
+			return new AcnetStatusDataSource(DPM_BAD_DATASOURCE_FORMAT);
 		}
 
-		return new AcnetStatusModel(DPM_INVALID_DATASOURCE);
+		return new AcnetStatusDataSource(DPM_INVALID_DATASOURCE);
 	}
 }
 
-class AcnetStatusModel extends JobModel
+class DefaultDataSource extends DataSource
+{
+	static final DefaultDataSource instance = new DefaultDataSource();
+
+	private DefaultDataSource() { }
+
+	@Override
+	public Job createJob(DPMList list)
+	{
+		throw new RuntimeException("Called createJob() with DefaultDataSource");
+	}
+
+	@Override
+	public boolean equals(Object o)
+	{
+		return o == instance;
+	}
+
+	@Override
+	public int hashCode()
+	{
+		return getClass().hashCode();
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Default";
+	}
+}
+
+class AcnetStatusDataSource extends DataSource
 {
 	private final int status;
 
-	AcnetStatusModel(int status)
+	AcnetStatusDataSource(int status)
 	{
 		this.status = status;
 	}
 
 	@Override
-	Job createJob(DPMList list)
+	public Job createJob(DPMList list)
 	{
 		return new AcnetStatusJob(list, status);
 	}
@@ -119,8 +141,8 @@ class AcnetStatusModel extends JobModel
 	@Override
 	public boolean equals(Object o)
 	{
-		if (o instanceof AcnetStatusModel)
-			return ((AcnetStatusModel) o).status == status;
+		if (o instanceof AcnetStatusDataSource)
+			return ((AcnetStatusDataSource) o).status == status;
 
 		return false;
 	}
@@ -138,73 +160,12 @@ class AcnetStatusModel extends JobModel
 	}
 }
 
-class DefaultModel extends Model
-{
-	public static final DefaultModel instance = new DefaultModel();
-
-	private DefaultModel() { }
-
-	public boolean equalsModel(Model model)
-	{
-		return model.equals(model);
-	}
-
-	@Override
-	public boolean equals(Object o)
-	{
-		return o == instance;
-	}
-
-	@Override
-	public int hashCode()
-	{
-		return getClass().hashCode();
-	}
-
-	@Override
-	public String toString()
-	{
-		return "DefaultModel";
-	}
-}
-
-class LiveDataModel extends JobModel
-{
-	public static final LiveDataModel instance = new LiveDataModel();
-
-	private LiveDataModel() { }
-
-	@Override
-	Job createJob(DPMList list)
-	{
-		return new AcceleratorJob(list);
-	}
-
-	@Override
-	public boolean equals(Object o)
-	{
-		return o == instance;
-	}
-
-	@Override
-	public int hashCode()
-	{
-		return getClass().hashCode();
-	}
-
-	@Override
-	public String toString()
-	{
-		return "LiveData";
-	}
-}
-
-class RedirectModel extends JobModel
+class RedirectDataSource extends DataSource
 {
 	private final Node srcNode;
 	private final Node dstNode;
 
-	RedirectModel(String src, String dest) throws AcnetStatusException
+	RedirectDataSource(String src, String dest) throws AcnetStatusException
 	{
 		Node tmp = null;
 
@@ -227,7 +188,7 @@ class RedirectModel extends JobModel
 	}
 
 	@Override
-	Job createJob(DPMList list)
+	public Job createJob(DPMList list)
 	{
 		return new RedirectAcceleratorJob(list, srcNode, dstNode);
 	}
@@ -235,8 +196,8 @@ class RedirectModel extends JobModel
 	@Override
 	public boolean equals(Object o)
 	{
-		if (o instanceof RedirectModel) {
-			RedirectModel m = (RedirectModel) o;
+		if (o instanceof RedirectDataSource) {
+			RedirectDataSource m = (RedirectDataSource) o;
 			
 			return m.srcNode.equals(srcNode) && 
 					m.dstNode.equals(dstNode);
@@ -258,17 +219,17 @@ class RedirectModel extends JobModel
 	}
 }
 
-class SavefileModel extends JobModel
+class SavefileDataSource extends DataSource
 {
 	private final int fileAlias;
 
-	SavefileModel(int fileAlias)
+	SavefileDataSource(int fileAlias)
 	{
 		this.fileAlias = fileAlias;
 	}
 
 	@Override
-	Job createJob(DPMList list) throws AcnetStatusException
+	public Job createJob(DPMList list) throws AcnetStatusException
 	{
 		return new SavefileJob(list, fileAlias);
 	}
@@ -276,8 +237,8 @@ class SavefileModel extends JobModel
 	@Override
 	public boolean equals(Object o)
 	{
-		if (o instanceof SavefileModel)
-			return ((SavefileModel) o).fileAlias == fileAlias;
+		if (o instanceof SavefileDataSource)
+			return ((SavefileDataSource) o).fileAlias == fileAlias;
 
 		return false;
 	}
@@ -295,13 +256,13 @@ class SavefileModel extends JobModel
 	}
 }
 
-class LoggerSingleModel extends JobModel
+class LoggerSingleDataSource extends DataSource
 {
 	private final String loggerNode;
 	private final long timestamp;
 	private final int accuracy;
 
-	LoggerSingleModel(String loggerNode, long timestamp, int accuracy)
+	LoggerSingleDataSource(String loggerNode, long timestamp, int accuracy)
 	{
 		this.loggerNode = loggerNode;
 		this.timestamp = timestamp;
@@ -309,7 +270,7 @@ class LoggerSingleModel extends JobModel
 	}
 
 	@Override
-	Job createJob(DPMList list)
+	public Job createJob(DPMList list)
 	{
 		return new LoggerSingleJob(list, loggerNode, timestamp, accuracy);
 	}
@@ -317,8 +278,8 @@ class LoggerSingleModel extends JobModel
 	@Override
 	public boolean equals(Object o)
 	{
-		if (o instanceof LoggerSingleModel) {
-			LoggerSingleModel m = (LoggerSingleModel) o;
+		if (o instanceof LoggerSingleDataSource) {
+			LoggerSingleDataSource m = (LoggerSingleDataSource) o;
 
 			return m.loggerNode == loggerNode &&
 					m.timestamp == timestamp &&
@@ -341,13 +302,13 @@ class LoggerSingleModel extends JobModel
 	}
 }
 
-class LoggerModel extends JobModel
+class LoggerDataSource extends DataSource
 {
 	private final long t1, t2;
 	//private final AcnetNodeInfo nodeInfo;
 	private final String logger;
 
-	LoggerModel(long t1, long t2, String logger)
+	LoggerDataSource(long t1, long t2, String logger)
 	{
 		this.t1 = t1;
 		this.t2 = t2;
@@ -356,13 +317,19 @@ class LoggerModel extends JobModel
 	}
 
 	@Override
-	boolean restartable()
+	public DataType dataType(WhatDaq whatDaq)
+	{
+		return DataType.Scaled;
+	}
+
+	@Override
+	public boolean restartable()
 	{
 		return false;
 	}
 
 	@Override
-	Job createJob(DPMList list)
+	public Job createJob(DPMList list)
 	{
 		return new LoggerJob(list, t1, t2, logger);
 	}
@@ -370,8 +337,8 @@ class LoggerModel extends JobModel
 	@Override
 	public boolean equals(Object o)
 	{
-		if (o instanceof LoggerModel) {
-			LoggerModel m = (LoggerModel) o;
+		if (o instanceof LoggerDataSource) {
+			LoggerDataSource m = (LoggerDataSource) o;
 
 			return m.t1 == t1 &
 					m.t2 == t2;
@@ -393,19 +360,19 @@ class LoggerModel extends JobModel
 	}
 }
 
-class LoggerDurationModel extends JobModel
+class LoggerDurationDataSource extends DataSource
 {
 	private final long duration;
 	private final String logger;
 
-	LoggerDurationModel(long duration, String logger)
+	LoggerDurationDataSource(long duration, String logger)
 	{
 		this.duration = duration;
 		this.logger = logger;
 	}
 
 	@Override
-	Job createJob(DPMList list)
+	public Job createJob(DPMList list)
 	{
 		long now = System.currentTimeMillis();
 
@@ -413,7 +380,13 @@ class LoggerDurationModel extends JobModel
 	}
 
 	@Override
-	boolean restartable()
+	public DataType dataType(WhatDaq whatDaq)
+	{
+		return DataType.Scaled;
+	}
+
+	@Override
+	public boolean restartable()
 	{
 		return false;
 	}
@@ -421,8 +394,8 @@ class LoggerDurationModel extends JobModel
 	@Override
 	public boolean equals(Object o)
 	{
-		if (o instanceof LoggerDurationModel) {
-			LoggerDurationModel m = (LoggerDurationModel) o;
+		if (o instanceof LoggerDurationDataSource) {
+			LoggerDurationDataSource m = (LoggerDurationDataSource) o;
 
 			return m.duration == duration;
 		}
@@ -443,25 +416,25 @@ class LoggerDurationModel extends JobModel
 	}
 }
 
-class SettingModel extends JobModel
+class SettingDataSource extends DataSource
 {
 	final List<SettingData> settings;
 	final ConsoleUser user;
 
-	SettingModel(List<SettingData> settings, ConsoleUser user)
+	SettingDataSource(List<SettingData> settings, ConsoleUser user)
 	{
 		this.settings = settings;
 		this.user = user;
 	}
 
 	@Override
-	boolean restartable()
+	public boolean restartable()
 	{
 		return false;
 	}
 
 	@Override
-	synchronized Job createJob(DPMList list)
+	public synchronized Job createJob(DPMList list)
 	{
 		return new SettingJob(settings, list, user);
 	}
@@ -469,7 +442,7 @@ class SettingModel extends JobModel
 	@Override
 	public boolean equals(Object o)
 	{
-		return o instanceof SettingModel;
+		return o instanceof SettingDataSource;
 	}
 
 	@Override
@@ -485,14 +458,14 @@ class SettingModel extends JobModel
 	}
 }
 
-class SDAModel extends JobModel
+class SDADataSource extends DataSource
 {
 	private final int usage;
 	private final int fileAlias;
 	private final int sdaCase;
 	private final int sdaSubcase;
 
-	SDAModel(int usage, int fileAlias, int sdaCase, int sdaSubcase)
+	SDADataSource(int usage, int fileAlias, int sdaCase, int sdaSubcase)
 	{
 		this.usage = usage;
 		this.fileAlias = fileAlias;
@@ -501,7 +474,7 @@ class SDAModel extends JobModel
 	}
 
 	@Override
-	Job createJob(DPMList list) throws AcnetStatusException
+	public Job createJob(DPMList list) throws AcnetStatusException
 	{
 		return new SavefileJob(list, usage, fileAlias, sdaCase, sdaSubcase);
 	}
@@ -509,8 +482,8 @@ class SDAModel extends JobModel
 	@Override
 	public boolean equals(Object o)
 	{
-		if (o instanceof SDAModel) {
-			SDAModel m = (SDAModel) o;
+		if (o instanceof SDADataSource) {
+			SDADataSource m = (SDADataSource) o;
 
 			return m.usage == usage &&
 					m.fileAlias == fileAlias &&
@@ -534,19 +507,19 @@ class SDAModel extends JobModel
 	}
 }
 
-class SpeedTestModel extends JobModel
+class SpeedTestDataSource extends DataSource
 {
 	final int replyCount;
 	final int arraySize;
 
-	SpeedTestModel(int replyCount, int arraySize)
+	SpeedTestDataSource(int replyCount, int arraySize)
 	{
 		this.replyCount = replyCount;
 		this.arraySize = arraySize;
 	}
 
 	@Override
-	Job createJob(DPMList list)
+	public Job createJob(DPMList list)
 	{
 		return new SpeedTestJob(list, replyCount, arraySize);
 	}
@@ -554,8 +527,8 @@ class SpeedTestModel extends JobModel
 	@Override
 	public boolean equals(Object o)
 	{
-		if (o instanceof SpeedTestModel) {
-			SpeedTestModel m = (SpeedTestModel) o;
+		if (o instanceof SpeedTestDataSource) {
+			SpeedTestDataSource m = (SpeedTestDataSource) o;
 
 			return m.replyCount == replyCount &&
 					m.arraySize == arraySize;
@@ -573,6 +546,6 @@ class SpeedTestModel extends JobModel
 	@Override
 	public String toString()
 	{
-		return "SpeedTestModel with " + replyCount + " replies and " + arraySize + " array elements";
+		return "SpeedTestDataSource with " + replyCount + " replies and " + arraySize + " array elements";
 	}
 }

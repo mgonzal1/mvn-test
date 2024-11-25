@@ -1,17 +1,15 @@
-// $Id: DaqSendFactory.java,v 1.9 2024/02/22 16:32:14 kingc Exp $
+// $Id: DaqSendFactory.java,v 1.11 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Collection;
-import java.util.logging.Level;
 
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-import gov.fnal.controls.servers.dpm.acnetlib.NodeFlags;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
-class DaqSendFactory implements NodeFlags
+class DaqSendFactory
 {
 	private static DaqSendInterface nullSendInterface = new DaqSendInterface()
 		{
@@ -42,13 +40,8 @@ class DaqSendFactory implements NodeFlags
 		return nullSendInterface;
 	}
 
-	static DaqSendInterface getDaqSendInterface(Node node, DataEvent event, boolean isSetting, 
-														Completable completable, long timeout)
+	static DaqSendInterface getDaqSendInterface(Node node, Event event, boolean isSetting, Completable completable)
 	{
-		return new DaqSendAcnet(node, event, isSetting, completable, timeout);
-
-		//logger.log(Level.FINE, "using RETDAT for " + node);
-
-		//return new DaqSendAcnet(node, event, isSetting, completable, timeout);
+		return new DaqSendAcnet(node, event, isSetting, completable);
 	}
 }

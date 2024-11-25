@@ -1,4 +1,4 @@
-// $Id: PVAPool.java,v 1.7 2024/03/05 17:42:33 kingc Exp $
+// $Id: PVAPool.java,v 1.14 2024/11/19 22:34:44 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
 import java.util.Set;
@@ -61,10 +61,13 @@ public class PVAPool extends TimerTask
 						try {
 							start();
 						} catch (Exception e) { 
-							sendStatus(ACNET_SYS);
-							logger.log(Level.FINE, "PVAPool channel [" + channel.getName() + 
-											"] request: [" + request + "] exception:", e);
+							sendStatus(DPM_INTERNAL_ERROR);
+							logger.log(Level.WARNING, "PVAPool channel [" + channel.getName() + "] request: [" + request + "] exception:", e);
 						}
+						break;
+
+					case CLOSED:
+						sendStatus(DPM_PEND);
 						break;
 				}
 			}
@@ -75,9 +78,8 @@ public class PVAPool extends TimerTask
 					startImpl();
 					return true;
 				} catch (Exception e) { 
-					sendStatus(ACNET_SYS);
-					logger.log(Level.FINE, "PVAPool channel [" + channel.getName() + 
-									"] request: [" + request + "] exception:", e);
+					sendStatus(DPM_INTERNAL_ERROR);
+					logger.log(Level.WARNING, "PVAPool channel [" + channel.getName() + "] request: [" + request + "] exception:", e);
 				}
 				return false;
 			}
@@ -102,7 +104,7 @@ public class PVAPool extends TimerTask
 			{
 				if (channel.isConnected()) {
 					new GetRequest2(channel, request, this);
-					logger.fine("PVAPool.channelget '" + request + "'");
+					logger.log(Level.FINE, "PVAPool.channelget [" + request + "]");
 				}
 			}
 
@@ -143,7 +145,7 @@ public class PVAPool extends TimerTask
 			{
 				if (channel.isConnected()) {
 					new PutRequest2(channel, request, value, this);
-					logger.fine("PVAPool.channelput '" + request + "' => " + value);
+					logger.log(Level.FINE, "PVAPool.channelput [" + request + "] => " + value);
 				}
 			}
 
@@ -151,7 +153,7 @@ public class PVAPool extends TimerTask
 			public void handleMonitor(PVAChannel channel, BitSet changes, BitSet overruns, PVAStructure data)
 			{
 				listener.handleData(channel, changes, overruns, data);
-				logger.fine("PVAPool.channelput '" + request + "' complete => " + value);
+				logger.log(Level.FINE, "PVAPool.channelput [" + request + "] complete => " + value);
 				removeChannelListener(this);
 			}
 
@@ -188,7 +190,7 @@ public class PVAPool extends TimerTask
 			{
 				if (channel.isConnected()) {
 					monitorCloseable = channel.subscribe(request, this);
-					logger.fine("PVAPool.channelsubscribe '" + request + "'");
+					logger.log(Level.FINE, "PVAPool.channelsubscribe [" + request + "]");
 				}
 			}
 
@@ -216,12 +218,12 @@ public class PVAPool extends TimerTask
 				listeners.removeIf(l -> l == listener);
 
 				if (listeners.size() == 0) {
-					logger.fine("PVAPool.channelstop '" + request + "'");
+					logger.log(Level.FINE, "PVAPool.channelstop [" + request + "]");
 
 					if (monitorCloseable != null) {
 						try {
 							monitorCloseable.close();
-							logger.fine("PVAPool.channelunsubscribe '" + request + "'");
+							logger.log(Level.FINE, "PVAPool.channelunsubscribe [" + request + "]");
 						} catch (Exception e) {
 							logger.log(Level.FINE, "exception closing pva channel", e);
 						}
@@ -254,9 +256,11 @@ public class PVAPool extends TimerTask
 		// Channel
 
 		private final PVAChannel channel;
-		private final HashMap<String, Monitor> monitors = new HashMap<>(128); 
+		private final HashMap<String, Monitor> monitors = new HashMap<>(); 
 		private final Set<Request> channelListeners = ConcurrentHashMap.newKeySet();
-		private volatile long timeLastUsed = System.currentTimeMillis();;
+		private volatile long timeLastUsed = System.currentTimeMillis();
+
+		long timeout;
 
 		Channel(String pv)
 		{
@@ -264,12 +268,12 @@ public class PVAPool extends TimerTask
 			pool.timer.schedule(this, 2000);
 		}
 
-		// TimerTask timeout
+		// Channel search timeout
 
 		@Override
 		public void run()
 		{
-			sendStatus(ACNET_REQTMO);
+			sendStatus(DPM_PEND);
 		}
 
 		private void sendStatus(int status)
@@ -281,18 +285,25 @@ public class PVAPool extends TimerTask
 		@Override
 		public void channelStateChanged(PVAChannel channel, ClientChannelState state)
 		{
-			logger.fine("PVAPool.channelstate " + channel.getName() + " " + state);
+			logger.log(Level.FINE, "PVAPool.channelstate [" + channel.getName() + "] " + state);
 
 			for (Request r : channelListeners)
 				r.channelStateChanged(channel, state);
 
 			switch (state) {
-				case CONNECTED:
+			 case SEARCHING:
+				sendStatus(DPM_PEND);
+			 	break;
 
-					// Cancel search timeout when successfully connected
+			 case FOUND:
+			 	break;
 
-					cancel();
-					break;
+			 case CONNECTED:
+
+				// Cancel search timeout when successfully connected
+
+				cancel();
+				break;
 			}
 		}
 
@@ -310,7 +321,7 @@ public class PVAPool extends TimerTask
 
 			monitor.addListener(listener);
 
-			timeLastUsed = System.currentTimeMillis();;
+			timeLastUsed = System.currentTimeMillis();
 		}
 
 		synchronized void unsubscribe(String request, EpicsListener listener)
@@ -335,7 +346,7 @@ public class PVAPool extends TimerTask
 
 			channelListeners.add(get);
 			get.start();
-			timeLastUsed = System.currentTimeMillis();;
+			timeLastUsed = System.currentTimeMillis();
 		}
 
 		synchronized void put(String request, Object value, EpicsListener listener)
@@ -344,7 +355,7 @@ public class PVAPool extends TimerTask
 
 			channelListeners.add(put);
 			put.start();
-			timeLastUsed = System.currentTimeMillis();;
+			timeLastUsed = System.currentTimeMillis();
 		}
 
 		protected synchronized void removeChannelListener(Request req)
@@ -383,7 +394,7 @@ public class PVAPool extends TimerTask
 
 	private final PVAClient pvaClient;
 	private final Timer timer;
-	private final ConcurrentHashMap<String, Channel> channels = new ConcurrentHashMap<>(2048);
+	private final ConcurrentHashMap<String, Channel> channels = new ConcurrentHashMap<>();
 
 	private PVAPool() throws Exception
 	{
@@ -406,7 +417,7 @@ public class PVAPool extends TimerTask
 		while (ii.hasNext()) {
 			Channel channel = ii.next().getValue();
 			if (channel.requestCount() == 0 && (now - channel.timeLastUsed) > 15000) {
-				logger.finer("PVAPool.closechannel [" + channel.channel.getName() + "]");
+				logger.log(Level.FINER, "PVAPool.closechannel [" + channel.channel.getName() + "]");
 				channel.channel.close();
 				ii.remove();
 			}				
@@ -431,7 +442,7 @@ public class PVAPool extends TimerTask
 		
 		if (channel == null) {
 			channel = new Channel(eReq.channel);
-			logger.fine("PVAPool.openchannel " + eReq.channel);
+			logger.log(Level.FINE, "PVAPool.openchannel [" + eReq.channel + "]");
 			pool.channels.put(eReq.channel, channel);
 		}
 
@@ -444,8 +455,13 @@ public class PVAPool extends TimerTask
 
 		final Channel channel = pool.channels.get(eReq.channel);
 
-		if (channel != null)
+		if (channel != null) {
 			channel.unsubscribe(eReq.request, eReq.listener);
+			if (channel.monitors.size() == 0) {
+				pool.channels.remove(eReq.channel);
+				channel.channel.close();
+			}
+		}
 	}
 
 	static synchronized public void get(EpicsRequest eReq)
@@ -456,7 +472,7 @@ public class PVAPool extends TimerTask
 
 		if (channel == null) {
 			channel = new Channel(eReq.channel);
-			logger.fine("PVAPool.openchannel " + eReq.channel);
+			logger.log(Level.FINE, "PVAPool.openchannel [" + eReq.channel + "]");
 			pool.channels.put(eReq.channel, channel);
 		}
 
@@ -471,7 +487,7 @@ public class PVAPool extends TimerTask
 
 		if (channel == null) {
 			channel = new Channel(eReq.channel);
-			logger.fine("PVAPool.openchannel " + eReq.channel);
+			logger.log(Level.FINE, "PVAPool.openchannel [" + eReq.channel + "]");
 			pool.channels.put(eReq.channel, channel);
 		}
 

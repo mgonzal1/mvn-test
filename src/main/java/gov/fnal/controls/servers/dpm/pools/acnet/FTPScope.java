@@ -1,11 +1,13 @@
-// $Id: FTPScope.java,v 1.5 2024/02/22 16:32:14 kingc Exp $
+// $Id: FTPScope.java,v 1.8 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.StringTokenizer;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
+import gov.fnal.controls.servers.dpm.drf3.TimeFreq;
+import gov.fnal.controls.servers.dpm.drf3.PeriodicEvent;
 
 class FTPScope implements AcnetErrors
 {
@@ -57,18 +59,6 @@ class FTPScope implements AcnetErrors
 		return rate;
 	}
 
-	//@Override
-	//public Object clone()
-	//{
-	//	try {
-	//		return super.clone();
-	//	} catch (CloneNotSupportedException e) {
-	//		System.out.println("Cannot clone FTPScope" + e);
-	//	}
-		
-	//	return null;
-	//}
-
 	@Override
 	public boolean equals(Object obj)
 	{
@@ -108,14 +98,7 @@ class FTPScope implements AcnetErrors
 		return duration;
 	}
 
-/*
-	void setDuration(double duration)
-	{
-		this.duration = duration;
-	}
-*/
-
-	DeltaTimeEvent ftpCollectionEvent(int maxRate)
+	Event ftpCollectionEvent(int maxRate)
 	{
 		double plotRate = maxRate;
 
@@ -124,19 +107,13 @@ class FTPScope implements AcnetErrors
 
 		long milliSecs = (long) ((1000. / plotRate) + 0.5);
 
-		return new DeltaTimeEvent(milliSecs);
+		return new PeriodicEvent(true, new TimeFreq(milliSecs));
 	}
-
-	//String getReconstructionString()
-	//{
-	//	return "rate=" + rate + ",dur=" + duration;
-	//}
 
 	static FTPScope getFTPScope(String scopeAndTriggerAndReArm) throws AcnetStatusException
 	{
 		try {
-			final String stripPrefix = scopeAndTriggerAndReArm.substring(12); // strip
-																		// f,type=ftp,
+			final String stripPrefix = scopeAndTriggerAndReArm.substring(12); // strip f,type=ftp,
 			if (stripPrefix.equals("null"))
 				return null;
 

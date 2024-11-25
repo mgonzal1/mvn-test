@@ -1,10 +1,13 @@
-// $Id: DPMBasicStatusScaling.java,v 1.7 2023/11/02 16:36:16 kingc Exp $
+// $Id: DPMBasicStatusScaling.java,v 1.10 2024/10/10 16:31:34 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.nio.ByteBuffer;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
+import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 
 public interface DPMBasicStatusScaling extends Scaling
 {
@@ -19,6 +22,11 @@ public interface DPMBasicStatusScaling extends Scaling
 	}
 
 	default void scale(WhatDaq whatDaq, double value) throws AcnetStatusException
+	{
+		throw new AcnetStatusException(DIO_NOSCALE);
+	}
+
+	default byte[] unscale(WhatDaq whatDaq) throws AcnetStatusException
 	{
 		throw new AcnetStatusException(DIO_NOSCALE);
 	}
@@ -87,7 +95,17 @@ public interface DPMBasicStatusScaling extends Scaling
 	{
 		throw new AcnetStatusException(DIO_NOSCALE);
 	}
+
+	default String[] bitNames() throws AcnetStatusException
+	{
+		throw new AcnetStatusException(DIO_NOSCALE);
+	}
 	
+	default String[] bitValues() throws AcnetStatusException
+	{
+		throw new AcnetStatusException(DIO_NOSCALE);
+	}
+
 	class NoScaling implements DPMBasicStatusScaling
 	{
 		@Override
@@ -113,7 +131,9 @@ public interface DPMBasicStatusScaling extends Scaling
 	{
 		try {
 			return new DPMBasicStatusScalingImpl(whatDaq);
-		} catch (Exception ignore) { }
+		} catch (Exception ignore) { 
+		ignore.printStackTrace();
+		}
 
 		return new NoScaling();
 	}
@@ -121,28 +141,19 @@ public interface DPMBasicStatusScaling extends Scaling
 
 class DPMBasicStatusScalingImpl extends BasicStatusScaling implements DPMBasicStatusScaling
 {
-	//final WhatDaq whatDaq;
-	final int di;
-	final int pi;
-	final int length;
 	final boolean[] defined;
+	final DigitalStatusScaling digitalScaling;
+	final String[] bitNames;
 
 	int rawStatus;
 
-	//BasicStatus basicStatus;
-	DigitalStatusScaling digitalScaling;
-
 	DPMBasicStatusScalingImpl(WhatDaq whatDaq) throws AcnetStatusException
 	{
-		super(whatDaq.dInfo);
+		super(whatDaq.deviceInfo());
 
-		//this.whatDaq = whatDaq;
-		this.di = whatDaq.getDeviceIndex();
-		this.pi = whatDaq.getPropertyIndex();
-		this.length = whatDaq.getLength();
 		this.defined = getDefined();
-		//this.basicStatus = null;
-		this.digitalScaling = null;
+		this.digitalScaling = new DigitalStatusScaling(whatDaq.deviceInfo());
+		this.bitNames = this.digitalScaling.bitNames.toArray(new String[this.digitalScaling.bitNames.size()]);
 	}
 
 	@Override
@@ -154,24 +165,30 @@ class DPMBasicStatusScalingImpl extends BasicStatusScaling implements DPMBasicSt
 	@Override
 	public void scale(WhatDaq whatDaq, byte[] data, int offset) throws AcnetStatusException
 	{
-    	//basicStatus = (BasicStatus) scale(data, offset, length);
     	rawStatus = scale(data, offset, length);
-		//basicStatus.setWhatDaq(whatDaq);
 	}
 
 	@Override
 	public void scale(WhatDaq whatDaq, double value) throws AcnetStatusException
 	{
 		rawStatus = (int) value;
+	}
 
-    	//basicStatus = new BasicStatus((int) value);
-		//basicStatus.setWhatDaq(whatDaq);
+	@Override
+	public byte[] unscale(WhatDaq whatDaq) throws AcnetStatusException
+	{
+		return raw(rawStatus, whatDaq.length());
+	}
+
+	@Override
+	public byte[] unscale(double data, int length) throws AcnetStatusException
+	{
+		return raw((int) data, length);
 	}
 
 	@Override
 	public String textValue()
 	{
-		//return basicStatus.toString();
 		return getStatusString(rawStatus);
 	}
 
@@ -265,8 +282,8 @@ class DPMBasicStatusScalingImpl extends BasicStatusScaling implements DPMBasicSt
 	@Override
 	public String[] extendedText() throws AcnetStatusException
 	{
-		if (digitalScaling == null)                                                                                                                                  
-			digitalScaling = new DigitalStatusScaling(di);
+		//if (digitalScaling == null)                                                                                                                                  
+			//digitalScaling = new DigitalStatusScaling(di);
 
 		//if (digitalScaling != null) {
 			final String[] bitName = digitalScaling.getLabels();
@@ -283,5 +300,19 @@ class DPMBasicStatusScalingImpl extends BasicStatusScaling implements DPMBasicSt
 		//}
 
 		//throw new AcnetStatusException(DIO_NOSCALE);
+	}
+
+	@Override
+	public String[] bitNames()
+	{
+		return bitNames;
+	}
+
+	@Override
+	public String[] bitValues()
+	{
+		final List<String> values = digitalScaling.bitValues(rawStatus);
+
+		return values.toArray(new String[values.size()]);
 	}
 }

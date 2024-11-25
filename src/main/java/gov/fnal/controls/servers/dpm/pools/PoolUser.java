@@ -1,4 +1,4 @@
-// $Id: PoolUser.java,v 1.2 2022/11/01 20:37:08 kingc Exp $
+// $Id: PoolUser.java,v 1.3 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools;
  
 public interface PoolUser
@@ -9,13 +9,6 @@ public interface PoolUser
 			notify();
 		}
 	}
-
-    //public void cancel(int error)
-//	{
-//		synchronized (this) {
-//			notify();
-//		}
-//	}
 
     default public void complete()
 	{
@@ -28,12 +21,4 @@ public interface PoolUser
 	{
 		return new PoolUser() { };
 	}
-
-    //public void repetitiveComplete()
-//	{
-//		synchronized (this) {
-//			notify();
-//		}
-//	}
 }
-

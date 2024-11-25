@@ -1,4 +1,4 @@
-// $Id: PoolSegmentAssembly.java,v 1.5 2024/01/22 22:00:21 kingc Exp $
+// $Id: PoolSegmentAssembly.java,v 1.11 2024/10/10 16:31:34 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.BitSet;
@@ -10,13 +10,32 @@ import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 
 class PoolSegmentAssembly
 {
+	class WhatDaqSegment extends WhatDaq
+	{
+		final int segmentId;
+
+		WhatDaqSegment(WhatDaq whatDaq, int length, int offset, int segmentId, ReceiveData receiveData)
+		{
+			super(whatDaq);
+
+			this.segmentId = segmentId;
+
+			lengthOffset(length, offset);
+			receiveData(receiveData);
+		}
+	}
+
 	class ReceiveSegment implements ReceiveData
 	{
-		final WhatDaq whatDaq;
+		final int index;
+		final WhatDaqSegment whatDaq;
 
-		ReceiveSegment(int length, int offset, int id)
+		ReceiveSegment(int index, int length, int offset, int id)
 		{
-			this.whatDaq = new WhatDaq(bigWhatDaq, length, offset, id, this);
+			this.index = index;
+			//this.whatDaq = new WhatDaq(bigWhatDaq, length, offset, id, this);
+			//this.whatDaq = WhatDaq.create(bigWhatDaq, length, offset, id, this);
+			this.whatDaq = new WhatDaqSegment(bigWhatDaq, length, offset, id, this);
 		}
 
 		@Override
@@ -24,15 +43,14 @@ class PoolSegmentAssembly
 		{
 			if (whatDaq.isMarkedForDelete())
 				return;
-			//System.arraycopy(segment, offset, data, whatDaq.offset(), whatDaq.length());
-			segment.get(data, 0, whatDaq.length());
+			segment.get(data, index, whatDaq.length());
 
-			segmentsReceived.set(whatDaq.id());
+			segmentsReceived.set(whatDaq.segmentId);
 
 			if (segmentsReceived.cardinality() == segments.size()) {
 				segmentsReceived.clear();
 				bigWhatDaq.getReceiveData().receiveData(data, 0, timestamp, cycle);
-				bigWhatDaq.setError(0);
+				bigWhatDaq.error(0);
 			}
 		}
 
@@ -43,20 +61,19 @@ class PoolSegmentAssembly
 		}
 
 		@Override
-		//public void receiveData(int error, int offset, byte[] segment, long timestamp)
 		public void receiveData(byte[] segment, int offset, long timestamp, long cycle)
 		{
-			if (whatDaq.isMarkedForDelete()) // || receiveError(error))
+			if (whatDaq.isMarkedForDelete())
 				return;
 
-			System.arraycopy(segment, offset, data, whatDaq.offset(), whatDaq.length());
+			System.arraycopy(segment, offset, data, index, whatDaq.length());
 
-			segmentsReceived.set(whatDaq.id());
+			segmentsReceived.set(whatDaq.segmentId);
 
 			if (segmentsReceived.cardinality() == segments.size()) {
 				segmentsReceived.clear();
 				bigWhatDaq.getReceiveData().receiveData(data, 0, timestamp, cycle);
-				bigWhatDaq.setError(0);
+				bigWhatDaq.error(0);
 			}
 		}
 	}
@@ -72,16 +89,18 @@ class PoolSegmentAssembly
 		this.segments = new ArrayList<>();
 		this.data = new byte[bigWhatDaq.length()];
 
+		int index = 0;
 		int id = 0;
-		int offset = bigWhatDaq.getOffset();
+		int offset = bigWhatDaq.offset();
 
-		for (; id < (bigWhatDaq.length() / segmentSize); id++, offset += segmentSize)
-			this.segments.add(new ReceiveSegment(segmentSize, offset, id));
+		for (; id < (bigWhatDaq.length() / segmentSize); id++, offset += segmentSize, index += segmentSize) {
+			this.segments.add(new ReceiveSegment(index, segmentSize, offset, id));
+		}
 
 		final int lastSegmentSize = bigWhatDaq.length() % segmentSize; 
 
 		if (lastSegmentSize > 0)
-			this.segments.add(new ReceiveSegment(lastSegmentSize, offset + segmentSize, id));
+			this.segments.add(new ReceiveSegment(index, lastSegmentSize, offset, id));
 
 		this.segmentsReceived = new BitSet(this.segments.size());
 	}
@@ -100,22 +119,15 @@ class PoolSegmentAssembly
 		return "PoolSegmentAssembly: " + bigWhatDaq;
 	}
 
-	//private final boolean receiveError(int error)
 	private final void receiveError(int error)
 	{
-		//if (error != 0) {
-			bigWhatDaq.setError(error);
+		bigWhatDaq.error(error);
 
-			if (!bigWhatDaq.isRepetitive()) {
-				for (ReceiveSegment r : segments)
-					r.whatDaq.setMarkedForDelete();
+		if (!bigWhatDaq.isRepetitive()) {
+			for (ReceiveSegment r : segments)
+				r.whatDaq.setMarkedForDelete();
 
-				//bigWhatDaq.getReceiveData().receiveData(error, 0, null, System.currentTimeMillis());
-				bigWhatDaq.getReceiveData().receiveStatus(error, System.currentTimeMillis(), 0);
-		//		return true;
-			}
-		//}
-
-		//return false;
+			bigWhatDaq.getReceiveData().receiveStatus(error, System.currentTimeMillis(), 0);
+		}
 	}
 }

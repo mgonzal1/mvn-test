@@ -1,4 +1,4 @@
-// $Id: DaqSendInterface.java,v 1.4 2023/06/12 16:22:10 kingc Exp $
+// $Id: DaqSendInterface.java,v 1.5 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Collection;
@@ -11,7 +11,6 @@ interface DaqSendInterface
 	boolean add(WhatDaq req);
 	void send(boolean forceResend);
 	void send(Collection<WhatDaq> items);
-	//void transactionLimit(int limit);	
 	int requestCount();
 	void cancel();
 }

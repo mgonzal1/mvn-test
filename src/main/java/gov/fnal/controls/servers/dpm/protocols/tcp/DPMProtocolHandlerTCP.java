@@ -1,4 +1,4 @@
-// $Id: DPMProtocolHandlerTCP.java,v 1.7 2021/12/30 20:17:46 kingc Exp $
+// $Id: DPMProtocolHandlerTCP.java,v 1.8 2024/06/27 18:50:25 kingc Exp $
 
 package gov.fnal.controls.servers.dpm.protocols.tcp;
 
@@ -68,7 +68,7 @@ public class DPMProtocolHandlerTCP extends DPMProtocolHandler implements Runnabl
 
 				logger.fine("TCP connection from " + channel);
 
-				Runnable task = () -> {
+				final Runnable task = () -> {
 					try {
 						final RemoteClientTCP client = new RemoteClientTCP(channel);
 						final Protocol protocol = client.protocol();
@@ -92,9 +92,11 @@ public class DPMProtocolHandlerTCP extends DPMProtocolHandler implements Runnabl
 				try {
 					threadPool.execute(task);
 				} catch (RejectedExecutionException e) {
+					e.printStackTrace();
 					channel.close();
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
 				logger.log(Level.FINE, "exception in TCP handler", e); 
 			}
 		}

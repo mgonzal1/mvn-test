@@ -1,9 +1,8 @@
-// $Id: BasicStatusScaling.java,v 1.8 2024/01/05 21:31:06 kingc Exp $
+// $Id: BasicStatusScaling.java,v 1.10 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
 import java.util.Arrays;
 
-//import gov.fnal.controls.service.proto.Lookup_v2;
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 
@@ -53,7 +52,6 @@ class BasicStatusScaling implements Scaling
 	final int length;
 	final Attribute[] attributes = new Attribute[32];
 
-	//BasicStatusScaling(Lookup_v2.DeviceInfo dInfo) throws AcnetStatusException
 	BasicStatusScaling(DeviceInfo dInfo) throws AcnetStatusException
 	{
 		Arrays.fill(attributes, Undefined);
@@ -61,9 +59,8 @@ class BasicStatusScaling implements Scaling
 		if (dInfo.status != null) {
 			this.name = dInfo.name;
 			this.di = dInfo.di;
-			this.length = dInfo.status.dataLen;
+			this.length = dInfo.status.inputLen;
 
-			//for (Lookup_v2.StatusAttribute sAttr : dInfo.status.attributes) {
 			for (DeviceInfo.Status.Attribute sAttr : dInfo.status.attributes) {
 				BasicStatusScaling.Attribute attr = new BasicStatusScaling.Attribute();
 				
@@ -82,9 +79,6 @@ class BasicStatusScaling implements Scaling
 				attr.nomatch.text = sAttr.trueDisplay.text;
 
 				this.attributes[sAttr.order] = attr;
-
-				//if (sAttr.order > STANDARD_ATTR_COUNT)
-				//	sAttr.order = STANDARD_ATTR_COUNT;
 			}
 		} else
 			throw new AcnetStatusException(DIO_NOSCALE);

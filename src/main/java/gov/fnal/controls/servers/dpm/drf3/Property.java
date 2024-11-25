@@ -1,37 +1,28 @@
-//  $Id: Property.java,v 1.2 2023/06/12 16:42:21 kingc Exp $
+//  $Id: Property.java,v 1.5 2024/09/23 18:56:04 kingc Exp $
 package gov.fnal.controls.servers.dpm.drf3;
 
-import java.util.HashMap;
 import java.util.Map;
-
-/**
- * <i>Property</i> attributes in <a href="http://www-bd.fnal.gov/controls/papers/drf2">DRF2</a>.
- * <p>
- * The name of each element in this enumeration corresponds to a canonical
- * property name.
- *
- */
+import java.util.HashMap;
 
 public enum Property {
-    ANALOG(false, 1),
-    CONTROL(false, 3),
-    STATUS(false, 4),
-    DIGITAL(false, 5),
-    READING(false, 12),
-    SETTING(false, 13),
-    DESCRIPTION(true, 15),
-    BIT_STATUS(true, 22),
-    INDEX(true, 23),
-    LONG_NAME(true, 24),
-    ALARM_LIST_NAME(true, 25);
+	UNKNOWN(0),
+    ANALOG(1),
+    CONTROL(3),
+    STATUS(4),
+    DIGITAL(5),
+    READING(12),
+    SETTING(13),
+    DESCRIPTION(15),
+    BIT_STATUS(22),
+    INDEX(23),
+    LONG_NAME(24),
+    ALARM_LIST_NAME(25);
 
-	public final boolean fromDatabase;
-	public final int indexValue;
+	public final int pi;
 
-	Property(boolean fromDatabase, int indexValue)
+	Property(int pi)
 	{
-		this.fromDatabase = fromDatabase;
-		this.indexValue = indexValue;
+		this.pi = pi;
 	}
     
     private static final Map<String,Property> ALIASES = new HashMap<String,Property>() {{

@@ -1,185 +1,99 @@
-// $Id: ExternalTrigger.java,v 1.5 2024/03/05 17:30:11 kingc Exp $
+// $Id: ExternalTrigger.java,v 1.9 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class ExternalTrigger implements Trigger, AcnetErrors
 {
-	WhatDaq armDevice;
-	int armMask;
-	boolean armExternalSource;
-	int armSourceModifier;
-	int armDelay;
-	int armOffset;
-	int armValue;
+	final WhatDaq whatDaq;
+	final int armMask;
+	final boolean armExternalSource;
+	final int armSourceModifier;
+	final int armDelay;
+	final int armOffset;
+	final int armValue;
 
-	/**
-	 * Constructs an ExternalTrigger object describing the device to serve as
-	 * the arming trigger to a snapshot plot collection of a device.
-	 * 
-	 * @param device
-	 *            the arming external trigger device and property.
-	 * @param deviceOffset
-	 *            the offset of the arming device.
-	 * @param deviceMask
-	 *            the mask to apply to the arming device.
-	 * @param deviceValue
-	 *            the value for the arming device.
-	 * @param delay
-	 *            the delay in microseconds or sample periods.
-	 */
-	ExternalTrigger(WhatDaq device, int deviceOffset, int deviceMask, int deviceValue, int delay)
+	ExternalTrigger(String triggerString) throws AcnetStatusException
 	{
-		this(device, deviceOffset, deviceMask, deviceValue, delay, false, 0);
-	}
-
-	/**
-	 * Constructs an ExternalTrigger object describing an external source to
-	 * serve as the arming trigger to a snapshot plot collection of a device.
-	 * 
-	 * 
-	 * @param armSourceModifier
-	 *            external source modifier (0-3).
-	 */
-	ExternalTrigger(int armSourceModifier) {
-		this(null, 0, 0, 0, 0, true, armSourceModifier);
-	}
-
-	/**
-	 * Constructs an ExternalTrigger object from a database saved string.
-     * The delay in a reconstruction string is measured in milliseconds.
-	 * 
-	 * @param reconstructionString
-	 *            string returned by getReconstruction().
-	 * @throws AcnetStatusException
-	 *             if the reconstructionString is invalid
-	 */
-	ExternalTrigger(String reconstructionString) throws AcnetStatusException {
-		this(0);
-		StringTokenizer tok = null;
-		String token = null;
 		try {
-			int modifierIndex = reconstructionString.indexOf("x,mod=");
+			final int modifierIndex = triggerString.indexOf("x,mod=");
+
 			if (modifierIndex != -1) {
-				armSourceModifier = Integer.parseInt(reconstructionString
-						.substring(modifierIndex + 1));
-				armExternalSource = true;
-				return;
+				this.armSourceModifier = Integer.parseInt(triggerString.substring(modifierIndex + 1));
+				this.whatDaq = null;
+				this.armMask = 0;
+				this.armExternalSource = true;
+				this.armDelay = 0;
+				this.armOffset = 0;
+				this.armValue = 0;
+			} else {
+				this.armSourceModifier = 0;
+				this.armExternalSource = false;
+				final StringTokenizer tokens = new StringTokenizer(triggerString.substring(5), ",=", false); // skip trig=
+
+				tokens.nextToken(); // skip d,
+				final String triggerDeviceName = tokens.nextToken();
+
+				//this.whatDaq = new WhatDaq(null, triggerDeviceName);
+				this.whatDaq = WhatDaq.create(triggerDeviceName);
+				this.armOffset = whatDaq.offset();
+
+				String token = tokens.nextToken(); // look for ,mask=
+
+				if (token.startsWith("mask")) {
+					this.armMask = Integer.parseInt(tokens.nextToken(), 16);
+					token = tokens.nextToken(); // look for ,val=
+				} else
+					this.armMask = 0;
+
+				if (token.startsWith("val")) {
+					this.armValue = Integer.parseInt(tokens.nextToken(), 16);
+					token = tokens.nextToken(); // look for ,dly=
+				} else
+					this.armValue = 0;
+
+				if (token.startsWith("dly"))
+					this.armDelay = Integer.parseInt(tokens.nextToken()) * 1000;
+				else
+					this.armDelay = 0;
 			}
-			armExternalSource = false;
-			tok = new StringTokenizer(reconstructionString.substring(5), ",=",
-					false); // skip trig=
-			tok.nextToken(); // skip d,
-			String triggerDeviceName = tok.nextToken();
-
-			//AcceleratorDevice triggerDevice = new AcceleratorDevice(
-			//		triggerDeviceName);
-			//AcceleratorDevicesItem adi = new AcceleratorDevicesItem();
-			//adi.addDevice(triggerDevice);
-			//armDevice = (WhatDaq) adi.whatDaqs(0, null, null).get(0);
-
-			armDevice = new WhatDaq(null, triggerDeviceName);
-
-
-			armOffset = armDevice.getOffset();
-
-			token = tok.nextToken(); // look for ,mask=
-			if (token.startsWith("mask")) {
-				String armMaskString = tok.nextToken();
-				armMask = Integer.parseInt(armMaskString, 16);
-				token = tok.nextToken(); // look for ,val=
-			}
-			if (token.startsWith("val")) {
-				String armValueString = tok.nextToken();
-				armValue = Integer.parseInt(armValueString, 16);
-				token = tok.nextToken(); // look for ,dly=
-			}
-			if (token.startsWith("dly")) {
-				String armDelayString = tok.nextToken();
-				armDelay = Integer.parseInt(armDelayString) * 1000;
-			}
-			return;
 		} catch (Exception e) {
-			System.out.println("ExternalTrigger.reconstructionString, "
-					+ reconstructionString + "\r\n" + token);
-			e.printStackTrace();
-			throw new AcnetStatusException(DPM_BAD_EVENT, "ExternalTrigger.reconstructionString, "
-					+ reconstructionString, e);
+			logger.log(Level.FINE, "Bad trigger event '" + triggerString + "'", e); 
+			throw new AcnetStatusException(DPM_BAD_EVENT, "Bad trigger event '" + triggerString + "'");
 		}
 	}
 
-	/**
-	 * Constructs an ExternalTrigger object describing the device or external
-	 * source to serve as the arming trigger to a snapshot plot collection of a
-	 * device.
-	 * 
-	 * @param device
-	 *            the arming external trigger device and property.
-	 * @param deviceOffset
-	 *            the offset of the arming device.
-	 * @param deviceMask
-	 *            the mask to apply to the arming device.
-	 * @param deviceValue
-	 *            the value for the arming device.
-	 * @param delay
-	 *            the delay in microseconds or sample periods.
-	 * @param armExternalSource
-	 *            the snapshot class.
-	 * @param armSourceModifier
-	 *            error when retrieving class codes.
-	 */
-	private ExternalTrigger(WhatDaq device, int deviceOffset, int deviceMask,
-			int deviceValue, int delay, boolean armExternalSource,
-			int armSourceModifier) {
-		armDevice = device;
-		armOffset = deviceOffset;
-		armMask = deviceMask;
-		armValue = deviceValue;
-		armDelay = delay;
-		this.armExternalSource = armExternalSource;
-		this.armSourceModifier = armSourceModifier & 0x03;
-	}
-
-	/**
-	 * Compare an ExternalTrigger for equality.
-	 * 
-	 * @return true when the external trigger represents the same arming
-	 *         conditions
-	 */
 	@Override
-	public boolean equals(Object arg) {
-		if ((arg != null) && (arg instanceof ExternalTrigger)) {
-			ExternalTrigger compare = (ExternalTrigger) arg;
-			if (compare.armExternalSource || armExternalSource) // no devices,
-																// just sources
-			{
-				if (compare.armExternalSource != armExternalSource)
+	public boolean equals(Object obj)
+	{
+		if (obj instanceof ExternalTrigger) {
+			final ExternalTrigger t = (ExternalTrigger) obj;
+
+			if (t.armExternalSource || armExternalSource) {
+				if (t.armExternalSource != armExternalSource)
 					return false;
-				if (compare.armSourceModifier != armSourceModifier)
-					return false;
-				return true;
+
+				return t.armSourceModifier != armSourceModifier;
 			}
-			if (compare.armDevice.getDeviceIndex() != armDevice
-					.getDeviceIndex()
-					|| compare.armDevice.getPropertyIndex() != armDevice
-							.getPropertyIndex())
+
+			if (t.whatDaq.di() != whatDaq.di() || t.whatDaq.pi() != whatDaq.pi())
 				return false;
-			if (compare.armMask != armMask
-					|| compare.armExternalSource != armExternalSource
-					|| compare.armSourceModifier != armSourceModifier
-					|| compare.armDelay != armDelay
-					|| compare.armOffset != armOffset
-					|| compare.armValue != armValue)
-				return false;
-			return true;
+
+			return t.armMask == armMask && t.armExternalSource == armExternalSource
+						&& t.armSourceModifier == armSourceModifier && t.armDelay == armDelay
+						&& t.armOffset == armOffset && t.armValue == armValue;
 		}
+
 		return false;
 	}
 
@@ -188,116 +102,43 @@ class ExternalTrigger implements Trigger, AcnetErrors
 		return armMask;
 	}
 
-	/**
-	 * Return if it is an external source arm.
-	 * 
-	 * @return true if it is an external source arm
-	 */
-	boolean isArmExternalSource() {
+	boolean isArmExternalSource()
+	{
 		return armExternalSource;
 	}
 
-	/**
-	 * Inquire if arm immediately.
-	 * 
-	 * @return true if arm immediately
-	 * 
-	 */
-	//public boolean isArmImmediately() {
-	//	return false;
-	//}
+	WhatDaq getArmDevice()
+	{
+		return whatDaq;
+	}
 
-	WhatDaq getArmDevice() { return armDevice; }
-
-	/**
-	 * Return external source number (1-3).
-	 * 
-	 * @return external source number (1-3)
-	 */
-	int getArmSourceModifier() {
+	int getArmSourceModifier()
+	{
 		return armSourceModifier;
 	}
 
-	/**
-	 * Return delay from arming events.
-	 * 
-	 * @return delay from arming events in microseconds
-	 */
-	//@Override
-	//public int getArmingDelay()
-	//{
-	//	return armDelay;
-	//}
-
-	/**
-	 * Return device offset.
-	 * 
-	 * @return device offset
-	 */
-	int getArmOffset() {
+	int getArmOffset()
+	{
 		return armOffset;
 	}
 
-	/**
-	 * Return device value.
-	 * 
-	 * @return device value
-	 */
-	int getArmValue() {
+	int getArmValue()
+	{
 		return armValue;
 	}
 
-	/**
-	 * Return a clone of an ExternalTrigger.
-	 * 
-	 * @return a clone of an ExternalTrigger
-	 * 
-	 */
-	//public Object clone() {
-	//	try {
-	//		return super.clone();
-	//	} catch (CloneNotSupportedException e) {
-	//		System.out.println("Cannot clone ExternalTrigger" + e);
-	//	}
-	//	;
-	//	return null;
-	//}
-
-	/**
-	 * Return the arming events.
-	 * 
-	 * @return the arming events
-	 * 
-	 */
 	@Override
-	public List<DataEvent> getArmingEvents()
+	public List<Event> getArmingEvents()
 	{
 		return null;
 	}
 
-	/**
-	 * Return a string representing this ExternalTrigger.
-	 * 
-	 * @return a string representing this ExternalTrigger
-	 * 
-	 */
 	@Override
 	public String toString()
 	{
-		StringBuffer returnString = new StringBuffer();
 		if (armExternalSource)
-			returnString.append("x,mod=" + armSourceModifier);
-		else {
-		}
-		return returnString.toString();
-	}
+			return "x,mod=" + armSourceModifier;
 
-	/**
-	 * Return a String useful for reconstructing an ExternalTrigger.
-	 * 
-	 * @return String for reconstructing this ExternalTrigger
-	 */
-	//public String getReconstructionString() {
-	//	return "trig=" + toString();
-	//}
-} // end ExternalTrigger class
+		return "";
+	}
+}

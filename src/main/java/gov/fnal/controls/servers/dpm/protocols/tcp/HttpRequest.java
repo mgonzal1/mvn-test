@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
-class HttpRequest
+class HttpRequest 
 {
 	private String method;
 	private String url;

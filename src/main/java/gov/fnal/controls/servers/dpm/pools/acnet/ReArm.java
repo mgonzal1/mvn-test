@@ -1,19 +1,17 @@
-// $Id: ReArm.java,v 1.7 2024/02/22 16:32:14 kingc Exp $
+// $Id: ReArm.java,v 1.10 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
+
+import java.util.StringTokenizer;
 
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetErrors;
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
-
-import gov.fnal.controls.servers.dpm.events.DataEvent;
-import gov.fnal.controls.servers.dpm.events.DataEventFactory;
-import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
-
-import java.util.StringTokenizer;
+import gov.fnal.controls.servers.dpm.drf3.Event;
+import gov.fnal.controls.servers.dpm.drf3.PeriodicEvent;
 
 class ReArm implements AcnetErrors
 {
 	final boolean enabled;
-	final DataEvent reArmDelayEvent;
+	final Event reArmDelayEvent;
 	final int maxPerHour;
 	final boolean reArmReady = true;
 
@@ -28,14 +26,12 @@ class ReArm implements AcnetErrors
 		this.maxPerHour = -1;
 	}
 
-	ReArm(String reconstructionString) throws AcnetStatusException
+	ReArm(String rearmString) throws AcnetStatusException
 	{
 		try {
-			final StringTokenizer tok = new StringTokenizer(reconstructionString, ",=", false);
+			final StringTokenizer tokens = new StringTokenizer(rearmString, ",=", false);
 
-			String token = tok.nextToken(); // skip rearm=
-
-			this.enabled = Boolean.valueOf(token).booleanValue();
+			this.enabled = new Boolean(tokens.nextToken()).booleanValue();
 
 			if (!this.enabled) {
 				this.reArmDelayEvent = null;
@@ -43,27 +39,29 @@ class ReArm implements AcnetErrors
 			} else {
 				final StringBuffer delayString = new StringBuffer();
 
-				tok.nextToken(); // skip ,dly=
-				token = tok.nextToken();
+				tokens.nextToken(); // skip ,dly=
+
+				String token = tokens.nextToken();
+
 				while (!token.startsWith("nmhr")) {
 					if (delayString.length() != 0)
 						delayString.append(",");
 					delayString.append(token);
-					token = tok.nextToken();
+					token = tokens.nextToken();
 				}
 				try {
 					if (delayString.toString().equals("null"))
 						this.reArmDelayEvent = null;
 					else
-						this.reArmDelayEvent = (DataEvent) DataEventFactory.stringToEvent(delayString.toString());
+						this.reArmDelayEvent = Event.parse(delayString.toString());
 				} catch (Exception e) {
 					throw new AcnetStatusException(DPM_BAD_EVENT, "ReArm, bad delay event " + delayString + ", " + e, e);
 				}
-				token = tok.nextToken().trim();
-				this.maxPerHour = Integer.parseInt(token);
+
+				this.maxPerHour = Integer.parseInt(tokens.nextToken().trim());
 			}
 		} catch (Exception e) {
-			throw new AcnetStatusException(DPM_BAD_EVENT, "ReArm.reconstructionString, " + reconstructionString, e);
+			throw new AcnetStatusException(DPM_BAD_EVENT, "Bad rearm event " + rearmString, e);
 		}
 	}
 
@@ -77,14 +75,11 @@ class ReArm implements AcnetErrors
 		return reArmReady;
 	}
 
-	long getEarliestCollection()
+	void markRecent()
 	{
-		return earliestCollection;
-	}
+		final long now = System.currentTimeMillis();
 
-	void setRecent(long lastCollection)
-	{
-		mostRecentCollection = lastCollection;
+		mostRecentCollection = now;
 
 		if (maxPerHour <= 0)
 			return;
@@ -93,7 +88,8 @@ class ReArm implements AcnetErrors
 			recents = new long[maxPerHour];
 
 		int index = 0;
-		long oldestCollection = lastCollection;
+		long oldestCollection = now;
+
 		for (int ii = 0; ii < maxPerHour; ii++) {
 			if (recents[ii] == 0) {
 				index = ii;
@@ -103,15 +99,15 @@ class ReArm implements AcnetErrors
 				index = ii;
 			}
 		}
-		recents[index] = lastCollection;
+		recents[index] = now;
 	}
 
 	long getReArmTime(long now)
 	{
 		long reArmWait = 0;
 
-		if (reArmDelayEvent != null && reArmDelayEvent instanceof DeltaTimeEvent)
-			reArmWait = ((DeltaTimeEvent) reArmDelayEvent).getRepeatRate();
+		if (reArmDelayEvent != null && reArmDelayEvent instanceof PeriodicEvent)
+			reArmWait = ((PeriodicEvent) reArmDelayEvent).getPeriod();
 
 		if (!enabled || maxPerHour == 0) {
 			earliestCollection = 0;
@@ -127,11 +123,9 @@ class ReArm implements AcnetErrors
 			for (int ii = 0; ii < maxPerHour; ii++) {
 				if (newestCollection == 0)
 					newestCollection = recents[ii];
-				else if (recents[ii] != 0
-						&& recents[ii] > newestCollection)
+				else if (recents[ii] != 0 && recents[ii] > newestCollection)
 					newestCollection = recents[ii];
-				if (recents[ii] != 0
-						&& recents[ii] < oldestCollection)
+				if (recents[ii] != 0 && recents[ii] < oldestCollection)
 					oldestCollection = recents[ii];
 			}
 			long hourAgo = now - (60 * 60 * 1000);
@@ -145,8 +139,7 @@ class ReArm implements AcnetErrors
 			if (maxedOut) {
 				long nextOldestCollection = now;
 				for (int ii = 0; ii < maxPerHour; ii++) {
-					if (recents[ii] > oldestCollection
-							&& recents[ii] < nextOldestCollection)
+					if (recents[ii] > oldestCollection && recents[ii] < nextOldestCollection)
 						nextOldestCollection = recents[ii];
 				}
 				if (nextOldestCollection - hourAgo > reArmWait) {
@@ -174,7 +167,7 @@ class ReArm implements AcnetErrors
 		if (reArmDelayEvent == null)
 			buf.append("null");
 		else
-			buf.append(reArmDelayEvent.toString());
+			buf.append(reArmDelayEvent);
 
 		buf.append(",nmhr=" + maxPerHour);
 

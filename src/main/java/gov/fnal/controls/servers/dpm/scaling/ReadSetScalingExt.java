@@ -1,24 +1,30 @@
-// $Id: ReadSetScalingExt.java,v 1.5 2024/02/22 16:33:36 kingc Exp $
+// $Id: ReadSetScalingExt.java,v 1.9 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
 import java.util.Date;
-import java.text.DateFormat;
-import java.text.ParseException;
+import java.util.HashMap;
+//import java.text.DateFormat;
+//import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.nio.ByteBuffer;
+import java.util.logging.Level;
+import java.sql.ResultSet;
 
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
-
 import gov.fnal.controls.servers.dpm.acnetlib.AcnetStatusException;
 import gov.fnal.controls.servers.dpm.acnetlib.Node;
-
 import gov.fnal.controls.servers.dpm.pools.DeviceCache;
 import gov.fnal.controls.servers.dpm.Errors;
-import gov.fnal.controls.servers.dpm.events.ClockEvent;
+import gov.fnal.controls.db.DbServer;
+import static gov.fnal.controls.db.DbServer.getDbServer;
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class ReadSetScalingExt extends ReadSetScaling
 {
+	static final HashMap<Integer, String> clockNumberToName = new HashMap<>();
+	static final SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
+
 	ReadSetScalingExt(DeviceInfo.ReadSetScaling scaling)
 	{
 		super(scaling);
@@ -42,6 +48,9 @@ class ReadSetScalingExt extends ReadSetScaling
 
 			case 2: 
 				return swapABCDtoCDAB(raw);
+
+			case 3:
+				return swapABCDtoDCBA(raw);
 
 			default:
 				throw new AcnetStatusException(DIO_SCALEFAIL);
@@ -185,7 +194,6 @@ class ReadSetScalingExt extends ReadSetScaling
 					throw new AcnetStatusException(DIO_SCALEFAIL, "Alternate Scaling Failed c0=17,length < 4");
 
 				try {
-					//return Lookup.getDeviceInfo(rawReading(data, length)).name;
 					return DeviceCache.name(rawReading(data, length));
 				} catch (Exception ignore) { }
 
@@ -226,11 +234,12 @@ class ReadSetScalingExt extends ReadSetScaling
 			case 669: // CNV_CLOCK_EVENT_HEX
 				if (length < 4) 	//4 = size in bytes
 					throw new AcnetStatusException(DIO_SCALEFAIL, "Alternate Scaling Failed c0=3,length < 4");
-				String ev_name = ClockEvent.clockEventNumberToName(rawReading(data, length));
-				if (ev_name.compareTo("Undefined") == 0) {
+
+				final String name = clockNumberToName.get(rawReading(data, length));
+				if (name == null)
 					throw new AcnetStatusException(DIO_SCALEFAIL, "Alternate Scaling Failed no such Clock Event");
-				} 
-				return Integer.toHexString(rawReading(data, length)&0xffff).toUpperCase();
+				
+				return Integer.toHexString(rawReading(data, length) & 0xffff).toUpperCase();
 
 			default:
 				return Integer.toString(rawReading(data, length));
@@ -240,295 +249,200 @@ class ReadSetScalingExt extends ReadSetScaling
 	@Override
 	public byte[] unscale(String value, int length) throws AcnetStatusException
 	{
-		return unscale(value);
-	}
-
-	byte[] stringToRaw(String s) throws AcnetStatusException
-	{
-		return unscale(s);
+		return stringToRaw(value);
 	}
 
 	void stringToRaw(String s, byte[] data, int offset) throws AcnetStatusException
 	{
-		final byte[] tmp = unscale(s);
+		final byte[] tmp = stringToRaw(s);
 
 		for (int ii = 0; ii < tmp.length; ii++)
 			data[offset++] = tmp[ii];
 	}
 
-	private byte[] unscale(String str) throws AcnetStatusException 
+	byte[] stringToRaw(String str) throws AcnetStatusException 
 	{
-		String sherr = null, sherr1 = null, sherr2 = null;
-		short sh = 0;
-		int v = 0, il = 0, jl = 0;
-		long vl = 0L;
-		short[] trunk_node = { 0, 0 };
-		byte[] b_y_t_e_s = { 0, 0 };
-		char char_at_1 = 0;	// default for CNV_SHORT_HEX,CNV_LONG_HEX
-		StringBuffer sbw = null;
-		int il_start = 0, il_end = 0;
-		int ip_address_byte_length = 4;
-
-		if (scaling.common.index == 84) {
-			b_y_t_e_s = unscale_2 ( str );
-			return (b_y_t_e_s);
-		}
-		// check transforms if appropriate throw new AcnetStatusException(DIO_SCALEFAIL, "Alternate UnScaling Failed")
+		if (scaling.common.index == 84)
+			return unscale2(str);
+		
 		if (scaling.common.index != 60)
-			//throw new AcnetStatusException(DIO_SCALEFAIL, "Alternate UnScaling Failed");
 			throw new AcnetStatusException(DIO_SCALEFAIL);
 
-		int c0 = (int) scaling.common.constants[0];
-
-		switch (c0) {
+		switch ((int) scaling.common.constants[0]) {
 		case 2: // CNV_SHORT_HEX
 			try {
-				if (str.length() > 1)
-					char_at_1 = str.charAt(1);
-				if ((char_at_1 != 'x') && (char_at_1 != 'X'))
-					sh = (short) (Integer.decode("0x" + str) & 0xffff);// in order to decode negatives
-				else
-					sh = (short) (Integer.decode(str) & 0xffff);
-			} catch (NumberFormatException ex) {
-				System.out.println("NumberFormatException" + ex);
-				ex.printStackTrace();
+
+				return raw(Integer.decode(str) & 0xffff, 2);
+			} catch (Exception e) {
+				throw new AcnetStatusException(DIO_SCALEFAIL);
 			}
-			b_y_t_e_s = raw(sh, 2);
-			break;
 
 		case 3: // CNV_LONG_HEX
 			try {
-				if (str.length() > 1)
-					char_at_1 = str.charAt(1);
-				if ((char_at_1 != 'x') && (char_at_1 != 'X'))
-					v = (int) (Long.decode("0x" + str) & 0xffffffff);// in order to decode negatives
-				else
-					v = (int) (Long.decode(str) & 0xffffffff);
-			} catch (NumberFormatException ex) {
-				System.out.println("NumberFormatException" + ex);
-				ex.printStackTrace();
+				return raw((int) (Long.decode(str) & 0xffffffff), 4);
+			} catch (NumberFormatException e) {
+				throw new AcnetStatusException(DIO_SCALEFAIL);
 			}
-			b_y_t_e_s = raw(v, 4);
-			break;
 
 		case 8: // CNV_CHAR
-			b_y_t_e_s = new byte[str.length()];
-			for (int ii = 0; ii < str.length(); ii++)
-				b_y_t_e_s[il] = (byte) str.charAt(ii);
-			break;
+			{
+				final byte[] buf = new byte[str.length()];
+
+				for (int ii = 0; ii < str.length(); ii++)
+					buf[ii] = (byte) str.charAt(ii);
+
+				return buf;
+			}
 
 		case 12: // CNV_ENUMERATED
-			//v = EnumeratedStrings.getEnumeratedSetting(di, pi, str);
-			v = getEnumSetting(str);
-			b_y_t_e_s = raw(v, 4);
-			break;
+			return raw(getEnumSetting(str), 4);
 
 		case 288: // CNV_BYTE_ENUMERATED
-			//v = EnumeratedStrings.getEnumeratedSetting(di, pi, str);
-			v = getEnumSetting(str);
-			b_y_t_e_s = raw(v, 1);
-			break;
+			return raw(getEnumSetting(str), 1);
 
 		case 289: // CNV_SHORT_ENUMERATED
-			//v = EnumeratedStrings.getEnumeratedSetting(di, pi, str);
-			v = getEnumSetting(str);
-			b_y_t_e_s = raw(v, 2);
-			break;
+			return raw(getEnumSetting(str), 2);
 
 		case 347: // CNV_IP_ADDRESS : "aaa.bbb.ccc.ddd"
-			b_y_t_e_s = new byte[ip_address_byte_length];
-			sbw = new StringBuffer(str);
-			for (int ii = 0; ii < ip_address_byte_length; ii++) {
-			    v = 0;
-			    if (ii < 3) {
-				il_end = sbw.indexOf(".", il_start);
-//		System.out.println("il = "+il+" il_end = " + il_end);
-				if (il_end < 0 )
-				    throw new AcnetStatusException(DIO_SCALEFAIL, "Wrong format of IP-address");
-				}
-			    else 
-				il_end = sbw.length();
-			    for (jl = il_start; jl < il_end; jl++) {
-				char_at_1 = sbw.charAt(jl);
-//		System.out.println("char = "+char_at_1);
-				if ( (char_at_1 > '9') || (char_at_1 < '0') )
-				    throw new AcnetStatusException(DIO_SCALEFAIL, "Wrong format of IP-address");
-				v = 10*v + char_at_1-'0';
-				}
-			    if ( v > 255 )
-				    throw new AcnetStatusException(DIO_SCALEFAIL, "Wrong format of IP-address");
-			    b_y_t_e_s[il] = (byte)v;
-			    il_start = il_end+1;
-			    }
-			break;
+			try {
+				final byte buf[] = new byte[4];
+				final String octs[] = str.split(".");
+
+				for (int ii = 0; ii < buf.length; ii++)
+					buf[ii] = Byte.decode(octs[ii]);
+
+				return buf;
+				
+			} catch (Exception e) {
+				throw new AcnetStatusException(DIO_SCALEFAIL);
+			}
 
 		case 15: // CNV_NODE
-			final Node node = Node.get(str);
-			b_y_t_e_s = new byte[2];
-			b_y_t_e_s[1] = (byte) (node.value() >> 8); //(trunk_node[0] & (short) 0x00FF);
-			b_y_t_e_s[0] = (byte) node.value(); //(trunk_node[1] & (short) 0x00FF);
-			break;
+			{
+				final Node node = Node.get(str);
+				final byte[] buf = new byte[2];
+
+				buf[1] = (byte) (node.value() >> 8);
+				buf[0] = (byte) node.value();
+
+				return buf;
+			}
 
 		case 17: // CNV_DEVICE
 			try {
-				//final Lookup.DeviceInfo dInfo = Lookup.getDeviceInfo(str);
-
-				//b_y_t_e_s = raw(dInfo.di, 4);
-				b_y_t_e_s = raw(DeviceCache.di(str), 4);
+				return raw(DeviceCache.di(str), 4);
 			} catch (Exception e) {
+				throw new AcnetStatusException(DIO_SCALEFAIL);
 			}
-			//DeviceNameIndex dni = new DeviceNameIndex(str);
-			//v = dni.getDeviceIndex();
-			//b_y_t_e_s = raw(v, 4);
-			break;
 
 		case 21: // CNV_ERROR
-			v = Errors.value(str);
-			b_y_t_e_s = new byte[2];
-			b_y_t_e_s[1] = (byte) ((v & (int) 0xFF00) >> 8);
-			b_y_t_e_s[0] = (byte) (v & (int) 0xFF);
-			break;
+			{
+				final int v = Errors.value(str);
+				final byte[] buf = new byte[2];
+				buf[1] = (byte) (v >> 8);
+				buf[0] = (byte) v;
+
+				return buf;
+			}
 
 		case 22: // CNV_SHORT_ERROR
-			{
-				b_y_t_e_s = new byte[2];
-				sherr = str;
-				int ii;
-				for (ii = 0; ii < sherr.length(); ii++)
-					if (sherr.charAt(ii) != ' ')
-						break;
+			try {
+				final byte[] buf = new byte[2];
+				final String split[] = str.split(" ");
 
-				if (il > 0)
-					sherr1 = sherr.substring(il);
-				else
-					sherr1 = sherr;
+				for (int ii = 0; ii < buf.length; ii++)
+					buf[ii] = Byte.decode(split[ii]);
 
-				ii = sherr1.indexOf(' '); //        if (il== 0) exception
-				sherr2 = sherr1.substring(0, ii);
-				b_y_t_e_s[0] = (byte) Integer.decode(sherr2).intValue(); // facility
-				for (jl = ii; jl < sherr1.length(); jl++)
-					if (sherr1.charAt(jl) != ' ')
-						break;
-				sherr2 = sherr1.substring(jl, sherr1.length());
-				b_y_t_e_s[1] = (byte) Integer.decode(sherr2).intValue(); // error number
+				return buf;
+			} catch (Exception e) {
+				throw new AcnetStatusException(DIO_SCALEFAIL);
 			}
-			break;
 
 		case 29: // CNV_CLINKS
 			// dd-mmm-yyyy hh:mm:ss GMT(?) to clinks
-			SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
-			try {
-				vl = (((DateFormat) sdf).parse(str)).getTime() - (730 * 24
-						* 3600 * 1000L);
-			} catch (ParseException ex) {
-				System.out.println("Date Format ParseException" + ex);
-				ex.printStackTrace();
+			{
+				try {
+					final long v = dateFormat.parse(str).getTime() - (730 * 24 * 3600 * 1000L) +
+									Calendar.getInstance().get(Calendar.ZONE_OFFSET);
+					return raw((int) (v / 1000), 4);
+				} catch (Exception e) {
+					throw new AcnetStatusException(DIO_SCALEFAIL);
+				}
 			}
-			Calendar cal = Calendar.getInstance();
-			vl += cal.get(Calendar.ZONE_OFFSET);
-			v = (int) (vl / 1000L);
-			
-			b_y_t_e_s = raw(v, 4);
-			break;
 
 		case 280: // CNV_GMT_FMT_CLINKS
-			// dd-mmm-yyyy hh:mm:ss GMT(?) to clinks
-			SimpleDateFormat gsdf = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
 			try {
-				vl = (((DateFormat) gsdf).parse(str)).getTime();
-			} catch (ParseException ex) {
-				System.out.println("Date Format ParseException" + ex);
-				ex.printStackTrace();
+				return raw((int) (dateFormat.parse(str).getTime() / 1000), 4);
+			} catch (Exception e) {
+				throw new AcnetStatusException(DIO_SCALEFAIL);
 			}
-			v = (int) (vl / 1000L);
-			b_y_t_e_s = raw(v, 4);
-			break;
 
 		case 669: // CNV_CLOCK_EVENT_HEX
-			try {
-				if (str.length() > 1)
-					char_at_1 = str.charAt(1);
-				if ((char_at_1 != 'x') && (char_at_1 != 'X'))
-					v = (int) (Long.decode("0x" + str) & 0xffffffff);
-				else
-					v = (int) (Long.decode(str) & 0xffffffff);
-			} catch (NumberFormatException ex) {
-				System.out.println("NumberFormatException" + ex);
-				ex.printStackTrace();
+			{
+				try {
+					return raw(swapABCDtoCDAB((int) (Long.decode(str) & 0xffffffff)), 4);
+				} catch (Exception e) {
+					throw new AcnetStatusException(DIO_SCALEFAIL);
+				}
 			}
-			String ev_name = ClockEvent.clockEventNumberToName( v );
-			if(ev_name.compareTo("Undefined") == 0) {
-				throw new AcnetStatusException(DIO_SCALEFAIL,
-					"Unscaling Failed no such Clock Event");
-			    } 
-			v = swapABCDtoCDAB ( v);
-			b_y_t_e_s = raw(v, 4);
-			break;
 
 		default:
-			throw new AcnetStatusException(DIO_SCALEFAIL, "Setting a byte[] not yet implemented");
+			throw new AcnetStatusException(DIO_SCALEFAIL);
 		}
-
-		return b_y_t_e_s;
 	}
 
-	private byte[] unscale_2(String str) throws AcnetStatusException 
+	private byte[] unscale2(String s) throws AcnetStatusException 
 	{
 		final double[] constants = scaling.common.constants;
 
 		switch ((int) constants[0]) {
 			case 472: // special conversion
 				// dd-mmm-yyyy hh:mm:ss GMT(?) to clinks
-				if (str.length() < 8 )
-					throw new AcnetStatusException(DIO_SCALEFAIL,
-						"Alternate unScaling Failed c0=472,length < 8");
+				if (s.length() < 8 || constants[3] == 0.0)
+					throw new AcnetStatusException(DIO_SCALEFAIL, "Alt unscaling failed c0=472");
 
-				final StringBuilder buf = new StringBuilder(str);
+				final double hours = ((int) (s.charAt(0)) - '0') * 10 + ((int) (s.charAt(1)) - '0');
+				final double minutes = ((int) (s.charAt(3)) - '0') * 10 + ((int) (s.charAt(4)) - '0');
+				final double seconds = ((int) (s.charAt(6)) - '0') * 10 + ((int) (s.charAt(7)) - '0');
+				final double fhours = hours + minutes / 60.0 + seconds / 3600.0;		
 
-				final double hours   = ((int) (buf.charAt(0)) - '0') * 10 + ((int)(buf.charAt(1))-'0');
-				final double minutes = ((int) (buf.charAt(3)) - '0') * 10 + ((int)(buf.charAt(4))-'0');
-				final double seconds = ((int) (buf.charAt(6)) - '0') * 10 + ((int)(buf.charAt(7))-'0');
-				final double flt_hours = hours + minutes / 60.0 + seconds / 3600.0;		
-
-				if (constants[3] == 0.0)
-					throw new AcnetStatusException(DIO_SCALEFAIL);
-
-				final int rawData = primary.unscale((flt_hours - constants[5]) * constants[4] / constants[3]);	/* convert to raw data */
-
-				return raw(rawData, 2);
+				return raw(primary.unscale((fhours - constants[5]) * constants[4] / constants[3]), 2);
 		}
 
 		throw new AcnetStatusException(DIO_SCALEFAIL);
 	}
 
-	/**
-	 * Return swapped raw data: 0xABCD -> 0xBADC
-	 * 
-	 * @return BADC.
-	 */
-	private int swapABCDtoBADC (Number val) 
+	private static final int swapABCDtoBADC(int x) 
 	{
-		int x  = val.intValue();
-		int x1 = (x << 8) & 0xFF000000;		    // x1 = B000
+		final int l = (x << 8);
+		final int r = (x >>> 8);
 
-		x1  |= ((x & 0xFF000000) >> 8) & 0x00FF0000;// x1 = BA00
-		x1  |= ((x & 0x000000FF) << 8) & 0x0000FF00;// x1 = BAD0
-		x1  |= ((x & 0x0000FF00) >> 8) & 0x000000FF;// x1 = BADC
-
-		return x1;
+		return (l & 0xff000000) | (r & 0x00ff0000) | (l & 0x0000ff00) | (r & 0x000000ff);
 	}
 
-	/**
-	 * Return swapped raw data: ABCD -> CDAB
-	 * 
-	 * @return CDAB.
-	 */
-	private int swapABCDtoCDAB (Number val) 
+	private static final int swapABCDtoCDAB(int x) 
 	{
-		int x  = val.intValue();
-		int x1 = ((x & 0xFFFF0000) >> 16) & 0x0000FFFF;// x1 = 00AB
-		int x2 = ((x & 0x0000FFFF) << 16) & 0xFFFF0000;// x2 = CD00
+		return (x >>> 16) | (x << 16);
+	}
 
-		return x1 | x2;
+	private static final int swapABCDtoDCBA(int x)
+	{
+		return (x >>> 24) | ((x >>> 8) & 0xff00) | ((x << 8) & 0xff0000) | (x << 24);
+	}
+
+	static void getClockEventInfo()
+	{
+		final String query = "SELECT symbolic_name, long_text, event_number FROM hendricks.clock_events where event_type = 0";
+
+		try {
+			final ResultSet rs = getDbServer("adbs").executeQuery(query);
+
+			while (rs.next())
+				clockNumberToName.put(rs.getInt(3), rs.getString(1));
+			
+			rs.close();
+		} catch (Exception e) {
+			logger.log(Level.WARNING, "exception in getClockEventInfo()", e);
+		}
 	}
 }

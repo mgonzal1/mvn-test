@@ -1,4 +1,4 @@
-// $Id: AcnetConnectionTCP.java,v 1.4 2024/03/06 15:38:07 kingc Exp $
+// $Id: AcnetConnectionTCP.java,v 1.7 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.util.Iterator;
@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 class AcnetConnectionTCP extends AcnetConnectionDaemon
 {
@@ -53,7 +55,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 				setName("AcnetConnectionTCP.SocketThread");
 				start();
 			} catch (Exception e) {
-				AcnetInterface.logger.log(Level.SEVERE, "unable to create ACNET data thread", e);
+				logger.log(Level.SEVERE, "unable to create ACNET data thread", e);
 				throw new RuntimeException("unable to create ACNET data thread");
 			}
 		}
@@ -61,7 +63,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 		@Override
 		public void run()
 		{
-			AcnetInterface.logger.info("Socket thread start");
+			logger.info("Socket thread start");
 
 			try {
 				while (true) {
@@ -80,7 +82,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 									key.cancel();
 									key.channel().close();
 
-									AcnetInterface.logger.log(Level.FINER, "ACNET handler exception for connection '" + c.connectedName() + "'", e);
+									logger.log(Level.FINER, "ACNET handler exception for connection '" + c.connectedName() + "'", e);
 								}
 							}
 
@@ -98,7 +100,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 					}
 				}
 			} catch (IOException e) {
-				AcnetInterface.logger.log(Level.SEVERE, "socket thread exception", e);
+				logger.log(Level.SEVERE, "socket thread exception", e);
 				throw new RuntimeException("socket thread exception", e);
 			}
 		}
@@ -126,15 +128,6 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 
 	private ReadState readState = ReadState.PacketLength;
 
-	//AcnetConnectionTCP(InetSocketAddress address)
-	//{
-	//	this(address, "", "");
-    //}
-
-	//AcnetConnectionTCP(InetSocketAddress address, String name)
-	//{
-	//	this(address, name, "");
-	//}
     static boolean isLocalAddress(InetAddress address)                                                                                                                       
     {
         // Check if the address is a valid special local or loop back
@@ -161,7 +154,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 		try {
 			connect();
 		} catch (AcnetStatusException e) {
-			AcnetInterface.logger.log(Level.SEVERE, "connect exception", e);
+			logger.log(Level.SEVERE, "connect exception", e);
 		}
 
 		connectionMonitor.register(this);
@@ -176,6 +169,12 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 	boolean inDataHandler()
 	{
 		return false;
+	}
+
+	@Override
+	Thread dataThread()
+	{
+		return socketThread;
 	}
 
 	@Override
@@ -219,7 +218,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 					//try {
 						//handleAcnetPacket(new TCPBuffer(buf));
 					//} catch (Exception e) {
-					//	AcnetInterface.logger.log(Level.FINE, "exception", e);
+					//	logger.log(Level.FINE, "exception", e);
 					//} finally {
 						//BufferCache.release(buf);
 					//}
@@ -255,7 +254,6 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 					if (len < 0 || len > 65535)
 						throw new IOException("bad length value " + len);
 
-					//readBuf = BufferCache.alloc();
 					readBuf = ByteBuffer.allocate(len);
 					lenBuf.clear();
 					channel.read(readBuf);
@@ -286,7 +284,7 @@ class AcnetConnectionTCP extends AcnetConnectionDaemon
 					try {
 						dataHandler.add(readBuf);
 					} catch (InterruptedException e) {
-						AcnetInterface.logger.log(Level.FINE, "interrupted", e);
+						logger.log(Level.FINE, "interrupted", e);
 					}
 					//BufferCache.release(readBuf);
 					readBuf = null;

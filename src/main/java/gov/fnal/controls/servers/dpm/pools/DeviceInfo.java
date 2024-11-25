@@ -1,4 +1,4 @@
-// $Id: DeviceInfo.java,v 1.4 2024/03/19 22:11:55 kingc Exp $
+// $Id: DeviceInfo.java,v 1.14 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools;
 
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.sql.SQLException;
 public class DeviceInfo
 {
 	public enum DeviceState { Active, Deleted, Obsolete, Documented }
-	public enum ControlSystemType { Acnet, Epics }
+	public enum ControlSystemType { Acnet, Epics, Unknown }
 
 	public static class PropertyInfo
 	{
@@ -26,12 +26,32 @@ public class DeviceInfo
 		public final String defEvent;
 		public final boolean nonLinear; 
 		public final String foreignName;
+		public final ControlSystemType controlSystem;
+		public final double minimum;
+		public final double maximum;
+
+		PropertyInfo()
+		{
+			this.pi = 0;
+			this.node = 0;
+			this.ftd = 0;
+			this.ssdn = new byte[0];
+			this.size = 0;
+			this.defSize = 0;
+			this.atomicSize = 0;
+			this.defEvent = "p,1000";
+			this.nonLinear = false;
+			this.controlSystem = ControlSystemType.Unknown;
+			this.foreignName = "";
+			this.minimum = Double.MIN_VALUE;
+			this.maximum = Double.MAX_VALUE;
+		}
 
 		PropertyInfo(DBMaps dbMaps, ResultSet rs) throws SQLException
 		{
 			this.pi = rs.getInt("pi");
 			this.node = (rs.getInt("trunk") << 8) + rs.getInt("node");
-			this.ftd = rs.getInt("ftd");
+			this.ftd = rs.getInt("ftd") & 0xffff;
 			this.ssdn = rs.getBytes("ssdn");
 			this.size = rs.getInt("size");
 			this.defSize = rs.getInt("def_size");
@@ -39,8 +59,31 @@ public class DeviceInfo
 			this.defEvent = rs.getString("default_data_event");
 			this.nonLinear = rs.getInt("addressing_mode") == 5;
 
-			final String tmp = dbMaps.foreignDevice.get(new DIPI(rs.getInt("di"), this.pi));
-			this.foreignName = tmp != null ? tmp : "";
+			final ForeignDevice tmp = dbMaps.foreignDevice.get(new DIPI(rs.getInt("di"), this.pi));
+
+			if (tmp == null) {
+				this.foreignName = "";
+				this.controlSystem = ControlSystemType.Acnet;
+			} else {
+				this.foreignName = tmp.name;
+
+				switch (tmp.controlSystem) {
+				 case 0:
+					this.controlSystem = ControlSystemType.Acnet;
+				 	break;
+
+				 case 1:
+					this.controlSystem = ControlSystemType.Epics;
+				 	break;
+
+				 default:
+					this.controlSystem = ControlSystemType.Acnet;
+				 	break;
+				}
+			}
+
+			this.minimum = rs.getDouble("minimum");
+			this.maximum = rs.getDouble("maximum");
 		}
 
 		PropertyInfo(int pi, int node, int size, int defSize)
@@ -54,12 +97,16 @@ public class DeviceInfo
 			this.atomicSize = defSize;
 			this.defEvent = "i";
 			this.nonLinear = false;
-			this.foreignName = null;
+			this.foreignName = "";
+			this.controlSystem = ControlSystemType.Unknown;
+			this.minimum = Double.MIN_VALUE;
+			this.maximum = Double.MAX_VALUE;
 		}
 
 		@Override public String toString()
 		{
-			return String.format("PropertyInfo(%d,%s)", pi, size);
+			return String.format("PropertyInfo(%d, size:%d def:%d atomic:%d defev:'%s' type'%s' foreign:%s)", 
+									pi, size, defSize, atomicSize, defEvent, controlSystem, foreignName);
 		}
 	}
 
@@ -123,7 +170,6 @@ public class DeviceInfo
 				List<EnumString> list = dbMaps.enumString.get(dipi);
 
 				if (list != null) {
-					//this.enumStrings = list.toArray(new EnumString[0]);
 					for (EnumString es : list) {
 						enums.put(es.value, es);
 						enums.put(es.shortText, es);
@@ -172,10 +218,15 @@ public class DeviceInfo
 			this.scaling = new ReadSetScaling(dbMaps, rs);
 		}
 
+		public boolean validScaling()
+		{
+			return scaling.primary.inputLen > 0;
+		}
+
 		@Override
 		public String toString()
 		{
-			return prop + "\n" + String.format("Reading(%s, %s)", scaling.primary, scaling.common);
+			return prop + " " + (validScaling() ? String.format("Scaling(%s, %s)", scaling.primary, scaling.common) : "Scaling(None)");
 		}
 	}
 
@@ -190,10 +241,15 @@ public class DeviceInfo
 			this.scaling = new ReadSetScaling(dbMaps, rs);
 		}
 
+		public boolean validScaling()
+		{
+			return scaling.primary.inputLen > 0;
+		}
+
 		@Override
 		public String toString()
 		{
-			return prop + "\n" + String.format("Setting(%s, %s)", scaling.primary, scaling.common);
+			return prop + " " + (validScaling() ? String.format("Scaling(%s, %s)", scaling.primary, scaling.common) : "Scaling(None)");
 		}
 	}
 
@@ -223,6 +279,12 @@ public class DeviceInfo
 			this.feData = rs.getBytes("specific_data");
 			this.segment = rs.getInt("segment");
 			this.text = rs.getString("analog_text");
+		}
+
+		@Override
+		public String toString()
+		{
+			return prop + " " + String.format("(minNom:%d maxTol:%d)", minOrNom, maxOrTol);
 		}
 	}
 
@@ -266,6 +328,12 @@ public class DeviceInfo
 			this.feData = rs.getBytes("specific_data");
 			this.segment = rs.getInt("segment");
 			this.text = new ArrayList<>();
+		}
+
+		@Override
+		public String toString()
+		{
+			return prop + " " + String.format("(nom:%d)", nominal);
 		}
 	}
 
@@ -325,22 +393,68 @@ public class DeviceInfo
 				this.trueDisplay = new Display("true", rs);
 				this.falseDisplay = new Display("false", rs);
 			}
+
+			@Override
+			public String toString()
+			{
+				return shortName; // + "[" + trueDisplay + "/" + falseDisplay + "]";
+			}
 		}
 
 		public final PropertyInfo prop;
 		
-		public final int dataLen;
+		public final int inputLen;
 		public final List<Attribute> attributes;
 		public final List<BitTextAttribute> bitText;
+		public final List<String> bitNames;
 
 		Status(DBMaps dbMaps, ResultSet rs) throws SQLException
 		{
 			final int di = rs.getInt("di");
 
 			this.prop = new PropertyInfo(dbMaps, rs);
-			this.dataLen = rs.getInt("scaling_length");
-			this.attributes = dbMaps.status.get(di);
-			this.bitText = dbMaps.statusBitText.get(di);
+			this.inputLen = inputLen(rs.getInt("scaling_length"));
+			this.attributes = dbMaps.status.containsKey(di) ? dbMaps.status.get(di) : new ArrayList<>();
+			this.bitText = dbMaps.statusBitText.containsKey(di) ? dbMaps.statusBitText.get(di) : new ArrayList<>();
+			this.bitNames = bitNames();
+		}
+
+		private List<String> bitNames()
+		{
+			final ArrayList<String> names = new ArrayList<>();
+
+			if (bitText != null) {
+				for (BitTextAttribute bit : bitText) {
+					if (bit.bitNo >= names.size()) {
+						final int emptyCount = bit.bitNo - names.size();
+						for (int ii = 0; ii < emptyCount; ii++)
+							names.add("");
+						names.add(bit.label);
+					} else
+						names.set(bit.bitNo, bit.label);
+				}
+			}
+
+			return names;
+		}
+
+		private int inputLen(int len)
+		{
+			return len == 0 ? this.prop.atomicSize : len;
+		}
+
+		@Override
+		public String toString()
+		{
+			final StringBuilder buf = new StringBuilder();
+
+			for (Attribute attribute : attributes) {
+				buf.append('"');
+				buf.append(attribute);
+				buf.append("\" ");
+			}
+
+			return buf.toString();
 		}
 	}
 
@@ -387,7 +501,7 @@ public class DeviceInfo
 	final public String longDescription;
 	final public long protectionMask;
 	final public DeviceState state;
-	final public ControlSystemType type;
+	//final public ControlSystemType type;
 
 	final public Reading reading;
 	final public Setting setting;
@@ -396,6 +510,24 @@ public class DeviceInfo
 	final public AnalogAlarm analogAlarm;
 	final public DigitalAlarm digitalAlarm;
 	final public List<String> family;
+
+	DeviceInfo(String name)
+	{
+		this.di = 0;
+		this.name = name;
+		this.description = "";
+		this.longName = name;
+		this.longDescription = "";
+		this.protectionMask = 0;
+		this.state = DeviceState.Active;
+		this.reading = null;
+		this.setting = null;
+		this.control = null;
+		this.status = null;
+		this.analogAlarm = null;
+		this.digitalAlarm = null;
+		this.family = null;
+	}
 
 	DeviceInfo(DBMaps dbMaps, ResultSet rs) throws SQLException
 	{
@@ -416,11 +548,6 @@ public class DeviceInfo
 			this.state = DeviceState.Documented;
 		else
 			this.state = DeviceState.Active;
-
-		if (rs.getInt("control_system_type") == 1)
-			this.type = ControlSystemType.Epics;
-		else
-			this.type = ControlSystemType.Acnet;
 
 		this.family = dbMaps.family.get(this.di);
 
@@ -475,13 +602,13 @@ public class DeviceInfo
 	@Override
 	public String toString()
 	{
-		final StringBuilder buf = new StringBuilder(String.format("DeviceInfo(%d,%s,%s)", di, name, description));
+		final StringBuilder buf = new StringBuilder(String.format("DeviceInfo(%d,%s,%s, mask:0x%08x)", di, name, description, protectionMask));
 
-		if (reading != null)
-			buf.append("\n" + reading); 
-
-		if (setting != null)
-			buf.append("\n" + setting); 
+		buf.append("\nReading: ").append(reading); 
+		buf.append("\nSetting: ").append(setting); 
+		buf.append("\nAnalogAlarm: ").append(analogAlarm);
+		buf.append("\nDigitalAlarm: ").append(digitalAlarm);
+		buf.append("\nBasicStatus: ").append(status);
 
 		return buf.toString();
 	}

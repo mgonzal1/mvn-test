@@ -1,14 +1,14 @@
-// $Id: AcnetMessage.java,v 1.3 2024/02/22 16:29:45 kingc Exp $
+// $Id: AcnetMessage.java,v 1.4 2024/11/21 22:02:19 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.util.logging.Level;
 
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+
 public class AcnetMessage extends AcnetPacket
 {
-	//AcnetMessage(AcnetConnection connection, Buffer buf)
 	AcnetMessage(Buffer buf)
 	{
-		//super(connection, buf);
 		super(buf);
 	}
 
@@ -21,7 +21,7 @@ public class AcnetMessage extends AcnetPacket
 			AcnetInterface.stats.messageReceived();
 			connection.stats.messageReceived();
 		} catch (Exception e) {
-			AcnetInterface.logger.log(Level.WARNING, "ACNET message callback exception for connection '" + connection.connectedName() + "'", e);
+			logger.log(Level.WARNING, "ACNET message callback exception for connection '" + connection.connectedName() + "'", e);
 		} finally {
 			data = null;
 			buf.free();

@@ -1,14 +1,8 @@
-//  $Id: StateEvent.java,v 1.1 2023/10/04 19:13:42 kingc Exp $
+//  $Id: StateEvent.java,v 1.2 2024/09/23 18:56:04 kingc Exp $
 package gov.fnal.controls.servers.dpm.drf3;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-/**
- *
- * @author Andrey Petrov
- * @version $Date: 2023/10/04 19:13:42 $
- */
 
 public class StateEvent extends Event
 {
@@ -18,21 +12,21 @@ public class StateEvent extends Event
         "(?i)S,(\\S+),(\\d+),(\\w+),(=|!=|\\*|>|<|<=|>=)" 
     );
     
-    static Event parseState( String str ) throws EventFormatException
+    static Event parseState(String str) throws EventFormatException
 	{
-        Matcher m = RE.matcher( str );
-        if (!m.matches()) {
-            throw new EventFormatException( "Invalid state event: \"" + str + "\"" );
-        }
+        final Matcher m = RE.matcher(str);
+        if (!m.matches())
+            throw new EventFormatException("Invalid state event: \"" + str + "\"");
+        
         try {
             return new StateEvent(
-                m.group( 1 ),                    // Device
-                Integer.parseInt( m.group( 2 )), // Value
-                TimeFreq.parse( m.group( 3 )),   // Delay
-                StateExpr.parse( m.group( 4 ))   // Expression
+                m.group(1),                   // Device
+                Integer.parseInt(m.group(2)), // Value
+                TimeFreq.parse(m.group(3)),   // Delay
+                StateExpr.parse(m.group(4))   // Expression
             );
         } catch (IllegalArgumentException ex) {
-            throw new EventFormatException( "Invalid event parameter", ex );
+            throw new EventFormatException("Invalid event parameter", ex);
         }
     }
 
@@ -43,7 +37,7 @@ public class StateEvent extends Event
 
     private transient String text;
 
-    public StateEvent( String device, int value, TimeFreq delay, StateExpr expr )
+    public StateEvent(String device, int value, TimeFreq delay, StateExpr expr)
 	{
         if (device == null || delay == null || expr == null) {
             throw new NullPointerException();
@@ -51,18 +45,23 @@ public class StateEvent extends Event
         if (value < 0 || value > MAX_VALUE) {
             throw new IllegalArgumentException( "Invalid value" );
         }
-        this.device = DeviceParser.parse( device );
+        this.device = DeviceParser.parse(device);
         this.deviceUC = device.toUpperCase();
         this.value = value;
         this.delay = delay;
         this.expr = expr;
     }
 
-    @Deprecated
-    public String getSource()
+	public StateEvent(String device, int value, TimeFreq delay, int exprValue)
 	{
-        return device;
-    }
+		this(device, value, delay, StateExpr.fromValue(exprValue));
+	}
+
+    //@Deprecated
+    //public String getSource()
+	//{
+     //   return device;
+    //}
     
     public String getDevice()
 	{
@@ -74,7 +73,6 @@ public class StateEvent extends Event
         return value;
     }
 
-    @Deprecated
     public long getDelay()
 	{
         return delay.getTimeMillis();
@@ -90,13 +88,22 @@ public class StateEvent extends Event
         return expr;
     }
 
+	@Override
+	public boolean isRepetitive()
+	{
+		return true;
+	}
+
+	@Override
+	public long defaultTimeout()
+	{
+		return 0;
+	}
+
     @Override
     public int hashCode()
 	{
-        return deviceUC.hashCode()
-             ^ value
-             ^ delay.hashCode()
-             ^ expr.hashCode();
+        return deviceUC.hashCode() ^ value ^ delay.hashCode() ^ expr.hashCode();
     }
 
     @Override

@@ -1,4 +1,4 @@
-//  $Id: Field.java,v 1.1 2022/11/01 20:42:17 kingc Exp $
+//  $Id: Field.java,v 1.4 2024/09/10 15:35:11 kingc Exp $
 package gov.fnal.controls.servers.dpm.drf3;
 
 import java.util.HashMap;
@@ -7,8 +7,8 @@ import java.util.EnumMap;
 
 import static gov.fnal.controls.servers.dpm.drf3.Property.*;
 
-public enum Field {
-
+public enum Field
+{
     RAW,
     PRIMARY,
     SCALED,
@@ -37,7 +37,11 @@ public enum Field {
     ABORT_INHIBIT,
     FLAGS,
     MASK,
-	BIT_VALUE;
+	BIT_VALUE,
+	BIT_NAMES,
+	BIT_VALUES,
+	UNITS,
+	EMPTY;
     
     private static final Map<String,Field> ALIASES = new HashMap<String,Field>() {{
         put( "RAW", RAW );
@@ -82,6 +86,9 @@ public enum Field {
         put( "FLAGS", FLAGS );
         put( "MASK", MASK );
 		put( "BIT_VALUE", BIT_VALUE);
+		put( "BIT_NAMES", BIT_NAMES);
+		put( "BIT_VALUES", BIT_VALUES);
+		put( "UNITS", UNITS);
     }};
    
     private static final Map<Property, Field> DEFAULT_FIELDS = new EnumMap<Property, Field>(
@@ -97,10 +104,11 @@ public enum Field {
             put(INDEX, SCALED);
             put(LONG_NAME, SCALED);
             put(ALARM_LIST_NAME, SCALED);
+            put(UNKNOWN, EMPTY);
         }
     };
 
-    static Field getDefaultField(Property prop)
+    public static Field getDefaultField(Property prop)
 	{
         return DEFAULT_FIELDS.get(prop);
     }
@@ -114,14 +122,13 @@ public enum Field {
      * @return A <code>Field</code> object.
      * @throws RequestFormatException if the field format is invalid.
      */
-    public static Field parse(String str) { // throws FieldFormatException {
-        if (str == null) {
-            throw new NullPointerException();
-        }
-        Field field = ALIASES.get(str.toUpperCase());
-        if (field == null) {
+    public static Field parse(String str)
+	{ // throws FieldFormatException {
+        final Field field = ALIASES.get(str.toUpperCase());
+
+        if (field == null)
             throw new FieldFormatException( "Invalid field: \"" + str + "\"" );
-        }
+        
         return field;
     }
 }

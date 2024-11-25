@@ -1,4 +1,4 @@
-// $Id: DataLoggerFetchJob.java,v 1.12 2024/02/22 16:32:14 kingc Exp $
+// $Id: DataLoggerFetchJob.java,v 1.15 2024/07/03 16:33:20 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.nio.ByteBuffer;
@@ -50,8 +50,6 @@ public class DataLoggerFetchJob extends TimerTask implements AcnetReplyHandler, 
 		this.node = LoggerConfigCache.loggerNode(loggerName);
 		this.callback = request.callback;
 		this.event = event;
-		//this.t1Seed = (int) (event.getStartTime() / 1000);
-		//this.t2Seed = (int) ((event.getStartTime() % 1000) * 1000000);
 		this.t1Seed = (int) (event.t1 / 1000);
 		this.t2Seed = (int) ((event.t1 % 1000) * 1000000);
 		this.loggedName = request.loggedName;
@@ -76,8 +74,6 @@ public class DataLoggerFetchJob extends TimerTask implements AcnetReplyHandler, 
 
 	private void putTime(final long t, ByteBuffer buf)
 	{
-		//long t = d.getTime();
-
 		// Seconds
 
 		buf.putInt((int) (t / 1000));
@@ -118,21 +114,14 @@ public class DataLoggerFetchJob extends TimerTask implements AcnetReplyHandler, 
 		buf.putShort(RETURN_TYPECODE);
 		buf.putInt(FETCH_POINT_COUNT);
 
-		//buf.putInt(event.getDeltaSeconds());
-		//buf.putInt(event.getSkipCount());
-		//buf.putInt(event.getSkipOffset());
 		buf.putInt(0);
 		buf.putInt(0);
 		buf.putInt(0);
 
-		//putString(event.getEventString(), EVENT_LENGTH, buf);
 		putString(event.event, EVENT_LENGTH, buf);
 
-		//buf.putInt(event.getListId());
-		buf.putInt(-1);
+		buf.putInt(event.id);
 
-		//putTime(event.getStartTime(), buf);
-		//putTime(event.getStopTime(), buf);
 		putTime(event.t1, buf);
 		putTime(event.t2, buf);
 
@@ -141,7 +130,7 @@ public class DataLoggerFetchJob extends TimerTask implements AcnetReplyHandler, 
 		putString(loggedName, NAME_LENGTH, buf);
 		buf.flip();
 
-		requestContext = acnetConnection.requestSingle(node.value(), "LMBRJK", buf, 20000, this);
+		requestContext = acnetConnection.requestSingle(node.value(), "LMBRJK", buf, 10000, this);
 	}
 
 	@Override
@@ -164,8 +153,7 @@ public class DataLoggerFetchJob extends TimerTask implements AcnetReplyHandler, 
 					consecutiveErrorCount = 0;
 
 					if (pointCount == 0)
-						sendStatus(0);
-						//callback.plotData(now(), status, 0, null, null, null);
+						cancel(0);
 					else {
 						final byte[] name = new byte[NAME_LENGTH];
 
@@ -189,7 +177,6 @@ public class DataLoggerFetchJob extends TimerTask implements AcnetReplyHandler, 
 
 						if (pointCount != FETCH_POINT_COUNT)
 							cancel(0);
-							//callback.plotData(now(), 0, 0, new long[0], new int[0], new double[0]);
 						else
 							fetch();
 					}
@@ -227,62 +214,25 @@ public class DataLoggerFetchJob extends TimerTask implements AcnetReplyHandler, 
 
 	private void handleStatus(int status)
 	{
-		//boolean willContinue = false;
-
-		if (consecutiveErrorCount <= 5) {
-			//willContinue = true;
-
+		if (consecutiveErrorCount < 1) {
 			switch (status) {
 				case ACNET_PEND:
 				case ACNET_UTIME:
 				case ACNET_REQTMO:
 				case ACNET_REQPACK:
 				case ACNET_REPLY_TIMEOUT:
-					//if (++lastFetchComplaintCount > 20) {
-						//willContinue = false;
-					//}
-
-					//ck.dataLoggerFetchTrouble(plotRequest, status);
-
-					//if (!cancelled) {
 						try {
 							fetch();
 						} catch (AcnetStatusException e) {
 							cancel(e.status);
-							//	ck.dataLoggerFetchTrouble(plotRequest, e.status);
-							//willContinue = false;
 						}
-					//}
-
-					//if (willContinue)
-					//	return;
 
 				case ACNET_BUSY:
 				case ACNET_QUEFULL:
 					AcnetPoolImpl.sharedTimer.schedule(this, 5000);
 					break;
-				//if (++lastFetchComplaintCount > 20) {
-				//	willContinue = false;
-				//}
-
-				//ck.dataLoggerFetchTrouble(plotRequest, status);
-
-				//if (willContinue)
-				//	return;
-
-				//case ACNET_NO_TASK:
-			//	willContinue = false;
-			//	status = LJ_COMM;
-			//	break;
-
 			}
 		} else
 			cancel(status);
-
-		//if (!willContinue) {
-			//plotRequest.troubleCallback.dataLoggerFetchTrouble(plotRequest, status);
-			cancelled = true;
-		//}
-
 	}
 }

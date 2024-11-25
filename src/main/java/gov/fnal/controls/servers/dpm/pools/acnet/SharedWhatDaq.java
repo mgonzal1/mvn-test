@@ -1,59 +1,43 @@
-// $Id: SharedWhatDaq.java,v 1.5 2023/06/20 20:52:51 kingc Exp $
+// $Id: SharedWhatDaq.java,v 1.9 2024/11/22 20:04:25 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-/*
-import java.util.List;
 import java.util.Iterator;
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.nio.ByteBuffer;
 
-import gov.fnal.controls.servers.dpm.CollectionContext;
 import gov.fnal.controls.servers.dpm.pools.WhatDaq;
-//import gov.fnal.controls.servers.dpm.pools.ReceiveData;
+import gov.fnal.controls.servers.dpm.pools.ReceiveData;
 
-public class SharedWhatDaq implements ReceiveData //extends WhatDaq //implements ReceiveData
+class SharedWhatDaq extends WhatDaq implements ReceiveData
 {
-	private final ArrayList<WhatDaq> users = new ArrayList<>();
-	private final int di;
-	private final int pi;
-	private final boolean isSetting;
-	private final int length;
-	private final int offset;
+	final LinkedList<WhatDaq> users = new LinkedList<>();
 
-	public SharedWhatDaq(WhatDaq whatDaq) //, boolean nonRepetitive)
+	SharedWhatDaq(WhatDaq whatDaq)
 	{
-		this.di = whatDaq.di;
-		this.pi = whatDaq.pi;
-		this.isSetting = whatDaq.isSetting;
-		this.length = whatDaq.length;
-		this.offset = whatDaq.offset;
-		//super(whatDaq, 0);
+		super(whatDaq);
 
-		//this.receiveData = this;
-		addUser(whatDaq);
+		setReceiveData(this);
+		users.add(whatDaq);
 	}
 
-	@Override
-	public boolean isEqual(WhatDaq whatDaq)
-	{
-		if (di != whatDaq.di() || pi != whatDaq.pi || isSetting != whatDaq.isSetting
-				|| length != whatDaq.length || offset != whatDaq.offset)
-			return false;
-	}
-
-	synchronized public void addUser(WhatDaq whatDaq)
+	synchronized public boolean addUser(WhatDaq whatDaq)
 	{
 		if (whatDaq == null)
 			throw new NullPointerException();
 
+		boolean replace = false;
+
+		for (WhatDaq tmp : users) {
+			if (tmp.list().equals(whatDaq.list())) 
+				replace = true;
+		}
+
 		users.add(whatDaq);
+
+		return replace;
 	}
 
-	public List<WhatDaq> getUsers()
-	{
-		return users;
-	}
-
-	synchronized int removeDeletedUsers()
+	synchronized public int removeDeletedUsers()
 	{
 		int totalDeleted = 0;
 		final Iterator<WhatDaq> iter = users.iterator();
@@ -68,7 +52,12 @@ public class SharedWhatDaq implements ReceiveData //extends WhatDaq //implements
 		return totalDeleted;
 	}
 
-	synchronized boolean isEmpty()
+	public Iterator<WhatDaq> iterator()
+	{
+		return users.iterator();	
+	}
+
+	synchronized public boolean isEmpty()
 	{
 		return users.isEmpty();
 	}
@@ -76,48 +65,40 @@ public class SharedWhatDaq implements ReceiveData //extends WhatDaq //implements
 	@Override
 	synchronized public void receiveData(byte[] data, int offset, long timestamp, long cycle)
 	{
-		final boolean delete = !event().isRepetitive();
-
 		for (final WhatDaq user : users) {
 			try {
 				user.getReceiveData().receiveData(data, offset, timestamp, cycle);
-				if (delete)
-					user.setMarkedForDelete();
 			} catch (Exception e) {
 				user.setMarkedForDelete();
 			}
 		}
 	}
+
+	@Override
+	synchronized public void receiveData(ByteBuffer data, long timestamp, long cycle)
+	{
+		data.mark();
+
+		for (final WhatDaq user : users) {
+			try {
+				user.getReceiveData().receiveData(data, timestamp, cycle);
+			} catch (Exception e) {
+				user.setMarkedForDelete();
+			}
+			data.reset();
+		}
+	}
+
 
 	@Override
 	synchronized public void receiveStatus(int status, long timestamp, long cycle)
 	{
-		final boolean delete = !event().isRepetitive();
-
 		for (final WhatDaq user : users) {
 			try {
-				user.getReceiveData().receiveData(status, timestamp, cycle);
-				if (delete)
-					user.setMarkedForDelete();
-			} catch (Exception e) {
-				user.setMarkedForDelete();
-			}
-		}
-	}
-
-	@Override
-	synchronized public void receiveData(WhatDaq whatDaq, int error, int offset, byte[] data, 
-											long timestamp, CollectionContext context)
-	{
-		for (final WhatDaq user : users) {
-			try {
-				user.getReceiveData().receiveData(user, error, offset, data, timestamp, context);
-				if (!whatDaq.event().isRepetitive())
-					user.setMarkedForDelete();
+				user.getReceiveData().receiveStatus(status, timestamp, cycle);
 			} catch (Exception e) {
 				user.setMarkedForDelete();
 			}
 		}
 	}
 }
-*/

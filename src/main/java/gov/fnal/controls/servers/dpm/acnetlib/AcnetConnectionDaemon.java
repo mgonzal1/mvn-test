@@ -1,4 +1,4 @@
-// $Id: AcnetConnectionDaemon.java,v 1.2 2024/04/01 15:30:49 kingc Exp $
+// $Id: AcnetConnectionDaemon.java,v 1.3 2024/11/21 22:02:19 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.util.HashMap;
@@ -19,6 +19,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 abstract class AcnetConnectionDaemon extends AcnetConnection implements Delayed
 {
@@ -44,7 +46,7 @@ abstract class AcnetConnectionDaemon extends AcnetConnection implements Delayed
 		@Override
 		public void run()
 		{
-			AcnetInterface.logger.log(Level.INFO, "ACNET connection monitor thread start");
+			logger.log(Level.INFO, "ACNET connection monitor thread start");
 
 			while (true) {
 				try {
@@ -55,7 +57,7 @@ abstract class AcnetConnectionDaemon extends AcnetConnection implements Delayed
 							if (c.connected())
 								c.ping();
 							else {
-								AcnetInterface.logger.log(Level.INFO, "ACNET " + c.connectedName() + " - reconnect");
+								logger.log(Level.INFO, "ACNET " + c.connectedName() + " - reconnect");
 								c.connect();
 								if (c.receiving)
 									c.startReceiving();
@@ -64,7 +66,7 @@ abstract class AcnetConnectionDaemon extends AcnetConnection implements Delayed
 							q.add(c);
 						}
 					} catch (AcnetStatusException e) {
-						AcnetInterface.logger.log(Level.INFO, "ACNET " + c.connectedName() + " - " + e);
+						logger.log(Level.INFO, "ACNET " + c.connectedName() + " - " + e);
 						c.disconnect();
 						c.setDelay(2000);
 						q.add(c);

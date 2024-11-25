@@ -1,28 +1,38 @@
-// $Id: Errors.java,v 1.2 2024/03/19 22:10:41 kingc Exp $
+// $Id: Errors.java,v 1.4 2024/11/19 22:34:43 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import java.util.HashMap;
+import java.sql.ResultSet;
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
-import gov.fnal.controls.db.CachedResultSet;
 import static gov.fnal.controls.db.DbServer.getDbServer;
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
 public class Errors
 {
 	private static HashMap<Integer, String> values = new HashMap<>();
 	private static HashMap<String, Integer> names = new HashMap<>();
 
-	static void init()
+	public static void init()
 	{
 		final String sqlQuery = "select facility_number+(error_code*256) AS \"value\", full_error_text::text from hendricks.acnet_errors";
 
+		ResultSet rs = null;
+
 		try {
-			final CachedResultSet rs = getDbServer("adbs").executeQuery(sqlQuery);
+			rs = getDbServer("adbs").executeQuery(sqlQuery);
 
 			while (rs.next()) {
 				values.put(rs.getInt("value"), rs.getString("full_error_text"));
 				names.put(rs.getString("full_error_text"), rs.getInt("value"));
 			}
 		} catch (Exception e) {
+			logger.log(Level.WARNING, "exception in init()", e);
+		} finally {
+			try {
+				rs.close();
+			} catch (Exception ignore) { }
 		}
 	}
 
@@ -65,6 +75,6 @@ public class Errors
 		init();
 
 		for (String name : names.keySet())
-			System.out.printf("%30s %8d %4s    [%s]\n", name, value(name), hex(name), numericName(name));
+			logger.log(Level.INFO, String.format("%30s %8d %4s    [%s]\n", name, value(name), hex(name), numericName(name)));
 	}
 }

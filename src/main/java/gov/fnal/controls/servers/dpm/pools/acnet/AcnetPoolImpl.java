@@ -1,4 +1,4 @@
-// $Id: AcnetPoolImpl.java,v 1.15 2024/04/11 19:17:07 kingc Exp $
+// $Id: AcnetPoolImpl.java,v 1.17 2024/09/23 18:56:04 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.Set;
@@ -40,10 +40,8 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 
 	public static void init() throws Exception
 	{
-		//Lookup.init();
 		LoggerConfigCache.init();
 		States.init();
-		//DBNews.init();
 	}
 
 	@Override
@@ -67,69 +65,36 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	@Override
 	public void handle(WhatDaq whatDaq, byte[] setting) throws AcnetStatusException
 	{
-		//try {
-		//logger.log(Level.FINER, "adding " + setting.length + " byte setting to " + whatDaq);
-
-			whatDaq.setSetting(setting);
-			requests.add(whatDaq);
-		//} catch (AcnetStatusException e) {
-		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		//} catch (Exception e) {
-		//	whatDaq.getReceiveData().receiveStatus(ACNET_NXE, System.currentTimeMillis(), 0);
-		//}
+		whatDaq.setSetting(setting);
+		requests.add(whatDaq);
 	}
 
 	@Override
 	public void handle(WhatDaq whatDaq, double setting) throws AcnetStatusException
 	{
-		//try {
-			//whatDaq.setSetting(setting);
-			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
-			requests.add(whatDaq);
-		//} catch (AcnetStatusException e) {
-		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		//} catch (Exception e) {
-		//	whatDaq.getReceiveData().receiveStatus(DIO_SCALEFAIL, System.currentTimeMillis(), 0);
-		//}
+		whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
+		requests.add(whatDaq);
 	}
 
 	@Override
 	public void handle(WhatDaq whatDaq, double[] setting) throws AcnetStatusException
 	{
-		//try {
-			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
-			requests.add(whatDaq);
-		//} catch (AcnetStatusException e) {
-		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		//} catch (Exception e) {
-		//	whatDaq.getReceiveData().receiveStatus(DIO_SCALEFAIL, System.currentTimeMillis(), 0);
-		//}
+		whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
+		requests.add(whatDaq);
 	}
 
 	@Override
 	public void handle(WhatDaq whatDaq, String setting) throws AcnetStatusException
 	{
-		//try {
-			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
-			requests.add(whatDaq);
-		//} catch (AcnetStatusException e) {
-		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		//} catch (Exception e) {
-		//	whatDaq.getReceiveData().receiveStatus(DIO_SCALEFAIL, System.currentTimeMillis(), 0);
-		//}
+		whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.length()));
+		requests.add(whatDaq);
 	}
 
 	@Override
 	public void handle(WhatDaq whatDaq, String[] setting) throws AcnetStatusException
 	{
-		//try {
-			whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
-			requests.add(whatDaq);
-		//} catch (AcnetStatusException e) {
-		//	whatDaq.getReceiveData().receiveStatus(e.status, System.currentTimeMillis(), 0);
-		//} catch (Exception e) {
-		//	whatDaq.getReceiveData().receiveStatus(DIO_SCALEFAIL, System.currentTimeMillis(), 0);
-		//}
+		whatDaq.setSetting(ScalingFactory.get(whatDaq).unscale(setting, whatDaq.defaultLength()));
+		requests.add(whatDaq);
 	}
 
 	@Override
@@ -137,33 +102,28 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	{
 		for (WhatDaq whatDaq : requests) {
 			whatDaq.setUser(user);
-			//whatDaq.setUser(poolUser);
 
-			//logger.log(Level.FINER, "AcnetPoolImpl: " + whatDaq);
+			if (whatDaq.isSettingReady()) {
+				OneShotDaqPool pool = oneshot.get(whatDaq.node().value());
 
-			if (whatDaq.getEvent().isRepetitive()) { //|| whatDaq.isSettingReady()) {
-				//final DaqPoolUserRequests<WhatDaq> pool =  DaqPool.getPool(whatDaq.getTrunk(), whatDaq.getNode(),
-				//												whatDaq.getEvent(), whatDaq.isSettingReady());
+				if (pool == null) {
+					pool = new SettingDaqPool(whatDaq.node());
+					oneshot.put(whatDaq.node().value(), pool);
+				}
+				pool.insert(whatDaq);
+			} else if (whatDaq.event().isRepetitive()) {
 				final DaqPoolUserRequests<WhatDaq> pool =  DaqPool.get(whatDaq.node(), whatDaq.event());
 
 				repetitive.add(pool);
 				pool.insert(whatDaq);
 			} else {
-				final int key = whatDaq.node().value(); ///(whatDaq.trunk() << 16) + whatDaq.node(); 
-
-				//DPMOneShotDaqPool pool = oneshot.get(key);
-				OneShotDaqPool pool = oneshot.get(key);
+				OneShotDaqPool pool = oneshot.get(whatDaq.node().value());
 
 				if (pool == null) {
-					//pool = new DPMOneShotDaqPool(whatDaq.getTrunk(), whatDaq.getNode(), 0, whatDaq.getEvent(), "", true);
-					//pool = new OneShotDaqPool(whatDaq.getTrunk(), whatDaq.getNode(), whatDaq.getEvent());
-					pool = whatDaq.isSettingReady() ? new SettingDaqPool(whatDaq.node()) : 
-														new OneShotDaqPool(whatDaq.node());
-					oneshot.put(key, pool);
+					pool = new OneShotDaqPool(whatDaq.node());
+					oneshot.put(whatDaq.node().value(), pool);
 				}
 
-				//logger.log(Level.FINER, "AcnetPoolImpl: " + whatDaq + " pool: " + pool);
-				//pool.insert(whatDaq, DPMOneShotDaqPool.NORMAL);
 				pool.insert(whatDaq);
 			}
 		}
@@ -174,7 +134,6 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 
 		for (DaqPoolUserRequests pool : repetitive) {
 			if (pool instanceof RepetitiveDaqPool)
-				//((RepetitiveDaqPool) pool).doProcessUserRequests(false);
 				pool.process(false);
 			else
 				pool.process(true);
@@ -186,7 +145,6 @@ public class AcnetPoolImpl implements PoolInterface, SettingData.Handler, AcnetE
 	{
 		for (DaqPoolUserRequests pool : repetitive) {
 			pool.cancel(user, 0);
-			//pool.cancel(poolUser, false, 0);
 			pool.process(true);
 		}
 

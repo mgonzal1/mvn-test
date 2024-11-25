@@ -1,4 +1,4 @@
-// $Id: AcnetReply.java,v 1.3 2024/02/22 16:29:45 kingc Exp $
+// $Id: AcnetReply.java,v 1.4 2024/05/30 18:11:14 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 public class AcnetReply extends AcnetPacket implements AcnetConstants, AcnetErrors
@@ -16,17 +16,14 @@ public class AcnetReply extends AcnetPacket implements AcnetConstants, AcnetErro
 		this.last = true;
 	}
 
-	//AcnetReply(AcnetConnection connection, int flags, Buffer buf)
 	AcnetReply(int flags, Buffer buf)
 	{
-		//super(connection, buf);
 		super(buf);
 
 		this.requestId = new RequestId(id);
 		this.last = (flags & ACNET_FLG_MLT) == 0;
 	}
 
-	//AcnetReply(AcnetConnection connection, int status, RequestId requestId, int server) 
 	AcnetReply(int status, RequestId requestId, int server, boolean last) 
 	{
 		super(ACNET_FLG_RPY, status, server, 0, 0, 0, 0, ACNET_HEADER_SIZE, null);
@@ -65,14 +62,12 @@ public class AcnetReply extends AcnetPacket implements AcnetConstants, AcnetErro
 	@Override
 	void handle(AcnetConnection connection)
 	{
-		//System.out.println("RECEIVED A REPLY");
-
 		if (connection.replyThread != null) {
-			//System.out.println("PUT ON REPLY QUEUE");
-			connection.replyThread.queue.offer(this);
-
-			AcnetInterface.stats.replyReceived();
-			connection.stats.replyReceived();
+			if (!connection.replyThread.queue.offer(this)) {
+				data = null;
+				buf.free();
+				connection.droppedReply(this);
+			}
 		} else {
 			try {
 				connection.handleReply(this);
@@ -82,6 +77,9 @@ public class AcnetReply extends AcnetPacket implements AcnetConstants, AcnetErro
 				buf.free();
 			}
 		}
+
+		AcnetInterface.stats.replyReceived();
+		connection.stats.replyReceived();
 	}
 
 	@Override

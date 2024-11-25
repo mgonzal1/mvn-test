@@ -1,16 +1,16 @@
-// $Id: ConsoleUser.java,v 1.1 2023/10/04 19:41:11 kingc Exp $
+// $Id: ConsoleUser.java,v 1.2 2024/09/26 14:18:48 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import java.util.Set;
 
 public interface ConsoleUser
 {
-	public int id();
-	public String name();
-	public int permissions();
-	public int classes();
-	public Set<String> roles();
-	public Set<String> allowedDevices(String role);
-	public Set<String> allowedDevices();
+	int id();
+	String name();
+	int permissions();
+	int classes();
+	Set<String> roles();
+	Set<String> allowedDevices(String role);
+	Set<String> allowedDevices();
 }
 

@@ -1,4 +1,4 @@
-// $Id: AcnetInterface.java,v 1.11 2024/04/22 20:10:52 kingc Exp $
+// $Id: AcnetInterface.java,v 1.15 2024/11/21 22:03:13 kingc Exp $
 package gov.fnal.controls.servers.dpm.acnetlib;
 
 import java.io.IOException;
@@ -27,12 +27,11 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.NetworkInterface;
 
+import static gov.fnal.controls.servers.dpm.DPMServer.logger;
+
 public class AcnetInterface implements AcnetConstants, AcnetErrors
 {
-	final static Logger logger = Logger.getLogger(AcnetInterface.class.getName());
-
 	static final Node vNode;
-	static final boolean usingDaemon;
 	static final StatSet stats = new StatSet();
 
 	static {
@@ -44,27 +43,8 @@ public class AcnetInterface implements AcnetConstants, AcnetErrors
 
 		logger.log(Level.INFO, "Using vNode '" + vNode + "'");
 
-		boolean bindFailed;
-
-		try {
-			final DatagramChannel channel = DatagramChannel.open().bind(new InetSocketAddress(ACNET_PORT));
-
-			try {
-				AcnetConnectionInternal.start(channel, vNode);
-				logger.log(Level.INFO, "Using internal ACNET implementation");
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-			bindFailed = false;
-		} catch (java.io.IOException e) {
-			logger.log(Level.INFO, "Using the ACNET daemon");
-
-			bindFailed = true;
-			AcnetConnectionDaemon.start();
-			//sendNodeTableEntriesToDaemon();
-		}
-
-		usingDaemon = bindFailed;
+		AcnetConnectionDaemon.start();
+		sendNodeTableEntriesToDaemon();
 	}
 
 	public static void sendNodeTableEntriesToDaemon()
@@ -144,26 +124,17 @@ public class AcnetInterface implements AcnetConstants, AcnetErrors
 
 	final public static void close()
 	{
-		if (usingDaemon)
-			AcnetConnectionDaemon.stop();
-		else 
-			AcnetConnectionInternal.stop();
+		AcnetConnectionDaemon.stop();
 	}
 
 	final synchronized public static AcnetConnection open(String name)
 	{
-		if (usingDaemon)
-			return new AcnetConnectionUDP(name, vNode);
-		else
-			return AcnetConnectionInternal.open(name, vNode);
+		return new AcnetConnectionUDP(name, vNode);
 	}
 
 	final synchronized public static AcnetConnection open()
 	{
-		if (usingDaemon)
-			return new AcnetConnectionUDP("", vNode);
-		else
-			return AcnetConnectionInternal.open("", vNode);
+		return new AcnetConnectionUDP("", vNode);
 	}
 
 	final synchronized public static AcnetConnection open(String host, String name)

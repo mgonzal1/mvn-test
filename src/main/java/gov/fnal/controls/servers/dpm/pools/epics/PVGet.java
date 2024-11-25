@@ -1,4 +1,4 @@
-// $Id: PVGet.java,v 1.4 2023/09/26 20:52:04 kingc Exp $
+// $Id: PVGet.java,v 1.5 2024/09/10 15:44:04 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.epics;
 
 import java.util.BitSet;
@@ -33,5 +33,7 @@ public class PVGet implements EpicsListener
 			PVAPool.get(new EpicsRequest(args[0], listener));
 			listener.wait();
 		}
+
+		System.exit(0);
 	}
 }

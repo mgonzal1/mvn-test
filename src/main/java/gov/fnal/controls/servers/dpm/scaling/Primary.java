@@ -1,4 +1,4 @@
-// $Id: Primary.java,v 1.1 2024/01/05 21:26:06 kingc Exp $
+// $Id: Primary.java,v 1.2 2024/11/19 22:34:44 kingc Exp $
 package gov.fnal.controls.servers.dpm.scaling;
 
 import gov.fnal.controls.servers.dpm.pools.DeviceInfo;
@@ -172,7 +172,6 @@ class Primary implements AcnetErrors
 			y = x1 | x2;
 			flt_data = Float.intBitsToFloat(y);
 
-			//System.out.println("scaled: " + flt_data + "   " + Float.intBitsToFloat(y));
 			return flt_data;
 
 			/*

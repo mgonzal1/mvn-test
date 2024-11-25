@@ -1,4 +1,4 @@
-// $Id: FTPPool.java,v 1.12 2024/02/22 16:32:14 kingc Exp $
+// $Id: FTPPool.java,v 1.16 2024/09/27 18:26:16 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.List;
@@ -26,46 +26,32 @@ import gov.fnal.controls.servers.dpm.pools.PoolUser;
 
 import static gov.fnal.controls.servers.dpm.DPMServer.logger;
 
-class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequests<FTPRequest>, AcnetErrors, TimeNow
+class FTPPool implements AcnetReplyHandler, DaqPoolUserRequests<FTPRequest>, AcnetErrors, TimeNow
 {
-	private static AcnetConnection acnetConnection;
-	private static List<FTPPool> pools = new LinkedList<>();
-
-	private List<SharedFTPRequest> userRequestList = new LinkedList<>();
-	private List<FastScaling> activeRequestList;
-
-	private int numActive = 0;
-
 	final static int FTP_RETURN_PERIOD = 3;
+	static final AcnetConnection acnetConnection = AcnetInterface.open("FTPPLT");
+	static final List<FTPPool> pools = new LinkedList<>();
 
-	Node node;
+	final List<SharedFTPRequest> userRequestList = new LinkedList<>();
 
-	private FTPScope ftpScope;
+	final int numActive = 0; // ?
 
-	private ClassCode ftpCode;
-	private int ftpClassCode;
-	private boolean newProtocol;
+	final Node node;
+	final FTPScope ftpScope;
+	final ClassCode ftpCode;
+	final int ftpClassCode;
+	final boolean newProtocol;
+	final short typecode;
+	final short returnPeriod;
+	final short startReturnTime;
+	final short stopReturnTime;
+	final short currentTime;
+	final FTPTimer timer;
+
+	boolean modified;
+	boolean reissueRequests;
+	List<FastScaling> activeRequestList;
 	AcnetRequestContext context;
-	private boolean setupInProgress;
-	private boolean reissueRequests;
-	private boolean modified;
-	private short typecode;
-	private int r50Name;
-	private short returnPeriod;
-	private short startReturnTime;
-	private short stopReturnTime;
-
-	final static int PLOT_PRIORITY_SDA = 3;
-	final static int PLOT_PRIORITY_MCR = 2;
-	final static int PLOT_PRIORITY_REMOTE_MCR = 1;
-	final static int PLOT_PRIORITY_USER = 0;
-	private short currentTime;
-
-	// The protocol is centered around the ACNET task name of the requester.
-	// So, each pool must have a unique task name.
-	static {
-		acnetConnection = AcnetInterface.open("FTPPLT");
-	}
 
 	FTPPool(FTPRequest ftpRequest)
 	{
@@ -84,12 +70,15 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 			this.newProtocol = false;
 			this.typecode = 2;
 		}
-		this.returnPeriod = 0;
+
+		this.returnPeriod = FTP_RETURN_PERIOD;
 		this.startReturnTime = 0;
 		this.stopReturnTime = 0;
 		this.currentTime = 0;
 		this.reissueRequests = false;
-		AcnetPoolImpl.sharedTimer.schedule(this, 30000);
+		this.timer = new FTPTimer();
+
+		AcnetPoolImpl.sharedTimer.schedule(this.timer, 10000, 10000);
 	}
 
 	synchronized static FTPPool get(FTPRequest req)
@@ -120,7 +109,9 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 					return;
 				}
 			}
-			SharedFTPRequest shared = new SharedFTPRequest(ftpRequest.getDevice(), ftpRequest.getClassCode(), ftpRequest.getScope());
+
+			final SharedFTPRequest shared = new SharedFTPRequest(ftpRequest.getDevice(), ftpRequest.getClassCode(), ftpRequest.getScope());
+
 			shared.addUser(ftpRequest);
 			userRequestList.add(shared);
 			modified = true;
@@ -130,25 +121,23 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 	@Override
 	public void cancel(PoolUser user, int error)
 	{
-		//boolean anyDeletes = false;
-
-		// mark all user requests with this Scheduler for delete
 		synchronized (userRequestList) {
 			Iterator<SharedFTPRequest> requests = userRequestList.iterator();
 
 			for (SharedFTPRequest shared = null; requests.hasNext();) {
 				shared = requests.next();
-				synchronized (shared) {
 
-					for (FTPRequest req : shared.getUsers()) {
-						if (req.getDevice().getUser() == user) {
-									req.callback.plotData(System.currentTimeMillis(), error, 0, null, null, null);
+				synchronized (shared) {
+					for (FTPRequest req : shared.users()) {
+						if (req.getDevice().user() == user) {
+							req.callback.plotData(System.currentTimeMillis(), error, 0, null, null, null);
 							req.setDelete();
-		//					anyDeletes = true;
 						}
 					}
 				}
 			}
+
+			timer.cancel();
 		}
 	}
 
@@ -160,41 +149,40 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 
 		boolean anyActiveUsers = false;
 		reissueRequests = false;
-			Iterator<SharedFTPRequest> requests = userRequestList.iterator();
+		Iterator<SharedFTPRequest> requests = userRequestList.iterator();
 
-			while (requests.hasNext()) {
-				final SharedFTPRequest shared = requests.next();
-				boolean anySharedUsers = false;
+		while (requests.hasNext()) {
+			final SharedFTPRequest shared = requests.next();
+			boolean anySharedUsers = false;
 
-				synchronized (shared) {
-					final Iterator<FTPRequest> users = shared.getUsers().iterator();
+			synchronized (shared) {
+				final Iterator<FTPRequest> users = shared.users().iterator();
 
-					while (users.hasNext()) {
-						final FTPRequest user = users.next();
-						if (user.getDelete()) {
-							users.remove();
-						} else {
-							anySharedUsers = true;
-						}
-					}
-				}
+				while (users.hasNext()) {
+					final FTPRequest user = users.next();
 
-				if (!anySharedUsers) {
-					//shared.stopCollection();
-					requests.remove();
-					modified = true;
-				} else {
-
-					byteCount += (shared.getDevice().getDefaultLength() == 4 ? 4 : 2);
-					anyActiveUsers = true;
-					sendCount++;
+					if (user.getDelete())
+						users.remove();
+					else
+						anySharedUsers = true;
 				}
 			}
 
-			if (!anyActiveUsers) {
-				context.cancelNoEx();
-				return false;
+			if (!anySharedUsers) {
+				requests.remove();
+				modified = true;
+			} else {
+
+				byteCount += (shared.getDevice().getDefaultLength() == 4 ? 4 : 2);
+				anyActiveUsers = true;
+				sendCount++;
 			}
+		}
+
+		if (!anyActiveUsers) {
+			context.cancelNoEx();
+			return false;
+		}
 
 		if (!modified && !forceRetransmission)
 			return false;
@@ -215,8 +203,8 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 	{
 		final ByteBuffer buf = ByteBuffer.allocate(32 * 1024).order(ByteOrder.LITTLE_ENDIAN);
 
-		if (!newProtocol)
-			typecode |= 0;
+		//if (!newProtocol)
+			//typecode |= 0;
 
 		buf.putShort(typecode);
 		buf.putInt(0);
@@ -226,8 +214,7 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 		else
 			buf.putShort((short) (numDevices | (currentTime << 8)));
 		
-		returnPeriod = FTP_RETURN_PERIOD; // number 15 hz ticks between
-											// returns
+		//returnPeriod = FTP_RETURN_PERIOD; // number 15 hz ticks between returns
 		buf.putShort(returnPeriod);
 
 		int msgSize = (int) ((numDataBytes + (numDevices << 1)) * ftpScope.rate);
@@ -261,29 +248,28 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 			buf.putShort((short) 0);
 		}
 
-		// pack the packets
-		// look for shared in userRequestList, add to shared if existing
-		SharedFTPRequest shared;
-
 		context.cancelNoEx();
 
-			activeRequestList = buildActiveList();
+		activeRequestList = buildActiveList();
 
-			for (FastScaling scaling : activeRequestList) {
-				shared = scaling.shared;
-				buf.putInt(shared.getDevice().dipi());
+		for (FastScaling scaling : activeRequestList) {
+			final SharedFTPRequest shared = scaling.shared;
+			buf.putInt(shared.getDevice().dipi());
 
-				if (newProtocol)
-					buf.putInt(shared.getDevice().getOffset());
+			if (newProtocol)
+				buf.putInt(shared.getDevice().offset());
 
-				buf.put(shared.getDevice().getSSDN());
-				short samplePeriod;
-				samplePeriod = (short) (100000 / shared.getScope().rate);
-				buf.putShort(samplePeriod);
+			buf.put(shared.getDevice().ssdn());
+			short samplePeriod;
+			samplePeriod = (short) (100000 / shared.getScope().rate);
+			buf.putShort(samplePeriod);
 
-				if (newProtocol)
-					buf.putInt(0);
-			}
+			if (newProtocol)
+				buf.putInt(0);
+		}
+
+		buf.flip();
+
 		try {
 			context = acnetConnection.requestMultiple(node.value(), "FTPMAN", buf, 1000 * 10, this);
 		} catch (AcnetStatusException e) {
@@ -293,7 +279,8 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 
 	private boolean services(FTPRequest ftp)
 	{
-		return ftp.getDevice().node().equals(node) && ftp.getFTPClassCode() == ftpClassCode &&
+		return ftp.getDevice().node().equals(node) &&
+				ftp.getFTPClassCode() == ftpClassCode &&
 				ftp.getScope().equals(ftpScope);
 	}
 
@@ -338,15 +325,15 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 			return;
 		}
 
-		if (replyType == 2) {
+		if (replyType == 2)
 			hdr.getInt(); // unused
-		}
+
 		synchronized (activeRequestList) {
-			int activeRequestListSize = activeRequestList.size();
 			for (FastScaling scaling : activeRequestList) {
 				final SharedFTPRequest shared = scaling.shared;
 
 				error = hdr.getShort();
+
 				if (error != 0) {
 					reissueRequests = true;
 					shared.plotData(System.currentTimeMillis(), error, 0, null, null, null);
@@ -392,16 +379,16 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 					while (nextTS > 50000) {
 						nextTS -= 50000;
 					}
-					nanos = nextTS * 100000L; // get nanoseconds since 0x02
+					nanos = nextTS * 100000L;
 
 					if (ii == 0) {
 						baseTime02 = TimeStamper.getBaseTime02(nextTS / 10);
-						previous = nanos; // base time handles first one
+						previous = nanos;
 						firstTS = nextTS;
 					}
-					if ((previous - nanos) > 2500000000L) {// wrapped around zero within the packet
-						baseTime02 += (5000000000L); // timestamps wrap every
-														// 5 seconds
+	
+					if ((previous - nanos) > 2500000000L) {
+						baseTime02 += (5000000000L);
 						if (baseTime02 / 1000000 - System.currentTimeMillis() > 1000) {
 							baseTime02 -= (5000000000L);
 						}
@@ -412,7 +399,7 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 					microSecs[ii] = (nanos / 1000);
 					nanoSecs[ii] = (short) (nanos % 1000);
 
-					nextData = scaling.bigRawData ? data.getInt() : data.getShort();
+					nextData = scaling.isInt ? data.getInt() : data.getShort();
 
 					try {
 						values[ii] = scaling.scaling.rawToCommon(nextData);
@@ -420,10 +407,9 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 						values[ii] = 0.0;
 					}
 				}
-				if (numPoints == 0) {
-				} else {
+
+				if (numPoints != 0)
 					shared.plotData(System.currentTimeMillis(), error, numPoints, microSecs, nanoSecs, values);
-				}
 			}
 		}
 	}
@@ -431,12 +417,21 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 	private void deliverError(int error)
 	{
 		synchronized (userRequestList) {
-			for (SharedFTPRequest shared : userRequestList) {
+			for (SharedFTPRequest shared : userRequestList)
 				shared.deliverError(error);
-			}
 		}
 
 		reissueRequests = true;
+	}
+
+	private synchronized List<FastScaling> buildActiveList()
+	{
+		final List<FastScaling> list = new LinkedList<>();
+
+		for (SharedFTPRequest shared : userRequestList)
+			list.add(new FastScaling(shared));
+
+		return list;
 	}
 
 	@Override
@@ -445,40 +440,27 @@ class FTPPool extends TimerTask implements AcnetReplyHandler, DaqPoolUserRequest
 		return "FTPPool: node: " + node + " " + ftpScope + " class code = " + ftpClassCode;
 	}
 
-	private class FastScaling
+	class FastScaling
 	{
-		private SharedFTPRequest shared;
-		private DPMReadSetScaling scaling;
-		private boolean bigRawData;
-		private int pointSize = 4;
+		final SharedFTPRequest shared;
+		final DPMReadSetScaling scaling;
+		final boolean isInt;
 
-		private FastScaling(SharedFTPRequest shared, boolean bigRawData)
+		private FastScaling(SharedFTPRequest shared)
 		{
 			this.shared = shared;
 			this.scaling = DPMReadSetScaling.get(shared.getDevice());
-			this.bigRawData = bigRawData;
-			if (bigRawData)
-				pointSize += 2;
+			this.isInt = shared.getDevice().getDefaultLength() == 4;
 		}
 	}
 
-	private synchronized List<FastScaling> buildActiveList()
+	class FTPTimer extends TimerTask
 	{
-		List<FastScaling> list = new LinkedList<>();
-
-		for (SharedFTPRequest shared : userRequestList) {
-			final boolean bigData = shared.getDevice().getDefaultLength() == 4;
-			list.add(new FastScaling(shared, bigData));
+		@Override
+		public void run()
+		{
+			logger.log(Level.FINER, "FTPPool reissue requests " + reissueRequests);
+			process(reissueRequests);
 		}
-
-		return list;
-	}
-
-	@Override
-	public void run()
-	{
-		logger.log(Level.FINER, "FTPPool reissue requests " + reissueRequests);
-		process(reissueRequests);
-		AcnetPoolImpl.sharedTimer.schedule(this, 30000);
 	}
 }

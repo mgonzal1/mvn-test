@@ -1,7 +1,5 @@
-// $Id: FEDirect.java,v 1.4 2024/03/18 15:29:03 kingc Exp $
+// $Id: FEDirect.java,v 1.9 2024/11/19 22:34:44 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
-
-import static java.lang.System.out;
 
 import java.util.Date;
 import java.util.ArrayList;
@@ -30,7 +28,7 @@ import gov.fnal.controls.servers.dpm.pools.WhatDaq;
 import gov.fnal.controls.servers.dpm.scaling.DPMAnalogAlarmScaling;
 import gov.fnal.controls.servers.dpm.scaling.DPMDigitalAlarmScaling;
 import gov.fnal.controls.servers.dpm.scaling.DPMBasicStatusScaling;
-import gov.fnal.controls.servers.dpm.events.DataEvent;
+import gov.fnal.controls.servers.dpm.drf3.Event;
 
 public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolReplier
 {
@@ -60,7 +58,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	public FEDirect(WhatDaq whatDaq, String protocol) throws AcnetStatusException
 	{
 		this.whatDaq = whatDaq;
-		this.replier = DataReplier.get(whatDaq, this);
+		this.replier = whatDaq.dataReplier(this);
 		this.gets32 = protocol.trim().equalsIgnoreCase("gets32");
 
 		Runtime.getRuntime().addShutdownHook(this);
@@ -74,9 +72,9 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	void print(final int indent, final String format, final Object... args)
 	{
 		if (indent > 0)
-			out.printf("%" + indent + "s", "");
+			System.out.println(String.format("%" + indent + "s", ""));
 
-		out.printf(format, args);
+		System.out.printf(format, args);
 	}
 
 	void printBytes(final ByteBuffer buf, final int indent, final int BytesPerLine)
@@ -92,30 +90,30 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 		final int dataLen = buf.length;
 
 		for (int ii = 0; ii < dataLen; ii += BytesPerLine) {
-			print(indent, "[");
+			print(indent, String.format("%04x [", ii));
 
 			for (int jj = 0; jj < BytesPerLine; jj++) {
 				final int di = ii + jj;
 
 				if (di < dataLen) {
-					out.print(hexDigits[(buf[di] >> 4) & 0x0f]);
-					out.print(hexDigits[buf[di] & 0x0f]);
+					System.out.print(hexDigits[(buf[di] >> 4) & 0x0f]);
+					System.out.print(hexDigits[buf[di] & 0x0f]);
 				} else
-					out.print("  ");
+					System.out.print("  ");
 
-				out.print(' ');
+				System.out.print(' ');
 			}
 
 			for (int jj = 0; jj < BytesPerLine; jj++) {
 				final int di = ii + jj;
 				if (di >= dataLen)
-					out.print(' ');
+					System.out.print(' ');
 				else if (buf[di] >= 32 && buf[di] <= 127)
-					out.print((char) buf[di]);
+					System.out.print((char) buf[di]);
 				else
-					out.print('.');
+					System.out.print('.');
 			}
-			out.println("]");
+			System.out.println("]");
 		}
 	}
 
@@ -143,7 +141,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	public void handle(AcnetReply reply)
 	{
 		if (replyCount++ == 0) {
-			out.println();
+			System.out.println();
 
 			try {
 				logger.info("Replies from " + reply.serverTaskName() + "@" + reply.serverName());
@@ -166,32 +164,31 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 				final long replyTS = getLong(buf);
 
 				final short status = buf.getShort();
-				buf.get(dataBuf, 0, whatDaq.getLength());
+				buf.get(dataBuf, 0, whatDaq.length());
 
 				try {
 					if (status == 0)
 						replier.sendReply(dataBuf, 0, collectionTS, cycleTS);
 					else
-						logger.info(String.format("status : %04x %s", status & 0xffff, (dateString(System.currentTimeMillis()))));
+						logger.info(String.format("device status : %04x %s", status & 0xffff, (dateString(System.currentTimeMillis()))));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			} else {
-			System.out.println("remaining: " + buf.remaining() + " len:" + whatDaq.length());
 				final short status = buf.getShort();
-				buf.get(dataBuf, 0, whatDaq.getLength());
+				buf.get(dataBuf, 0, whatDaq.length());
 
 				try {
 					if (status == 0)
 						replier.sendReply(dataBuf, 0, System.currentTimeMillis(), 0);
 					else
-						logger.info(String.format("status : %04x %s", reply.status() & 0xffff, (dateString(System.currentTimeMillis()))));
+						logger.info(String.format("device status : %04x %s", reply.status() & 0xffff, (dateString(System.currentTimeMillis()))));
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 		} else {
-			logger.info(String.format("status : %04x %s", reply.status() & 0xffff, (dateString(System.currentTimeMillis()))));
+			logger.info(String.format("ACNET header status : %04x %s", reply.status() & 0xffff, (dateString(System.currentTimeMillis()))));
 		}
 	}
 
@@ -210,7 +207,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	@Override
 	public void sendReply(WhatDaq whatDaq, double data, long timestamp, long cycle) throws IOException
 	{
-		logger.info(String.format("reading: %8d %10.2f %-8s %s cycle:%d", seqNo, data, whatDaq.getUnits(), dateString(timestamp), cycle));
+		logger.info(String.format("reading: %8d %10.2f %-8s %s cycle:%d", seqNo, data, whatDaq.units(), dateString(timestamp), cycle));
 	}
 
 	@Override
@@ -219,7 +216,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 		String dateStr = dateString(timestamp);
 
 		for (int ii = 0; ii < data.length; ii++) {
-			logger.info(String.format("reading: [%3d] %8d %10.2f %-8s %s cycle:%d", ii, seqNo, data[ii], whatDaq.getUnits(), dateStr, cycle));
+			logger.info(String.format("reading: [%3d] %8d %10.2f %-8s %s cycle:%d", ii, seqNo, data[ii], whatDaq.units(), dateStr, cycle));
 			dateStr = "";
 		}
 	}
@@ -227,7 +224,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	@Override
 	public void sendReply(WhatDaq whatDaq, String data, long timestamp, long cycle) throws InterruptedException, IOException
 	{
-		logger.info(String.format("reading: %8d %20s %-8s %s cycle:%d", seqNo, data, whatDaq.getUnits(), dateString(timestamp), cycle));
+		logger.info(String.format("reading: %8d %20s %-8s %s cycle:%d", seqNo, data, whatDaq.units(), dateString(timestamp), cycle));
 	}
 
 	@Override
@@ -236,7 +233,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 		String dateStr = dateString(timestamp);
 
 		for (int ii = 0; ii < data.length; ii++) {
-			logger.info(String.format("reading: [%3d] %8d %20s %-8s %s cycle:%d", ii, seqNo, data[ii], whatDaq.getUnits(), dateStr, cycle));
+			logger.info(String.format("reading: [%3d] %8d %20s %-8s %s cycle:%d", ii, seqNo, data[ii], whatDaq.units(), dateStr, cycle));
 			dateStr = "";
 		}
 	}
@@ -244,7 +241,7 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	@Override
 	public void sendReply(WhatDaq whatDaq, boolean data, long timestamp, long cycle) throws InterruptedException, IOException
 	{
-		logger.info(String.format("reading: %8d %10s %-8s %s cycle:%d", seqNo, data, whatDaq.getUnits(), dateString(timestamp), cycle));
+		logger.info(String.format("reading: %8d %10s %-8s %s cycle:%d", seqNo, data, whatDaq.units(), dateString(timestamp), cycle));
 	}
 
 	@Override
@@ -268,41 +265,38 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	FEDirect sendRequest() throws AcnetStatusException
 	{
 		final ByteBuffer buf = ByteBuffer.allocate(32 * 1024);
-		final DataEvent event = whatDaq.getEvent();
+		final Event event = whatDaq.event();
 
 		if (gets32) {
 			logger.info("sending GETS32 request");
 
-			buf.put((byte) 1);
-			buf.put((byte) 1);
-			buf.put((byte) 0);
+			buf.put((byte) 1).put((byte) 1).put((byte) 0);
 			buf.put((byte) (whatDaq.node().value() >> 8));
 			buf.put((byte) whatDaq.node().value());
-			buf.put((byte) 0);
-			buf.put((byte) 1);
+			buf.put((byte) 0).put((byte) 1);
 			buf.put((byte) (event.isRepetitive() ? 1 : 0));
 
 			buf.order(ByteOrder.LITTLE_ENDIAN);
 
-			buf.putInt(34 + 2 + whatDaq.getLength());
+			buf.putInt(34 + 2 + whatDaq.length());
 			buf.putShort((short) 1);
-			buf.putShort((short) whatDaq.getFTD());
+			buf.putShort((short) FTD.forEvent(event));
 
 			final byte[] eventBytes = event.toString().getBytes();
 
 			if ((eventBytes.length & 1) > 0) {
 				buf.putShort((short) (eventBytes.length + 1));
 				buf.put(eventBytes);
-				buf.put((byte) 0);
+				buf.put((byte) ' ');
 			} else {
 				buf.putShort((short) eventBytes.length);
 				buf.put(eventBytes);
 			}
 
 			buf.putInt(whatDaq.dipi());
-			buf.put(whatDaq.getSSDN());
-			buf.putInt(whatDaq.getLength());
-			buf.putInt(whatDaq.getOffset());
+			buf.put(whatDaq.ssdn());
+			buf.putInt(whatDaq.length());
+			buf.putInt(whatDaq.offset());
 			buf.flip();
 
 			requestContext = connection.requestMultiple(whatDaq.node().value(), "GETS32", buf, 500000, this);
@@ -311,14 +305,14 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 
 			buf.order(ByteOrder.LITTLE_ENDIAN);
 
-			buf.putShort((short) (2 + whatDaq.getLength()));
+			buf.putShort((short) (2 + whatDaq.length()));
 			buf.putShort((short) 1);
-			buf.putShort((short) event.ftd());
+			buf.putShort((short) FTD.forEvent(event));
 			
 			buf.putInt(whatDaq.dipi());
-			buf.put(whatDaq.getSSDN());
-			buf.putShort((short) whatDaq.getLength());
-			buf.putShort((short) whatDaq.getOffset());
+			buf.put(whatDaq.ssdn());
+			buf.putShort((short) whatDaq.length());
+			buf.putShort((short) whatDaq.offset());
 			buf.flip();
 
 			requestContext = connection.requestMultiple(whatDaq.node().value(), "RETDAT", buf, 500000, this);
@@ -330,8 +324,8 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	@Override
 	public void run()
 	{
-		out.println();
-		out.println("Shutdown: cancelling request - received " + replyCount + " replies");
+		System.out.println();
+		System.out.println("Shutdown: cancelling request - received " + replyCount + " replies");
 
 		try {
 			requestContext.cancel();
@@ -343,14 +337,14 @@ public class FEDirect extends Thread implements AcnetReplyHandler, DPMProtocolRe
 	public static void main(String[] args)
 	{
 		try {
-			final DPMRequest request = new DPMRequest(args[1]);
+			final DPMRequest request = new DPMRequest(args[1], 0);
 			final ArrayList<DPMRequest> requestList = new ArrayList<>();
 
 			requestList.add(request);
 
 			DeviceCache.init();
 			DeviceCache.add(requestList);
-			final WhatDaq whatDaq = new WhatDaq(null, 0, request);
+			final WhatDaq whatDaq = WhatDaq.create(request);
 
 			(new FEDirect(whatDaq, args[0])).sendRequest().printRepliesForever();
 		} catch (AcnetStatusException e) {
