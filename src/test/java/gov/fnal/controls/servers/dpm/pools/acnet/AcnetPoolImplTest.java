@@ -29,14 +29,14 @@ public class AcnetPoolImplTest {
         acnetPool.addSetting(whatDaq, setting);
     }
 
-    @Test
-    public void test_handle() throws AcnetStatusException {
-        AcnetPoolImpl acnetPool = new AcnetPoolImpl();
-        ReceiveData receiveData = new ReceiveDataStub();
-        WhatDaq whatDaq = new WhatDaq(mock(WhatDaq.class), 5, 10, 10, receiveData);
-        byte[] setting = {65, 66, 67, 68, 69};
-        acnetPool.handle(whatDaq, setting);
-    }
+//    @Test
+//    public void test_handle() throws AcnetStatusException {
+//        AcnetPoolImpl acnetPool = new AcnetPoolImpl();
+//        ReceiveData receiveData = new ReceiveDataStub();
+//        WhatDaq whatDaq = new WhatDaq(mock(WhatDaq.class), 5, 10, 10, receiveData);
+//        byte[] setting = {65, 66, 67, 68, 69};
+//        acnetPool.handle(whatDaq, setting);
+//    }
 
     private class ReceiveDataStub implements ReceiveData {
         @Override

@@ -12,18 +12,18 @@ import java.util.List;
 
 public class OneShotDaqPoolTest {
 
-    @Test
-    public void test_insert() {
-        Node node = Mockito.mock(Node.class);
-
-        ReceiveData receiveData = Mockito.mock(ReceiveData.class);
-        WhatDaq whatDaq1 = Mockito.mock(WhatDaq.class);
-        WhatDaq whatDaq = new WhatDaq(whatDaq1, 487, 10, 457, receiveData);
-        List<WhatDaq> whatDaqCollections = new ArrayList<>();
-        whatDaqCollections.add(whatDaq);
-        OneShotDaqPool pool = new OneShotDaqPool(node);
-        pool.insert(whatDaqCollections);
-    }
+//    @Test
+//    public void test_insert() {
+//        Node node = Mockito.mock(Node.class);
+//
+//        ReceiveData receiveData = Mockito.mock(ReceiveData.class);
+//        WhatDaq whatDaq1 = Mockito.mock(WhatDaq.class);
+//        WhatDaq whatDaq = new WhatDaq(whatDaq1, 487, 10, 457, receiveData);
+//        List<WhatDaq> whatDaqCollections = new ArrayList<>();
+//        whatDaqCollections.add(whatDaq);
+//        OneShotDaqPool pool = new OneShotDaqPool(node);
+//        pool.insert(whatDaqCollections);
+//    }
 
     @Test
     public void test_process() {

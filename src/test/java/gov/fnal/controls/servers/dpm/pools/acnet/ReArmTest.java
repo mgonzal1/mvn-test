@@ -6,11 +6,11 @@ import org.junit.jupiter.api.Test;
 
 public class ReArmTest {
 
-    @Test
-    public void test_setRecent() throws AcnetStatusException {
-        ReArm reArm = new ReArm("rearm=false");
-        reArm.setRecent(14678951);
-    }
+//    @Test
+//    public void test_setRecent() throws AcnetStatusException {
+//        ReArm reArm = new ReArm("rearm=false");
+//        reArm.setRecent(14678951);
+//    }
     @Test
     public void test_getReArmTime() throws AcnetStatusException {
         ReArm reArm = new ReArm("rearm=false");

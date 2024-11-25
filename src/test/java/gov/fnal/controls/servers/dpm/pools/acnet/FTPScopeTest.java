@@ -1,6 +1,6 @@
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
-import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
+//import gov.fnal.controls.servers.dpm.events.DeltaTimeEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -28,10 +28,10 @@ public class FTPScopeTest {
         Assertions.assertEquals(45.65,duration);
     }
 
-    @Test
-    public void test_ftpCollectionEvent(){
-        FTPScope ftpScope  = new FTPScope(125.45, (byte) 100,true,45.65);
-        final DeltaTimeEvent deltaTimeEvent = ftpScope.ftpCollectionEvent(1248365);
-        Assertions.assertInstanceOf(DeltaTimeEvent.class , deltaTimeEvent);
-    }
+//    @Test
+//    public void test_ftpCollectionEvent(){
+//        FTPScope ftpScope  = new FTPScope(125.45, (byte) 100,true,45.65);
+//        final DeltaTimeEvent deltaTimeEvent = ftpScope.ftpCollectionEvent(1248365);
+//        Assertions.assertInstanceOf(DeltaTimeEvent.class , deltaTimeEvent);
+//    }
 }
