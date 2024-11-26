@@ -1,4 +1,4 @@
-// $Id: DaqSendTransaction.java,v 1.20 2024/11/19 22:34:44 kingc Exp $
+// $Id: DaqSendTransaction.java,v 1.21 2024/11/26 14:58:18 kingc Exp $
 package gov.fnal.controls.servers.dpm.pools.acnet;
 
 import java.util.ArrayList;
@@ -76,13 +76,13 @@ abstract class DaqSendTransaction implements NodeFlags, AcnetReplyHandler, Acnet
 			//final ByteBuffer buf = ByteBuffer.allocate(reqList.daqDefs.requestSize(reqList.requests.size())).order(ByteOrder.LITTLE_ENDIAN);
 			final ByteBuffer buf = ByteBuffer.allocate(reqList.reqSize).order(ByteOrder.LITTLE_ENDIAN);
 
-			context = acnetConnection.sendRequest(reqList.node.value(), getTaskName(), reqList.event.isRepetitive(), 
-													createRequest(buf), (int) reqList.timeout, this);
+			context = acnetConnection.sendRequest(reqList.node.value(), getTaskName(), reqList.event.isRepetitive(),
+					createRequest(buf), (int) reqList.timeout, this);
 		} catch (AcnetStatusException e) {
-			logger.log(Level.FINE, "DaqSendTransaction.transmit exception", e); 
+			logger.log(Level.FINE, "DaqSendTransaction.transmit exception", e);
 			context.cancelNoEx();
 		} catch (Exception e) {
-			logger.log(Level.WARNING, "DaqSendTransaction.transmit exception", e); 
+			logger.log(Level.WARNING, "DaqSendTransaction.transmit exception", e);
 			context.cancelNoEx();
 		}
 	}
@@ -148,7 +148,7 @@ abstract class DaqSendTransaction implements NodeFlags, AcnetReplyHandler, Acnet
 	{
 		for (ReplyInfo rInfo : replyRequests) {
 			final WhatDaq whatDaq = rInfo.whatDaq;
-			
+
 			if (retryCount == 0) {
 				whatDaq.getReceiveData().receiveStatus(status);
 				clientReport.reportError(whatDaq.dipi(), status, reqList.isSetting);
@@ -158,7 +158,7 @@ abstract class DaqSendTransaction implements NodeFlags, AcnetReplyHandler, Acnet
 		reqList.listCompletion.completed(status);
 	}
 
- 	@Override
+	@Override
 	public String toString()
 	{
 		return "DaqSendTransaction: " + reqList.node
@@ -196,7 +196,7 @@ class DaqSendTransaction16 extends DaqSendTransaction
 			buf.putShort((short) 1);
 			buf.putShort((short) reqList.requests.size());
 		} else {
-			buf.putShort((short) reqList.replySize()); 
+			buf.putShort((short) reqList.replySize());
 			buf.putShort((short) reqList.requests.size());
 			//buf.putShort((short) reqList.event.ftd());
 			buf.putShort((short) FTD.forEvent(reqList.event));
@@ -210,7 +210,7 @@ class DaqSendTransaction16 extends DaqSendTransaction
 
 			if (reqList.isSetting) {
 				buf.put(whatDaq.setting(), 0, whatDaq.length());
-		
+
 				if ((whatDaq.length() & 1) > 0)
 					buf.put((byte) 0);
 			}
@@ -264,9 +264,9 @@ class DaqSendTransaction16 extends DaqSendTransaction
 
 class DaqSendTransaction32 extends DaqSendTransaction //implements NodeFlags, AcnetReplyHandler, AcnetErrors//, Daq32Defs
 {
-	static final AcnetConnection connectionR = AcnetInterface.open("GETSR").setQueueReplies(128);
-	static final AcnetConnection connection1 = AcnetInterface.open("GETS1").setQueueReplies(64);
-	static final AcnetConnection connectionS = AcnetInterface.open("GETSS").setQueueReplies(64);
+	static final AcnetConnection connectionR = AcnetInterface.open("GETSR").setQueueReplies(512);
+	static final AcnetConnection connection1 = AcnetInterface.open("GETS1").setQueueReplies(128);
+	static final AcnetConnection connectionS = AcnetInterface.open("GETSS").setQueueReplies(128);
 
 	//int returnCount = 0;
 
@@ -285,10 +285,10 @@ class DaqSendTransaction32 extends DaqSendTransaction //implements NodeFlags, Ac
 			return connectionS;
 		else if (!reqList.event.isRepetitive())
 			return connection1;
-		
+
 		return connectionR;
 	}
-	
+
 	@Override
 	String getTaskName()
 	{
@@ -328,7 +328,7 @@ class DaqSendTransaction32 extends DaqSendTransaction //implements NodeFlags, Ac
 
 			if (reqList.isSetting) {
 				buf.put(whatDaq.setting(), 0, whatDaq.length());
-		
+
 				if ((whatDaq.length() & 1) > 0)
 					buf.put((byte) 0);
 			}
@@ -342,7 +342,7 @@ class DaqSendTransaction32 extends DaqSendTransaction //implements NodeFlags, Ac
 	}
 
 	@Override
-	// public void handle(AcnetReply r)
+		// public void handle(AcnetReply r)
 	void handleReply(ByteBuffer data)
 	{
 	/*
@@ -354,54 +354,54 @@ class DaqSendTransaction32 extends DaqSendTransaction //implements NodeFlags, Ac
 		if (r.status() == ACNET_NO_TASK) {
 			completeWithStatus(ACNET_NODE_DOWN);
 			return;
-		}	
+		}
 
 		final ByteBuffer data = r.data().order(ByteOrder.LITTLE_ENDIAN);
 		*/
 
 
 		//if (data.remaining() == reqList.replySize()) {
-			final int globalStatus = data.getShort();
-			int completedStatus = 0;
+		final int globalStatus = data.getShort();
+		int completedStatus = 0;
 
-			data.getLong();
-		
-			final long cycleTS = data.getLong();
-			final long collectTS = data.getLong();
-			final long replyTS = data.getLong();
+		data.getLong();
 
-			for (ReplyInfo rInfo : replyRequests) {
-				final WhatDaq whatDaq = rInfo.whatDaq;
-				final int status = data.getShort();
+		final long cycleTS = data.getLong();
+		final long collectTS = data.getLong();
+		final long replyTS = data.getLong();
+
+		for (ReplyInfo rInfo : replyRequests) {
+			final WhatDaq whatDaq = rInfo.whatDaq;
+			final int status = data.getShort();
+
+			if (status != 0)
+				completedStatus = status;
+
+			if (reqList.isSetting) {
+				whatDaq.getReceiveData().receiveStatus(status == 0 ? globalStatus : status, collectTS, cycleTS);
+			} else {
+				final int pos = data.position();
 
 				if (status != 0)
-					completedStatus = status;
+					whatDaq.getReceiveData().receiveStatus(status, collectTS, cycleTS);
+				else if (globalStatus != 0)
+					whatDaq.getReceiveData().receiveStatus(globalStatus, collectTS, cycleTS);
+				else
+					whatDaq.getReceiveData().receiveData(data, collectTS, cycleTS);
 
-				if (reqList.isSetting) {
-					whatDaq.getReceiveData().receiveStatus(status == 0 ? globalStatus : status, collectTS, cycleTS);
-				} else {
-					final int pos = data.position();
+				data.position(pos + whatDaq.length());
 
-					if (status != 0)
-						whatDaq.getReceiveData().receiveStatus(status, collectTS, cycleTS);
-					else if (globalStatus != 0)
-						whatDaq.getReceiveData().receiveStatus(globalStatus, collectTS, cycleTS);
-					else
-						whatDaq.getReceiveData().receiveData(data, collectTS, cycleTS);
-
-					data.position(pos + whatDaq.length());
-
-					if (whatDaq.lengthIsOdd())
-						data.get();
-				}
-
-				if (status != 0 && status != rInfo.lastStatus)
-					clientReport.reportError(whatDaq.dipi(), status, reqList.isSetting);
-
-				rInfo.lastStatus = status;
+				if (whatDaq.lengthIsOdd())
+					data.get();
 			}
 
-			reqList.listCompletion.completed(completedStatus);
+			if (status != 0 && status != rInfo.lastStatus)
+				clientReport.reportError(whatDaq.dipi(), status, reqList.isSetting);
+
+			rInfo.lastStatus = status;
+		}
+
+		reqList.listCompletion.completed(completedStatus);
 		//} else {
 		//	completeWithStatus(ACNET_TRUNC_REPLY);
 		//	context.cancelNoEx();

@@ -1,4 +1,4 @@
-// $Id: DPMServer.java,v 1.93 2024/11/25 17:03:22 kingc Exp $
+// $Id: DPMServer.java,v 1.94 2024/11/26 16:42:31 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import java.util.Timer;
@@ -35,6 +35,8 @@ public class DPMServer implements AcnetErrors
 {
 	static class ServerHandler extends ConsoleHandler
 	{
+		static final int warningValue = Level.WARNING.intValue();
+
 		ServerHandler()
 		{
 			super();
@@ -49,7 +51,7 @@ public class DPMServer implements AcnetErrors
 			if (name.isEmpty())
 				super.publish(record);
 
-			if (level == Level.WARNING && record.getThrown() != null)
+			if (level.intValue() >= warningValue)
 				Scope.exceptionStack();
 		}
 	}
@@ -66,7 +68,7 @@ public class DPMServer implements AcnetErrors
 	static final String localHostName;
 	static final MemoryUsageDisplay memoryUsageDisplay;
 	static final String codeVersion;
-	static final ServerSocketChannel scopeChannel; 
+	static final ServerSocketChannel scopeChannel;
 	static final boolean debug;
 
 	static volatile RestartTask restartTask = null;
@@ -81,7 +83,7 @@ public class DPMServer implements AcnetErrors
 
 		for (Handler h : root.getHandlers())
 			root.removeHandler(h);
-		
+
 		root.addHandler(new ServerHandler());
 		logger = root;
 		//logger.addHandler(new ConsoleHandler());
@@ -105,13 +107,13 @@ public class DPMServer implements AcnetErrors
 		cpuCount = os.getAvailableProcessors();
 		timer = new Timer("Shared timer", false);
 		memoryUsageDisplay = new MemoryUsageDisplay();
-	}	
+	}
 
 	private static int getPid()
 	{
 		try {
 			return Integer.valueOf(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]);
-		} catch (Exception e) { 
+		} catch (Exception e) {
 			return 0;
 		}
 	}
@@ -153,7 +155,7 @@ public class DPMServer implements AcnetErrors
 
 			for (DPMProtocolHandler h : DPMProtocolHandler.allHandlers()) {
 				if (!h.restartable())
-					return;	
+					return;
 			}
 
 			logger.log(Level.INFO, "Restarting ...");
@@ -220,7 +222,7 @@ public class DPMServer implements AcnetErrors
 		return logger.getLevel();
 	}
 
-  	public static void setLogLevel(Level level)
+	public static void setLogLevel(Level level)
 	{
 		logger.log(Level.INFO, "Logging level set to " + level);
 
@@ -246,7 +248,7 @@ public class DPMServer implements AcnetErrors
 
 		for (DPMProtocolHandler h : DPMProtocolHandler.allHandlers())
 			lists.addAll(h.disposedLists());
-		
+
 		return lists;
 	}
 
@@ -303,7 +305,7 @@ public class DPMServer implements AcnetErrors
 	{
 		final String root = System.getProperty("engines.files.root");
 
-		if (root != null) { 
+		if (root != null) {
 			final FileWriter file = new FileWriter(root + "/files/dpm/" + AcnetInterface.getVirtualNode());
 
 			file.write(codeVersion);
@@ -315,11 +317,11 @@ public class DPMServer implements AcnetErrors
 	{
 		setLogLevel(initLogLevel);
 
-		logger.log(Level.CONFIG, "DPM(" + pid + ") VERSION:'" + codeVersion + 
-					"' CLASSPATH:'" + System.getProperty("java.class.path") + "'");
+		logger.log(Level.CONFIG, "DPM(" + pid + ") VERSION:'" + codeVersion +
+				"' CLASSPATH:'" + System.getProperty("java.class.path") + "'");
 
 		Runtime.getRuntime().addShutdownHook(new ShutdownHook());
-	
+
 		try {
 			logCodeVersion();
 		} catch (Exception ignore) { }
@@ -351,7 +353,7 @@ public class DPMServer implements AcnetErrors
 		}
 
 		//scopeChannel.close();
-	
+
 		//DPMServer.class.wait();
 	}
 }
