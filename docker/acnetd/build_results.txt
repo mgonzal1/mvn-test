@@ -1,0 +1,25 @@
+g++ -pipe -W -Wall  -Werror -I/usr/include/openssl -fno-strict-aliasing -DTHIS_PLATFORM=\"Linux\" -DTHIS_ARCH=\"x86_64\" -DTHIS_TARGET=Linux_Target -Wno-deprecated-declarations -std=c++0x -O2 -DNDEBUG   -c -o main.o main.cpp
+g++ -pipe -W -Wall  -Werror -I/usr/include/openssl -fno-strict-aliasing -DTHIS_PLATFORM=\"Linux\" -DTHIS_ARCH=\"x86_64\" -DTHIS_TARGET=Linux_Target -Wno-deprecated-declarations -std=c++0x -O2 -DNDEBUG   -c -o taskinfo.o taskinfo.cpp
+taskinfo.cpp: In constructor 'TaskInfo::TaskInfo(TaskPool&, taskhandle_t, taskid_t)':
+taskinfo.cpp:15:5: error: class 'TaskInfo' does not have any field named 'pendingRequests'
+     pendingRequests(0), maxPendingRequests(0)
+     ^
+taskinfo.cpp:15:25: error: class 'TaskInfo' does not have any field named 'maxPendingRequests'
+     pendingRequests(0), maxPendingRequests(0)
+                         ^
+taskinfo.cpp: At global scope:
+taskinfo.cpp:30:41: error: no 'bool TaskInfo::decrementPendingRequests()' member function declared in class 'TaskInfo'
+ bool TaskInfo::decrementPendingRequests()
+                                         ^
+taskinfo.cpp:39:48: error: no 'bool TaskInfo::testPendingRequestsAndIncrement()' member function declared in class 'TaskInfo'
+ bool TaskInfo::testPendingRequestsAndIncrement()
+                                                ^
+taskinfo.cpp: In member function 'void TaskInfo::report(std::ostream&) const':
+taskinfo.cpp:72:77: error: 'pendingRequests' was not declared in this scope
+  "\t\t\t<tr class=\"even\"><td class=\"label\">Pending Request</td><td>" << pendingRequests << "</td></tr>\n" <<
+                                                                             ^
+taskinfo.cpp:73:67: error: 'maxPendingRequests' was not declared in this scope
+  "\t\t\t<tr><td class=\"label\">Max Pending Requests</td><td>" << maxPendingRequests << "</td></tr>\n" <<
+                                                                   ^
+make: *** [taskinfo.o] Error 1
+** BUILD FAILED. **

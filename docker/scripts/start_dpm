@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+
+echo == Starting acnetd for ${NODE_NAME}
+
+# Start acnetd
+/usr/local/bin/acnetd -H ${NODE_NAME} -s &
+
+#
+# Start dpm
+#
+echo == Starting DPM
+
+start_dpm() {
+  source /usr/local/dae/bin/setup_java
+  export CLASSPATH=${CLASSPATH}:/usr/local/dae/jars/*
+
+  echo $CLASSPATH
+
+  ${JAVA_HOME}/bin/java ${DPM_OPTS} -Djava.rmi.server.hostname=10.200.24.140 -Dvnode=${NODE_NAME} -Ddebug=true -Dversion=${DPM_RELEASE} -Dloglevel=FINER gov.fnal.controls.servers.dpm.DPMServer
+}
+
+RESTART_VM=1
+
+while [ ${RESTART_VM} -eq 1 ]; do
+        start_dpm
+	RETVAL=${PIPESTATUS[0]}
+	if [ ${RETVAL} -ge 100 ]; then
+		if [ ${RETVAL} -eq 143 -o ${RETVAL} -eq 137 ]; then
+			RESTART_VM=0
+		elif [ ${RETVAL} -ne 100 ]; then
+			echo ${RETVAL}
+			echo DPM died 
+			sleep 5
+		fi
+	else
+		RESTART_VM=0
+	fi
+done
+
+wait -n

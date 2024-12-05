@@ -1,0 +1,55 @@
+#!/usr/local/bin/bash
+
+get_args()
+{
+    [ -r ${ARGS_FILE} ] && JAVA_OPTS="${JAVA_OPTS}`sed -e 's/^ *//' -e 's/ *$//' -e '/^$/d' -e '/^#/d' ${ARGS_FILE}|sed -n -e 'H' -e '${g;s/\n/ /g;p;}'`"
+}
+
+get_dpm_args()
+{
+    [ -r ${ARGS_FILE} ] && DPM_OPTS="${DPM_OPTS}`sed -e 's/^ *//' -e 's/ *$//' -e '/^$/d' -e '/^#/d' ${ARGS_FILE}|sed -n -e 'H' -e '${g;s/\n/ /g;p;}'`"
+}
+
+DAE_ROOT=/usr/local/dae
+JAVA_WORK_PATH=${HOME}/javaworkpath
+ENGINE_ARGS=${HOME}/engineargs
+DPM_ARGS=${HOME}/dpmargs
+EXTRA_ARGS=${HOME}/extraargs
+#DAE_GLOBAL_VERSION=${DAE_ROOT}/current.version
+DAE_LOCAL_VERSION=${HOME}/dae.version
+RELEASEDIR=releases
+LD_LIBRARY_PATH=${DAE_ROOT}/jars/linux
+
+[ -z "${JAVA_HOME}" ] && JAVA_HOME=/usr/java/default
+
+#DAE_VERSION=`cat ${DAE_GLOBAL_VERSION}`
+#[ -r ${DAE_LOCAL_VERSION} ] && DAE_VERSION=`cat ${DAE_LOCAL_VERSION}`
+
+CLASSPATH=${DAE_ROOT}/${RELEASEDIR}/${DAE_VERSION}:${DAE_ROOT}/${RELEASEDIR}/${DAE_VERSION}/jars/govjars.jar
+[ -n "${JAVA_WORK}" ] && CLASSPATH=${JAVA_WORK}:${CLASSPATH}
+
+[ -r ${JAVA_WORK_PATH} ] && CLASSPATH=`sed -e 's/^ *//' -e 's/ *$//' -e '/^$/d' -e '/^#/d' ${JAVA_WORK_PATH}|sed -n -e 'H' -e '${g;s/\n/:/g;s/::*/:/g;s/^://;s/:$//;p;}'`:${CLASSPATH}
+
+CONFIG_OPTS="-Djava.util.prefs.systemRoot=${HOME}/.java -Djava.net.preferIPv4Stack=true"
+METRICS_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.util.logging.config.file=logging.properties"
+#ENGINE_OPTS="-Ddae.root=${DAE_ROOT}/${RELEASEDIR}/${DAE_VERSION} -Ddae.version=${DAE_VERSION} -Dengines.files.root=/export/engines"
+MEM_OPTS="-Xms2048m -Xmx2048m"
+GC_OPTS="-XX:+UseMembar -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+DisableExplicitGC -Xnoclassgc -XX:+CMSIncrementalPacing -XX:CMSIncrementalDutyCycleMin=0 -XX:CMSIncrementalDutyCycle=10"
+MANAGE_OPTS="-Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+
+#JAVA_OPTS=" -server -showversion ${MANAGE_OPTS} ${CONFIG_OPTS} ${ENGINE_OPTS} ${GC_OPTS} ${MEM_OPTS} ${METRICS_OPTS}"
+JAVA_OPTS=" -server -showversion ${MANAGE_OPTS} ${CONFIG_OPTS} ${GC_OPTS} ${MEM_OPTS} ${METRICS_OPTS}"
+DPM_OPTS=" -server -showversion ${CONFIG_OPTS}"
+
+ARGS_FILE=${ENGINE_ARGS}
+get_args
+ARGS_FILE=${EXTRA_ARGS}
+get_args
+ARGS_FILE=${DPM_ARGS}
+get_dpm_args
+#[ -r ${EXTRA_ARGS} ] && JAVA_OPTS="${JAVA_OPTS}`sed -e 's/^ *//' -e 's/ *$//' -e '/^$/d' -e '/^#/d' ${EXTRA_ARGS}|sed -n -e 'H' -e '${g;s/\n/ /g;p;}'`"
+
+export DAE_ROOT LD_LIBRARY_PATH JAVA_HOME CLASSPATH JAVA_OPTS DAE_VERSION
+
+echo "Using CLASSPATH \"${CLASSPATH}\""
+echo "Using JAVA_OPTS \"${JAVA_OPTS}\""
