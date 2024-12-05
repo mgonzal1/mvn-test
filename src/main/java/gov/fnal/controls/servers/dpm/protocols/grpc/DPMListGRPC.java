@@ -1,6 +1,6 @@
-// $Id: DPMListGRPC.java,v 1.16 2024/11/19 22:34:44 kingc Exp $
+// $Id: DPMListGRPC.java,v 1.17 2024/12/05 17:01:56 kingc Exp $
 package gov.fnal.controls.servers.dpm.protocols.grpc;
- 
+
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.HashMap;
@@ -69,11 +69,11 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	}
 
 	@Override
-    public void sendReply(WhatDaq whatDaq) throws InterruptedException, IOException, AcnetStatusException { }
+	public void sendReply(WhatDaq whatDaq) throws InterruptedException, IOException, AcnetStatusException { }
 
 	@Override
 	public void sendReply(WhatDaq whatDaq, DPMAnalogAlarmScaling scaling, long timestamp, long cycle) { }
-		
+
 	@Override
 	public void sendReply(WhatDaq whatDaq, DPMDigitalAlarmScaling scaling, long timestamp, long cycle) { }
 
@@ -84,7 +84,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	public void sendReply(WhatDaq whatDaq, byte[] data, long timestamp, long cycle)
 	{
 		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId()).setTimestamp(timestamp);
-		
+
 		sendReply(whatDaq, reply.setData(Data.newBuilder().setRaw(ByteString.copyFrom(data))));
 	}
 
@@ -110,7 +110,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId()).setTimestamp(timestamp);
 
 		final Data.ScalarArray.Builder arr = Data.ScalarArray.newBuilder();
-		
+
 		for (final double value : values)
 			arr.addValue(value);
 
@@ -151,7 +151,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 	{
 		final Reading.Builder reply = Reading.newBuilder().setIndex((int) whatDaq.refId()).setTimestamp(timestamp);
 		final Data.TextArray.Builder arr = Data.TextArray.newBuilder();
-		
+
 		for (final String value : values)
 			arr.addValue(value);
 
@@ -198,7 +198,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 			notify();
 		}
 
-		void sendReply(WhatDaq whatDaq, Reading.Builder reply) 
+		void sendReply(WhatDaq whatDaq, Reading.Builder reply)
 		{
 			if (!replier.isReady()) {
 				if (whatDaq.getOption(WhatDaq.Option.FLOW_CONTROL)) {
@@ -215,8 +215,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 					return;
 				}
 			}
-			replyCounter.incrementAndGet();
-			replier.onNext(reply.build());	
+			replier.onNext(reply.build());
 		}
 	}
 
@@ -231,9 +230,9 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 		public void run() { }
 
 		@Override
-		void sendReply(WhatDaq whatDaq, Reading.Builder reply) 
+		void sendReply(WhatDaq whatDaq, Reading.Builder reply)
 		{
-			replier.onNext(reply.build());	
+			replier.onNext(reply.build());
 			replier.onCompleted();
 			dispose(0);
 		}
@@ -269,7 +268,7 @@ public abstract class DPMListGRPC extends DPMList implements AcnetErrors, DPMPro
 
 			replier.onNext(statusList.build());
 			replier.onCompleted();
-			
+
 			dispose();
 		}
 

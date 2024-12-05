@@ -1,4 +1,4 @@
-// $Id: DPMServer.java,v 1.94 2024/11/26 16:42:31 kingc Exp $
+// $Id: DPMServer.java,v 1.95 2024/12/04 19:21:41 kingc Exp $
 package gov.fnal.controls.servers.dpm;
 
 import java.util.Timer;
@@ -48,11 +48,17 @@ public class DPMServer implements AcnetErrors
 			final String name = record.getLoggerName();
 			final Level level = record.getLevel();
 
-			if (name.isEmpty())
+			if (name.isEmpty()) {
 				super.publish(record);
 
-			if (level.intValue() >= warningValue)
-				Scope.exceptionStack();
+				if (level.intValue() >= warningValue) {
+					Scope.exceptionStack();
+
+					if (debug) {
+						System.out.println("Exception stack status set: " + level + " " + record.getMessage());
+					}
+				}
+			}
 		}
 	}
 
