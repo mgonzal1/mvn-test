@@ -17,7 +17,7 @@ on:
       - dpm_dockerbuild
 
 env:
-  DPM_RELEASE: 'v11-testarg'
+  DPM_RELEASE: 'v12-PVA'
 
 # This is for optimization, it will cancel the job if there is a new change within the same PR
 concurrency:
