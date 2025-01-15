@@ -54,14 +54,11 @@ jobs:
     - name: Build and UT with Maven
       run: mvn -B package --file pom.xml
 
-    - name: List Files
-      run: |
-        echo "Where am I?"
-        ls -tlrha
-        pwd
-        env
-        echo "----"
-        echo $GITHUB_WORKSPACE
+    - name: Upload JAR
+      uses: actions/upload-artifact@v4
+      with:
+          path: target/data-pool-manager-maven-1.0.jar
+          name: DPM.jar
 
     - name: Docker meta
       id: meta
