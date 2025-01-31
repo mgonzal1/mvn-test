@@ -106,6 +106,33 @@ jobs:
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+          images: adregistry.fnal.gov/acorn/dpm
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ env.NEW_VERSION }}
+            
+    - name: Log in to Docker Registry
+      uses: docker/login-action@v3
+      with:
+        registry: adregistry.fnal.gov
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+    
+    - name: Build and push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        file: docker/Dockerfile
+        tags: adregistry.fnal.gov/acorn/dpm:${{ env.NEW_VERSION }}
+        build-args: |
+          DPM_RELEASE=${{ env.NEW_VERSION }}        
+          labels: ${{ steps.meta.outputs.labels }}   
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     #- name: Update dependency graph
     #  uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
