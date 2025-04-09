@@ -121,7 +121,7 @@
     <distributionManagement>
     <repository>
       <id>github</id>
-      <name>GitHub Packages</name>
+      <name>GitHub mgonzal1 Apache Maven Packages</name>
       <url>https://maven.pkg.github.com/mgonzal1/mvn-test</url>
     </repository>
   </distributionManagement>
