@@ -118,4 +118,11 @@
       </plugin>
     </plugins>
   </reporting>
+    <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>>https://maven.pkg.github.com/mgonzal1/dpm</url>
+    </repository>
+  </distributionManagement>
 </project>
